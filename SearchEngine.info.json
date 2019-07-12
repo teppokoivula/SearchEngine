@@ -1,0 +1,14 @@
+{
+    "title": "SearchEngine",
+    "summary": "SearchEngine is a module for indexing and searching site contents.",
+    "icon": "search",
+    "version": "0.1.0",
+    "author": "Teppo Koivula",
+    "href": "https://github.com/teppokoivula/SearchEngine",
+    "requires": [
+        "ProcessWire>=3.0.112",
+        "PHP>=7.1.0"
+    ],
+    "singular": true,
+    "autoload": true
+  }

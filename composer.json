@@ -1,0 +1,23 @@
+{
+    "name": "teppokoivula/search-engine",
+    "type": "pw-module",
+    "description": "SearchEngine is a ProcessWire CMS/CMF module for indexing and searching site contents.",
+    "keywords": [
+        "module",
+        "processwire"
+    ],
+    "homepage": "https://github.com/teppokoivula/SearchEngine",
+    "license": "MPL-2.0",
+    "authors": [
+        {
+            "name": "Teppo Koivula",
+            "homepage": "https://github.com/teppokoivula",
+            "email": "teppo.koivula@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "processwire/processwire": "^3.0",
+        "wireframe-framework/processwire-composer-installer": "^1.0.0"
+    }
+}
