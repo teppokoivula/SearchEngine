@@ -18,7 +18,7 @@ SearchEngine is a module that creates an index of page contents, and makes it ea
 
 By default the module will create a search index field called 'search_index' and store values from Page fields title, headline, summary, and body to said index field when a page is saved. You can modify this behaviour (field name and/or indexed page fields) by defining $config->SearchEngine array in your site config file or other applicable location:
 
-```
+```php
 $config->SearchEngine = [
     'index_field' => 'search_index',
     'indexed_fields' => [
@@ -31,12 +31,22 @@ $config->SearchEngine = [
 ];
 ```
 
-- You can access the search index field just like any other ProcessWire field with selectors:
+You can access the search index field just like any other ProcessWire field with selectors:
 
-```
+```php
 if ($q = $sanitizer->selectorValue($input->get->q)) {
-   $results = $pages->find('search_index%=' . $query_string . ', limit=25');
+    $results = $pages->find('search_index%=' . $query_string . ', limit=25');
+    echo $results->render();
+    echo $results->renderPager();
 }
+```
+
+Alternatively you can delegate the find operation to the SearchEngine module as well:
+
+```php
+$query = $modules->get('SearchEngine')->find($input->get->q);
+echo $query->resultsString; // alias for $query->results->render()
+echo $query->pager; // alias for $query->results->renderPager()
 ```
 
 ## Requirements

@@ -2,8 +2,10 @@
 
 namespace ProcessWire;
 
-use SearchEngine\Indexer,
-    SearchEngine\Config;
+use SearchEngine\Config,
+    SearchEngine\Finder,
+    SearchEngine\Indexer,
+    SearchEngine\Query;
 
 /**
  * SearchEngine ProcessWire module
@@ -11,7 +13,7 @@ use SearchEngine\Indexer,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.1.0
+ * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -52,6 +54,13 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'FieldtypeOptions',
         ],
         'link_prefix' => 'link:',
+        'find_args' => [
+            'limit' => 25,
+            'operator' => '%=',
+            'query_param' => null,
+            'selector_extra' => '',
+            'sort' => null,
+        ],
     ];
 
     /**
@@ -67,6 +76,13 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @var \SearchEngine\Indexer
      */
     protected $indexer;
+
+    /**
+     * An instance of Finder
+     *
+     * @var \SearchEngine\Finder
+     */
+    protected $finder;
 
     /**
      * Has the module been initialized?
@@ -144,6 +160,20 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     }
 
     /**
+     * Find content matching provided query.
+     *
+     * This method is a wrapper for Finder::find().
+     *
+     * @param mixed $query The query.
+     * @param array $args Additional arguments, see Query::__construct() for details.
+     * @return Query Resulting Query object.
+     */
+    public function find($query = null, array $args = []): Query {
+        $this->maybeInit();
+        return $this->finder->find($query, $args);
+    }
+
+    /**
      * Initialize the module
      *
      * If the module hasn't been initialized yet, this method will perform the required init setup.
@@ -159,16 +189,19 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
 
         // Init runtime options.
         $this->initOptions();
-        
+
         // Init class autoloader.
         $this->wire('classLoader')->addNamespace(
             'SearchEngine',
             $this->wire('config')->paths->SearchEngine . 'lib/'
         );
-        
+
         // Init SearchEngine Indexer.
-        $this->indexer = $this->wire(new Indexer($this->options));
-        
+        $this->indexer = $this->wire(new Indexer());
+
+        // Init SearchEngine Finder.
+        $this->finder = $this->wire(new Finder());
+
         // Remember that the module has been initialized.
         $this->initialized = true;
     }
@@ -276,6 +309,19 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 }
             }
         }
+    }
+
+    /**
+     * Magic getter method
+     *
+     * This method is added so that we can keep some properties readable from the outside but not
+     * writable. Falls back to parent class (Wire) if local property doesn't exist.
+     *
+     * @param string $key Property name.
+     * @return mixed
+     */
+    public function __get($key) {
+        return $this->$key ?? parent::get($key);
     }
 
 }

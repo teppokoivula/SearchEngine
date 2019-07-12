@@ -8,18 +8,11 @@ use ProcessWire\InputfieldWrapper,
 /**
  * SearchEngine Config
  *
- * @version 0.1.0
+ * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
-class Config extends \ProcessWire\WireData {
-
-    /**
-     * Options array passed from the SearchEngine module
-     *
-     * @var array
-     */
-    protected $options = [];
+class Config extends Base {
 
     /**
      * Config data array passed from the SearchEngine module
@@ -32,11 +25,10 @@ class Config extends \ProcessWire\WireData {
      * Constructor method
      *
      * @param array $data Config data array.
-     * @param array $options Options array.
      */
-    public function __construct(array $data, array $options = []) {
+    public function __construct(array $data) {
+        parent::__construct();
         $this->data = $data;
-        $this->options = $options;
     }
 
     /**

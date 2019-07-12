@@ -5,27 +5,11 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.1.0
+ * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
-class Indexer extends \ProcessWire\Wire {
-
-    /**
-     * Options array passed from the SearchEngine module
-     *
-     * @var array
-     */
-    protected $options = [];
-
-    /**
-     * Constructor method
-     *
-     * @param array $options Options array.
-     */
-    public function __construct(array $options = []) {
-        $this->options = $options;
-    }
+class Indexer extends Base {
 
     /**
      * Index multiple pages
