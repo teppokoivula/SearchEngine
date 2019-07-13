@@ -16,7 +16,7 @@ SearchEngine is a module that creates an index of page contents, and makes it ea
 
 ## Options
 
-By default the module will create a search index field called 'search_index' and store values from Page fields title, headline, summary, and body to said index field when a page is saved. You can modify this behaviour (field name and/or indexed page fields) by defining $config->SearchEngine array in your site config file or other applicable location:
+By default the module will create a search index field called 'search_index' and store values from Page fields title, headline, summary, and body to said index field when a page is saved. You can modify the default behaviour via the Module config screen in the PocessWire Admin, or by defining $config->SearchEngine array in your site config file or other applicable location:
 
 ```php
 $config->SearchEngine = [
