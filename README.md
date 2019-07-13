@@ -12,7 +12,7 @@ SearchEngine is a module that creates an index of page contents, and makes it ea
 2) Add the site search index field to templates you want to make searchable.
 3) Use selectors to query values in site search index.
 
-*Note: you can use any operator for your selectors, you will likely find the '*=' and '%=' operators most useful here. You can read more about selector operators from [ProcessWire's documentation](https://processwire.com/docs/selectors/).*
+*Note: you can use any operator for your selectors, you will likely find the '\*=' and '%=' operators most useful here. You can read more about selector operators from [ProcessWire's documentation](https://processwire.com/docs/selectors/).*
 
 ## Options
 
