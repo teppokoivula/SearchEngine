@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- New Renderer class for rendering a search form.
+- New Data class to serve as a wrapper for WireData with improved getDot() support.
+- Alias methods SearchEngine::renderForm() and SearchEngine::renderInputfieldForm().
+
 ## [0.3.1] - 2019-07-13
 
 ### Changed

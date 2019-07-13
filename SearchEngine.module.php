@@ -5,7 +5,8 @@ namespace ProcessWire;
 use SearchEngine\Config,
     SearchEngine\Finder,
     SearchEngine\Indexer,
-    SearchEngine\Query;
+    SearchEngine\Query,
+    SearchEngine\Renderer;
 
 /**
  * SearchEngine ProcessWire module
@@ -13,7 +14,7 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.3.1
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -63,6 +64,28 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'query_param' => null,
             'selector_extra' => '',
         ],
+        'render_args' => [
+            'form_action' => './',
+            'form_class' => 'se__search-form',
+            'form_id' => 'se-form',
+            'input_name' => 'q',
+            'input_class' => 'se__search-form__input',
+            'input_id' => 'se-form-input',
+            'label_class' => 'se__search-form__label',
+            'strings' => [
+                'input_label' => null,
+                'input_placeholder' => null,
+                'submit' => null,
+            ],
+            'templates' => [
+                'form' => '<form id="{form_id}" class="{form_class}" action="{form_action}">%s</form>',
+                'input' => '<input type="text" name="{input_name}" placeholder="{strings.input_placeholder}" id="{input_id}">',
+                'label' => '<label for="{input_id}" class="{label_class}">{strings.input_label}</label>',
+                'submit' => '<input type="submit" value="{strings.submit}">',
+                'list' => '<ul class="{list_class}">%s</ul>',
+                'list_item' => '<li class="{list_item_class}">%s</li>',
+            ],
+        ],
     ];
 
     /**
@@ -85,6 +108,13 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @var \SearchEngine\Finder
      */
     protected $finder;
+
+    /**
+     * An instance of Renderer
+     *
+     * @var \SearchEngine\Renderer
+     */
+    protected $renderer;
 
     /**
      * Has the module been initialized?
@@ -203,6 +233,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
 
         // Init SearchEngine Finder.
         $this->finder = $this->wire(new Finder());
+
+        // Init SearchEngine Renderer.
+        $this->renderer = $this->wire(new Renderer());
 
         // Remember that the module has been initialized.
         $this->initialized = true;
@@ -324,6 +357,23 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function __get($key) {
         return $this->$key ?? parent::get($key);
+    }
+
+    /**
+     * Method overloading support
+     *
+     * This method provides easy access to Renderer features: when a render* method is requested
+     * from this module, we check if Renderer has a matching method and then call that instead.
+     *
+     * @param string $method Method name.
+     * @param array $arguments Array of arguments.
+     * @return mixed
+     */
+    public function __call($method, $arguments) {
+        if (strpos($method, "render") === 0) {
+            return $this->renderer->__call($method, $arguments);
+        }
+        return parent::__call($method, $arguments);
     }
 
 }
