@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2019-07-13
+
+### Added
+- New Indexer::___getIndexValue and Indexer::___getRepeatableIndexValue methods.
+
+### Changed
+- Changed 'link_prefix' option to 'link' item in 'prefixes' array.
+- Improved indexing for file and image fields (FieldtypeFile).
+- Changed default sort value for Finder::find() to 'sort'.
+- Documented available find args in the README file.
+
 ## [0.2.0] - 2019-07-13
 
 ### Added

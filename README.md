@@ -27,7 +27,16 @@ $config->SearchEngine = [
         'summary',
         'body',
     ],
-    'link_prefix' => 'link:',
+    'prefixes' => [
+        'link' => 'link:',
+    ],
+    'find_args' => [
+        'limit' => 25,
+        'sort' => 'sort',
+        'operator' => '%=',
+        'query_param' => null,
+        'selector_extra' => '',
+    ],
 ];
 ```
 

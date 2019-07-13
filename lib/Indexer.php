@@ -76,16 +76,54 @@ class Indexer extends Base {
             ];
             foreach ($page->fields as $field) {
                 if (in_array($field->name, $indexed_fields)) {
-                    $index[$prefix . $field->name] = $page->getFormatted($field->name);
+                    $index[$prefix . $field->name] = $this->getIndexValue($page, $field);
                 } else if (in_array($field->type, $repeatable_fieldtypes)) {
-                    foreach ($page->get($field->name) as $child) {
-                        $index = array_merge(
-                            $index,
-                            $this->getPageIndex($child, $indexed_fields, $prefix . $child->name . '.'),
-                        );
-                    }
+                    // Note: union operator is slightly faster than array_merge() and makes sense
+                    // here since we're working with associative arrays only.
+                    $index += $this->getRepeatableIndexValue($page, $field, $indexed_fields, $prefix);
                 }
             }
+        }
+        return $index;
+    }
+
+    /**
+     * Get the index value for a single page field
+     *
+     * @param \ProcessWire\Page $page
+     * @param \ProcessWire\Field $field
+     * @return mixed
+     */
+    protected function ___getIndexValue(\ProcessWire\Page $page, \ProcessWire\Field $field) {
+        $value = '';
+        if ($field->type instanceof \ProcessWire\FieldtypeFile) {
+            $value = $page->getUnformatted($field->name)->implode(' ', function($item) {
+                return implode(' ', array_filter([
+                    $item->name,
+                    $item->description,
+                ]));
+            });
+        } else {
+            $value = $page->getFormatted($field->name);
+        }
+        return $value;
+    }
+
+    /**
+     * Get index value for a repeatable page field
+     *
+     * @param \ProcessWire\Page $page
+     * @param \ProcessWire\Field $field
+     * @param array $indexed_fields
+     * @param string $prefix
+     * @return array
+     */
+    protected function ___getRepeatableIndexValue(\Processwire\Page $page, \ProcessWire\Field $field, array $indexed_fields = [], string $prefix = ''): array {
+        $index = [];
+        foreach ($page->get($field->name) as $child) {
+            // Note: union operator is slightly faster than array_merge() and makes sense
+            // here since we're working with associative arrays only.
+            $index += $this->getPageIndex($child, $indexed_fields, $prefix . $child->name . '.');
         }
         return $index;
     }
@@ -123,7 +161,7 @@ class Indexer extends Base {
     protected function getURLIndex(string $data): string {
         $index = '';
         if (!empty($data) && preg_match_all('/href=([\"\'])(.*?)\1/i', $data, $matches)) {
-            $link_prefix = $this->options['link_prefix'];
+            $link_prefix = $this->options['prefixes']['link'];
             $index = $link_prefix . implode(' ' . $link_prefix, $matches[2]);
         }
         return $index;

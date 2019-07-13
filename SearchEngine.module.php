@@ -53,13 +53,15 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'FieldtypeSelector',
             'FieldtypeOptions',
         ],
-        'link_prefix' => 'link:',
+        'prefixes' => [
+            'link' => 'link:',
+        ],
         'find_args' => [
             'limit' => 25,
+            'sort' => 'sort',
             'operator' => '%=',
             'query_param' => null,
             'selector_extra' => '',
-            'sort' => null,
         ],
     ];
 
