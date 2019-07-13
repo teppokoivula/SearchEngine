@@ -7,7 +7,7 @@ SearchEngine is a module that creates an index of page contents, and makes it ea
 
 1) Install SearchEngine module.
 
-*Note: the module will automatically create an index field install time, so be sure to define a custom field before installation if you don't want it to be called "search_index".*
+*Note: the module will automatically create an index field install time, so be sure to define a custom field (via site config) before installation if you don't want it to be called "search_index". You can change the field name later as well, but you'll have to update the "index_field" option in site config or module settings (in Admin) after renaming it.*
 
 2) Add the site search index field to templates you want to make searchable.
 3) Use selectors to query values in site search index.
