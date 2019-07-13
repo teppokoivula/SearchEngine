@@ -22,18 +22,18 @@ class Data extends \ProcessWire\WireData {
         $this->setArray($values);
     }
 
-	/**
-	 * Retrieve the value for a previously set property
-	 *
+    /**
+     * Retrieve the value for a previously set property
+     *
      * @param string|object $key Name of property you want to retrieve.
-	 * @return mixed|null Returns value of requested property, or null if the property was not found.
-	 * @see \ProcessWire\WireData::set()
-	 */
-	public function get($key) {
-		if (strpos($key, '.')) {
+     * @return mixed|null Returns value of requested property, or null if the property was not found.
+     * @see \ProcessWire\WireData::set()
+     */
+    public function get($key) {
+        if (strpos($key, '.')) {
             return $this->getDot($key);
         }
-		return parent::get($key);
-	}
+        return parent::get($key);
+    }
 
 }
