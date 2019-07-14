@@ -92,20 +92,23 @@ class Query extends \ProcessWire\Wire {
      * @return mixed
      */
     public function __get(string $name) {
-        if ($name === 'selector') {
-            return $this->getSelector();
-        }
-        if ($name === 'resultsString' && !empty($this->results)) {
-            return method_exists($this->results, '___getMarkup') ? $this->results->render() : '';
-        }
-        if ($name === 'resultsCount' && !empty($this->results)) {
-            return $this->results->count();
-        }
-        if ($name === 'resultsTotal' && !empty($this->results)) {
-            return $this->results->getTotal();
-        }
-        if (($name === 'pager' || $name === 'resultsPager') && !empty($this->results)) {
-            return $this->results instanceof \ProcessWire\PaginatedArray ? $this->results->renderPager() : '';
+        switch ($name) {
+            case 'selector':
+                return $this->getSelector();
+                break;
+            case 'resultsString':
+                return !empty($this->results) && method_exists($this->results, '___getMarkup') ? $this->results->render() : '';
+                break;
+            case 'resultsCount':
+                return !empty($this->results) ? $this->results->count() : '';
+                break;
+            case 'resultsTotal':
+                return !empty($this->results) ? $this->results->getTotal() : '';
+                break;
+            case 'pager':
+            case 'resultsPager':
+                return !empty($this->results) && $this->results instanceof \ProcessWire\PaginatedArray ? $this->results->renderPager() : '';
+                break;
         }
         return $this->$name;
     }
