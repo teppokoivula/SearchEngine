@@ -26,9 +26,9 @@ class Renderer extends Base {
     public function __construct() {
         parent::__construct();
         $this->defaultStrings = [
-            'input_label' => $this->_('Search for'),
-            'input_placeholder' => $this->_('Search for...'),
-            'submit' => $this->_('Search'),
+            'input_label' => $this->_x('Search', 'input label'),
+            'input_placeholder' => $this->_('Search the site...'),
+            'submit' => $this->_x('Search', 'submit button text'),
         ];
     }
 
@@ -42,13 +42,16 @@ class Renderer extends Base {
 
         $options = array_replace_recursive($this->options['render_args'], $args);
 
-        // Merge strings with default strings and create a Data object.
+        // Merge strings with defaults and convert array to a Data object.
         foreach ($this->defaultStrings as $string => $value) {
             if (is_null($options['strings'][$string])) {
                 $options['strings'][$string] = $value;
             }
         }
         $options['strings'] = $this->wire(new Data($options['strings']));
+
+        // Convert classes to a Data object.
+        $options['classes'] = $this->wire(new Data($options['classes']));
 
         // Render search form.
         $form_content = sprintf(
