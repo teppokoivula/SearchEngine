@@ -86,7 +86,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'form' => '<form id="{form_id}" class="{classes.form}" action="{form_action}" role="search">%s</form>',
                 'input' => '<input type="search" name="{input_name}" autocomplete="off" placeholder="{strings.input_placeholder}" class="{classes.input}" id="{input_id}">',
                 'label' => '<label for="{input_id}" class="{classes.label}"><span class="{classes.label_text}">{strings.input_label}</span></label>',
-                'submit' => '<input type="submit" class="{classes.submit}"><span class="{classes.submit_text}">{strings.submit}</span></input>',
+                'submit' => '<button type="submit" class="{classes.submit}"><span class="{classes.submit_text}">{strings.submit}</span></button>',
                 'list' => '<ul class="{classes.list}">%s</ul>',
                 'list_item' => '<li class="{classes.list_item}">%s</li>',
             ],
