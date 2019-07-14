@@ -138,7 +138,7 @@ class Renderer extends Base {
 
         // Bail out early if not provided with – and unable to fetch automatically – results.
         if (!$query instanceof Query) {
-            throw new WireException('Unrecognized query parameter.');
+            return '';
         }
 
         // Header for results.
