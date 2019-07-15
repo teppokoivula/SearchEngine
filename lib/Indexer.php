@@ -73,6 +73,7 @@ class Indexer extends Base {
             $repeatable_fieldtypes = [
                 'FieldtypePageTable',
                 'FieldtypeRepeater',
+                'FieldtypeRepeaterMatrix',
             ];
             foreach ($page->fields as $field) {
                 if (in_array($field->name, $indexed_fields)) {

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.3] - 2019-07-15
+
+### Fixed
+- Correctly identify FieldtypeRepeaterMatrix as one of the repeatable fieldtypes.
+
 ## [0.3.2] - 2019-07-15
 
 ### Fixed
