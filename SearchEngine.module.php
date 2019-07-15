@@ -74,8 +74,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'classes' => [
                 'form' => 'search-form',
                 'form_input' => 'search-form__input',
-                'form_input_label' => 'search-form__label',
-                'form_input_label_text' => 'search-form__label-text',
+                'form_label' => 'search-form__label',
+                'form_label_text' => 'search-form__label-text',
                 'form_submit' => 'search-form__submit',
                 'form_submit_text' => 'search-form__submit-text',
                 'results' => 'search-results',
@@ -90,7 +90,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'result_desc' => 'search-result__desc',
             ],
             'strings' => [
-                'form_input_label' => null,
+                'form_label' => null,
                 'form_input_placeholder' => null,
                 'form_input_value' => null,
                 'form_submit' => null,
@@ -101,7 +101,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             ],
             'templates' => [
                 'form' => '<form id="{form_id}" class="{classes.form}" action="{form_action}" role="search">%s</form>',
-                'form_input_label' => '<label for="{form_input_id}" class="{classes.form_input_label}"><span class="{classes.form_input_label_text}">{strings.form_input_label}</span></label>',
+                'form_label' => '<label for="{form_input_id}" class="{classes.form_label}"><span class="{classes.form_label_text}">{strings.form_label}</span></label>',
                 'form_input' => '<input type="search" name="{find_args.query_param}" value="{strings.form_input_value}" autocomplete="off" placeholder="{strings.form_input_placeholder}" class="{classes.form_input}" id="{form_input_id}">',
                 'form_submit' => '<button type="submit" class="{classes.form_submit}"><span class="{classes.form_submit_text}">{strings.form_submit}</span></button>',
                 'results' => '<div id="{results_id}">%s</div>',

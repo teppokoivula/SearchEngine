@@ -29,7 +29,7 @@ class Renderer extends Base {
     public function __construct() {
         parent::__construct();
         $this->defaultStrings = [
-            'form_input_label' => $this->_x('Search', 'input label'),
+            'form_label' => $this->_x('Search', 'input label'),
             'form_input_placeholder' => $this->_('Search the site...'),
             'form_submit' => $this->_x('Search', 'submit button text'),
             'results_heading' => $this->_('Search results'),
@@ -53,7 +53,7 @@ class Renderer extends Base {
         // Render search form.
         $form_content = sprintf(
             $options['templates']['form'],
-            $options['templates']['form_input_label']
+            $options['templates']['form_label']
           . $options['templates']['form_input']
           . $options['templates']['form_submit']
         );
