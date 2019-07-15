@@ -13,7 +13,7 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.3.1
+ * @version 0.3.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */

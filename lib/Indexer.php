@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.2.0
+ * @version 0.2.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -76,11 +76,13 @@ class Indexer extends Base {
             ];
             foreach ($page->fields as $field) {
                 if (in_array($field->name, $indexed_fields)) {
-                    $index[$prefix . $field->name] = $this->getIndexValue($page, $field);
-                } else if (in_array($field->type, $repeatable_fieldtypes)) {
-                    // Note: union operator is slightly faster than array_merge() and makes sense
-                    // here since we're working with associative arrays only.
-                    $index += $this->getRepeatableIndexValue($page, $field, $indexed_fields, $prefix);
+                    if (in_array($field->type, $repeatable_fieldtypes)) {
+                        // Note: union operator is slightly faster than array_merge() and makes sense
+                        // here since we're working with associative arrays only.
+                        $index += $this->getRepeatableIndexValue($page, $field, $indexed_fields, $prefix);
+                    } else {
+                        $index[$prefix . $field->name] = $this->getIndexValue($page, $field);
+                    }
                 }
             }
         }
