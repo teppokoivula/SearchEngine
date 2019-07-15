@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New Data class to serve as a wrapper for WireData with improved getDot() support.
 - Alias methods SearchEngine::render*() for each render-prefixed method in Renderer.
 
+## [0.3.2] - 2019-07-15
+
+### Fixed
+- Content from repeatable fields is only indexed if the parent field is included in the indexed_fields array.
+
 ## [0.3.1] - 2019-07-13
 
 ### Changed

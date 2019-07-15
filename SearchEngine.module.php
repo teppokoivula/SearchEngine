@@ -53,6 +53,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'FieldtypeImage',
             'FieldtypeSelector',
             'FieldtypeOptions',
+            'FieldtypeRepeater',
+            'FieldtypeRepeaterMatrix',
+            'FieldtypePageTable',
         ],
         'prefixes' => [
             'link' => 'link:',
