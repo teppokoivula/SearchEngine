@@ -70,7 +70,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         'render_args' => [
             'theme' => 'default',
             'minified_resources' => true,
-            'form_action' => './#se-results',
+            'form_action' => './',
             'form_id' => 'se-form',
             'form_input_id' => 'se-form-input',
             'results_summary_id' => 'se-results-summary',
