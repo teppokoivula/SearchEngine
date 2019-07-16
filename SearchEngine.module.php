@@ -68,6 +68,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'selector_extra' => '',
         ],
         'render_args' => [
+            'theme' => 'default',
+            'minified_resources' => true,
             'form_action' => './#se-results',
             'form_id' => 'se-form',
             'form_input_id' => 'se-form-input',
@@ -120,6 +122,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'result_path_item' => '<li class="{classes.result_path_item}">{item.title}</li>',
                 'result_desc' => '<div class="{classes.result_desc}">%s</div>',
                 'result_highlight' => '<strong class="{classes.result_highlight}">%s</strong>',
+                'styles' => '<link rel="stylesheet" type="text/css" href="%s">',
+                'scripts' => '<script async="true" src="%s"></script>',
             ],
         ],
     ];

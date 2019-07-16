@@ -3,7 +3,8 @@
 namespace SearchEngine;
 
 use \ProcessWire\Inputfield,
-    \ProcessWire\Page;
+    \ProcessWire\Page,
+    \ProcessWire\WireException;
 
 /**
  * SearchEngine Renderer
@@ -24,10 +25,27 @@ class Renderer extends Base {
     protected $defaultStrings = [];
 
     /**
+     * Themes for rendering different views
+     *
+     * @var array
+     */
+    protected $themes = [
+        'default' => [
+            'styles' => [
+                [
+                    'name' => 'style',
+                    'ext' => 'css',
+                ],
+            ],
+        ],
+    ];
+
+    /**
      * Constructor method
      */
     public function __construct() {
         parent::__construct();
+        $this->themeURL = $this->wire('config')->urls->get('SearchEngine') . 'themes/';
         $this->defaultStrings = [
             'form_label' => $this->_x('Search', 'input label'),
             'form_input_placeholder' => $this->_('Search the site...'),
@@ -47,19 +65,19 @@ class Renderer extends Base {
      */
     public function ___renderForm(array $args = []): string {
 
-        // Prepare options array.
-        $options = $this->prepareRenderOptions($args);
+        // Prepare args.
+        $args = $this->prepareArgs($args);
 
         // Render search form.
         $form_content = sprintf(
-            $options['templates']['form'],
-            $options['templates']['form_label']
-          . $options['templates']['form_input']
-          . $options['templates']['form_submit']
+            $args['templates']['form'],
+            $args['templates']['form_label']
+          . $args['templates']['form_input']
+          . $args['templates']['form_submit']
         );
 
         // Replace placeholders (string tags).
-        $form = \ProcessWire\wirePopulateStringTags($form_content, $options);
+        $form = \ProcessWire\wirePopulateStringTags($form_content, $this->getData($args));
 
         return $form;
     }
@@ -83,13 +101,13 @@ class Renderer extends Base {
     public function ___getInputfieldForm(array $args = []): \ProcessWire\Inputfieldform {
 
         $modules = $this->wire('modules');
-        $options = array_replace_recursive($this->options['render_args'], $args);
+        $args = array_replace_recursive($this->options['render_args'], $args);
 
         // Search form.
         $form = $modules->get('InputfieldForm');
         $form->method = 'GET';
-        $form->id = $options['form_id'];
-        $form_action = $options['form_action'];
+        $form->id = $args['form_id'];
+        $form_action = $args['form_action'];
         if ($form_action instanceof Page) {
             $form_action = $form_action->path;
         }
@@ -125,8 +143,9 @@ class Renderer extends Base {
      */
     public function ___renderResultsList(array $args = [], Query $query = null): string {
 
-        // Prepare options.
-        $options = $this->prepareRenderOptions($args);
+        // Prepare args and get Data object.
+        $args = $this->prepareArgs($args);
+        $data = $this->getData($args);
 
         // If query is null, fetch results automatically.
         if (is_null($query)) {
@@ -143,15 +162,15 @@ class Renderer extends Base {
 
         // Header for results.
         $results_heading = sprintf(
-            $options['templates']['results_heading'],
-            $options['strings']['results_heading']
+            $args['templates']['results_heading'],
+            $args['strings']['results_heading']
         );
 
         // Summary for results.
         $results_summary_type = empty($query->results) ? 'none' : (count($query->results) > 1 ? 'many' : 'one');
-        $results_summary_text = $options['strings']['results_summary_' . $results_summary_type];
+        $results_summary_text = $args['strings']['results_summary_' . $results_summary_type];
         $results_summary = sprintf(
-            $options['templates']['results_summary'],
+            $args['templates']['results_summary'],
             vsprintf($results_summary_text, [$query->query, $query->resultsTotal])
         );
 
@@ -161,12 +180,12 @@ class Renderer extends Base {
             $results_list_items = '';
             foreach ($query->results as $result) {
                 $results_list_items .= sprintf(
-                    $options['templates']['results_list_item'],
-                    $this->renderResult($result, $options, $query)
+                    $args['templates']['results_list_item'],
+                    $this->renderResult($result, $data, $query)
                 );
             }
             $results_list = sprintf(
-                $options['templates']['results_list'],
+                $args['templates']['results_list'],
                 $results_list_items
             );
         }
@@ -174,12 +193,12 @@ class Renderer extends Base {
         // Final markup for results.
         $results = \ProcessWire\wirePopulateStringTags(
             sprintf(
-                $options['templates']['results'],
+                $args['templates']['results'],
                 $results_heading
               . $results_summary
               . $results_list
             ),
-            $options
+            $data
         );
 
         return $results;
@@ -189,19 +208,19 @@ class Renderer extends Base {
      * Render a single search result
      *
      * @param Page $result Single result object.
-     * @param Data $options Options as a Data object.
+     * @param Data $data Options as a Data object.
      * @param Query $query Query object.
      * @return string
      */
-    public function ___renderResult(Page $result, Data $options, Query $query): string {
+    protected function ___renderResult(Page $result, Data $data, Query $query): string {
         return \ProcessWire\wirePopulateStringTags(
             sprintf(
-                $options['templates']['result'],
-                $options['templates']['result_link']
-              . $options['templates']['result_path']
-              . $this->renderResultDesc($result, $options, $query)
+                $data['templates']['result'],
+                $data['templates']['result_link']
+              . $data['templates']['result_path']
+              . $this->renderResultDesc($result, $data, $query)
             ),
-            $options->set('item', $result)
+            $data->set('item', $result)
         );
     }
 
@@ -209,30 +228,149 @@ class Renderer extends Base {
      * Render a single search result description
      *
      * @param Page $result Single result object.
-     * @param Data $options Options as a Data object.
+     * @param Data $data Options as a Data object.
      * @param Query $query Query object.
      * @return string
      */
-    protected function ___renderResultDesc(Page $result, Data $options, Query $query): string {
-        $desc = $result->get($options['result_summary_field']) ?? '';
+    protected function ___renderResultDesc(Page $result, Data $data, Query $query): string {
+        $desc = $result->get($data['result_summary_field']) ?? '';
         if (!empty($desc)) {
             $desc = $this->wire('sanitizer')->text($desc);
-            $desc = $this->maybeHighlight($desc, $query->query, $options);
-            $desc = sprintf($options['templates']['result_desc'], $desc);
+            $desc = $this->maybeHighlight($desc, $query->query, $data);
+            $desc = sprintf($data['templates']['result_desc'], $desc);
         }
         return $desc;
     }
 
     /**
-     * Render a search form and a list of search results
+     * Get stylesheet filenames for a given theme
+     *
+     * This is an alias for getResources().
+     *
+     * @param array $args Optional arguments.
+     * @return array Stylesheet filenames as an array.
+     */
+    public function getStyles(array $args = []): array {
+        return $this->getResources($args, 'styles');
+    }
+
+    /**
+     * Render link tags for stylesheet(s) of a given theme
+     *
+     * This is an alias for renderResources().
+     *
+     * @param array $args Optional arguments.
+     * @return string Stylesheet tag(s).
+     */
+    public function renderStyles(array $args = []): string {
+        return $this->renderResources($args, 'styles');
+    }
+
+    /**
+     * Get script filenames for a given theme
+     *
+     * This is an alias for getResources().
+     *
+     * @param array $args Optional arguments.
+     * @return array Script filenames as an array.
+     */
+    public function getScripts(array $args = []): array {
+        return $this->getResources($args, 'scripts');
+    }
+
+    /**
+     * Render script tags for a given theme
+     *
+     * This is an alias for renderResources().
+     *
+     * @param array $args Optional arguments.
+     * @return string Script tag(s).
+     */
+    public function renderScripts(array $args = []): string {
+        return $this->renderResources($args, 'scripts');
+    }
+
+    /**
+     * Get resources of specified type for a given theme
+     *
+     * @param array $args Optional arguments.
+     * @param string $type Type of returned resources (styles or scripts).
+     * @return array Filenames as an array.
+     *
+     * @throws WireException if theme isn't found.
+     */
+    protected function getResources(array $args = [], string $type): array {
+
+        // Prepare args.
+        $args = $this->prepareArgs($args);
+        $theme = $args['theme'];
+
+        // Make sure that given theme exists.
+        if (empty($this->themes[$theme])) {
+            throw new WireException(sprintf(
+                $this->_('Theme "%1$s" doesn\'t exist, please use one of: "%2$s".'),
+                $this->wire('sanitizer')->entities($theme),
+                implode(', ', array_keys($this->themes))
+            ));
+        }
+
+        // Get and return resources.
+        $resources = $this->themes[$theme][$type] ?? [];
+        if (empty($resources)) {
+            return [];
+        }
+        $minified = $args['minified_resources'];
+        return array_map(function($resource) use ($theme, $minified) {
+            $file = $resource['name'] . ($minified ? '.min' : '') . '.' . $resource['ext'];
+            return $this->themeURL . $theme . '/' . $file;
+        }, $resources);
+    }
+
+    /**
+     * Render markup for including resources of a specific type from given theme
+     *
+     * @param array $args Optional arguments.
+     * @param string $type Type of returned resources (styles or scripts).
+     * @param string $template Template to wrap resource filename with.
+     * @return string Markup for embedding resources.
+     */
+    protected function renderResources(array $args = [], string $type): string {
+
+        // Prepare args.
+        $args = $this->prepareArgs($args);
+
+        // Get, render, and return resources.
+        $resources = $this->getResources($args, $type);
+        if (empty($resources)) {
+            return '';
+        }
+        $template = $args['templates'][$type];
+        return implode(array_map(function($resource) use ($template) {
+            return sprintf($template, $resource);
+        }, $resources));
+    }
+
+    /**
+     * Render the whole search feature (styles, scripts, form, results, and pager)
      *
      * @param array $args Optional arguments.
      * @return string
      */
-    public function ___render(array $args = []) {
+    public function ___render(array $args = []): string {
+
+        // Prepare args.
+        $args = $this->prepareArgs($args);
+        $theme = $args['theme'];
+
+        // Render and return rendered markup.
         $resultsList = $this->renderResultsList($args);
         $form = $this->renderForm($args);
-        return $form . $resultsList;
+        return implode([
+            $theme ? $this->renderStyles($args) : '',
+            $theme ? $this->renderScripts($args) : '',
+            $form,
+            $resultsList,
+        ]);
     }
 
     /**
@@ -240,15 +378,15 @@ class Renderer extends Base {
      *
      * @param string $string Original string.
      * @param string $query Query as a string.
-     * @param Data $options Options as a Data object.
+     * @param Data $data Predefined Data object.
      * @return string String with highlights, or the original string if no matches found.
      */
-    protected function maybeHighlight(string $string, string $query, Data $options): string {
-        if ($options['results_highlight_query'] && stripos($string, $query)) {
+    protected function maybeHighlight(string $string, string $query, Data $data): string {
+        if ($data['results_highlight_query'] && stripos($string, $query)) {
             $string = preg_replace(
                 '/' . preg_quote($query, '/') . '/i',
                 sprintf(
-                    $options['templates']['result_highlight'],
+                    $data['templates']['result_highlight'],
                     '$0'
                 ),
                 $string
@@ -258,36 +396,61 @@ class Renderer extends Base {
     }
 
     /**
-     * Prepare render options for use
+     * Prepare arguments for use
      *
-     * @param array $args Optional arguments.
-     * @return Data Options object.
+     * @param array $args Original arguments array.
+     * @return array Prepared arguments array.
      */
-    protected function prepareRenderOptions(array $args = []): Data {
+    protected function prepareArgs(array $args = []): array {
 
-        $options = array_replace_recursive($this->options['render_args'], $args);
+        // Bail out early if args have already been prepared.
+        if (!empty($args['_prepared'])) {
+            return $args;
+        }
 
-        // Merge strings with defaults and convert array to a Data object.
+        // Merge default render arguments with provided custom values.
+        $args = array_replace_recursive($this->options['render_args'], $args);
+
+        // Merge default string values with provided custom strings.
         foreach ($this->defaultStrings as $string => $value) {
-            if (is_null($options['strings'][$string])) {
-                $options['strings'][$string] = $value;
+            if (is_null($args['strings'][$string])) {
+                $args['strings'][$string] = $value;
             }
         }
-        if (empty($options['strings']['form_input_value'])) {
-            $options['strings']['form_input_value'] = $this->wire('input')->whitelist($this->options['find_args']['query_param']);
+
+        // Add find arguments to args array if not already present.
+        if (empty($args['find_args'])) {
+            $args['find_args'] = $this->options['find_args'];
         }
-        $options['strings'] = $this->wire(new Data($options['strings']));
 
-        // Convert find_args to a Data object, adding it first if it doesn't yet exist.
-        if (empty($options['find_args'])) {
-            $options['find_args'] = $this->options['find_args'];
+        // Prefill form input value if query param has been whitelisted.
+        if (empty($args['strings']['form_input_value'])) {
+            $args['strings']['form_input_value'] = $this->wire('input')->whitelist($this->options['find_args']['query_param']);
         }
-        $options['find_args'] = $this->wire(new Data($this->options['find_args']));
 
-        // Convert classes to a Data object.
-        $options['classes'] = $this->wire(new Data($options['classes']));
+        // Add a flag to signal that the args array has been prepared.
+        $args['_prepared'] = true;
 
-        return new Data($options);
+        return $args;
+    }
+
+    /**
+     * Convert arguments array to ready-to-use Data object
+     *
+     * The main purpose of this method is to enable populating string tags recursively from the
+     * provided arguments using \ProcessWire\wirePopulateStringTags().
+     *
+     * @param array $args Arguments to build Data object from.
+     * @return Data Data object.
+     */
+    protected function getData(array $args = []): Data {
+
+        // Convert subarrays to Data objects first.
+        foreach (['strings', 'find_args', 'classes'] as $key) {
+            $args[$key] = $this->wire(new Data($args[$key]));
+        }
+
+        return new Data($args);
     }
 
     /**
