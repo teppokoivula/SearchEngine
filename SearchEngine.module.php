@@ -111,7 +111,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'form_submit' => '<button type="submit" class="{classes.form_submit}"><span class="{classes.form_submit_text}">{strings.form_submit}</span></button>',
                 'results' => '<div id="{results_id}">%s</div>',
                 'results_heading' => '<h2 class="{classes.results_heading}">%s</h2>',
-                'results_summary' => '<p class="{classes.results_summary}">%s</p>',
+                'results_summary' => '<p class="{classes.results_summary}" id="{results_summary_id}">%s</p>',
                 'results_list' => '<ul class="{classes.results_list}" aria-labelled-by="{results_summary_id}">%s</ul>',
                 'results_list_item' => '<li class="{classes.results_list_item}">%s</li>',
                 'result' => '<div class="{classes.result}">%s</div>',
