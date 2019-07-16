@@ -190,6 +190,12 @@ class Renderer extends Base {
             );
         }
 
+        // Results pager.
+        $results_pager = '';
+        if ($results_summary_type !== 'none' && $args['pager']) {
+            $results_pager = $this->renderPager($args, $query);
+        }
+
         // Final markup for results.
         $results = \ProcessWire\wirePopulateStringTags(
             sprintf(
@@ -197,6 +203,7 @@ class Renderer extends Base {
                 $results_heading
               . $results_summary
               . $results_list
+              . $results_pager
             ),
             $data
         );
@@ -240,6 +247,20 @@ class Renderer extends Base {
             $desc = sprintf($data['templates']['result_desc'], $desc);
         }
         return $desc;
+    }
+
+    /**
+     * Render a pager for search results
+     *
+     * @param array $args Optional arguments.
+     * @param Query Query object.
+     * @return string Rendered pager markup.
+     */
+    public function renderPager(array $args = [], Query $query): string {
+
+        // If pager_args *haven't* been overridden in the args array, we can fetch the pager from
+        // the Query object, where it could already be cached.
+        return !empty($args['pager_args']) ? $query->results->renderPager($args['pager_args']) : $query->pager;
     }
 
     /**
@@ -483,6 +504,12 @@ class Renderer extends Base {
                 break;
             case 'resultsList':
                 return $this->renderResultsList();
+                break;
+            case 'styles':
+                return $this->renderStyles();
+                break;
+            case 'scripts':
+                return $this->renderScripts();
                 break;
         }
         return $this->$name;

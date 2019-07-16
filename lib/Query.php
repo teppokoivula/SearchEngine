@@ -16,7 +16,7 @@ namespace SearchEngine;
  * @property-read string pager Rendered pager or empty string if not supported.
  * @property-read string ResultsPager Rendered pager or empty string if not supported.
  */
-class Query extends \ProcessWire\Wire {
+class Query extends Base {
 
     /**
      * The query provided for the find operation
@@ -58,7 +58,7 @@ class Query extends \ProcessWire\Wire {
      *
      * @var string
      */
-    public $pager = '';
+    protected $pager = '';
 
     /**
      * Constructor method
@@ -72,10 +72,19 @@ class Query extends \ProcessWire\Wire {
      *  - sort (string, sort value, defaults to no defined sort)
      */
     public function __construct($query = '', array $args = []) {
+
+        parent::__construct();
+
+        // Merge default find arguments with provided custom values.
+        $args = array_replace_recursive($this->options['find_args'], $args);
+
+        // Sanitize query string and whitelist query param (if possible).
         $this->query = empty($query) ? '' : $this->wire('sanitizer')->selectorValue($query);
-        if (!empty($args['query_param'])) {
+        if (!empty($this->query) && !empty($args['query_param'])) {
             $this->wire('input')->whitelist($args['query_param'], $this->query);
         }
+
+        // Cache original query, args, and original args in class properties.
         $this->original_query = $query;
         $this->args = $args;
         $this->original_args = $args;
@@ -107,7 +116,11 @@ class Query extends \ProcessWire\Wire {
                 break;
             case 'pager':
             case 'resultsPager':
-                return !empty($this->results) && $this->results instanceof \ProcessWire\PaginatedArray ? $this->results->renderPager() : '';
+                if (empty($this->pager) && !empty($this->results) && $this->results instanceof \ProcessWire\PaginatedArray) {
+                    $options = $this->wire('modules')->get('SearchEngine')->options;
+                    $this->pager = $this->results->renderPager($this->options['pager_args']);
+                }
+                return $this->pager;
                 break;
         }
         return $this->$name;

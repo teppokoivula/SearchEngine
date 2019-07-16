@@ -67,6 +67,21 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'query_param' => 'q',
             'selector_extra' => '',
         ],
+        'pager_args' => [
+            // This array is passed to MarkupPagerNav, see https://processwire.com/docs/front-end/markup-pager-nav/ for details.
+            'listMarkup' => '<div class="search-results-pager"><ul class="search-results-pager__list">{out}</ul></div>',
+            'itemMarkup' => '<li class="search-results-pager__list-item {class}">{out}</li>',
+            'linkMarkup' => '<a class="search-results-pager__item" href="{url}"><span class="search-results-pager__item-text">{out}</span></a>',
+            'separatorItemClass' => 'search-results-pager__separator',
+            'nextItemClass' => 'search-results-pager__item search-results-pager__item--next',
+            'previousItemClass' => 'search-results-pager__item search-results-pager__item--previous',
+            'firstItemClass' => 'search-results-pager__item search-results-pager__item--first',
+            'firstNumberItemClass' => 'search-results-pager__item search-results-pager__item--first-num',
+            'firstItemClass' => 'search-results-pager__item search-results-pager__item--first',
+            'lastItemClass' => 'search-results-pager__item search-results-pager__item--last',
+            'lastNumberItemClass' => 'search-results-pager__item search-results-pager__item--last-num',
+            'currentItemClass' => 'search-results-pager__item search-results-pager__item--current',
+        ],
         'render_args' => [
             'theme' => 'default',
             'minified_resources' => true,
@@ -77,6 +92,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_id' => 'se-results',
             'result_summary_field' => 'summary',
             'results_highlight_query' => true,
+            'pager' => true,
             'classes' => [
                 'form' => 'search-form',
                 'form_input' => 'search-form__input',
@@ -411,6 +427,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function __call($method, $arguments) {
         if (strpos($method, "render") === 0) {
+            $this->maybeInit();
             return $this->renderer->__call($method, $arguments);
         }
         return parent::__call($method, $arguments);
