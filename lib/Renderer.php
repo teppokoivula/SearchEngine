@@ -162,7 +162,7 @@ class Renderer extends Base {
             foreach ($query->results as $result) {
                 $results_list_items .= sprintf(
                     $options['templates']['results_list_item'],
-                    $this->renderResult($result, $options)
+                    $this->renderResult($result, $options, $query)
                 );
             }
             $results_list = sprintf(
@@ -190,15 +190,16 @@ class Renderer extends Base {
      *
      * @param Page $result Single result object.
      * @param Data $options Options as a Data object.
+     * @param Query $query Query object.
      * @return string
      */
-    public function ___renderResult(Page $result, Data $options): string {
+    public function ___renderResult(Page $result, Data $options, Query $query): string {
         return \ProcessWire\wirePopulateStringTags(
             sprintf(
                 $options['templates']['result'],
                 $options['templates']['result_link']
               . $options['templates']['result_path']
-              . $this->renderResultDesc($result, $options)
+              . $this->renderResultDesc($result, $options, $query)
             ),
             $options->set('item', $result)
         );
@@ -209,14 +210,17 @@ class Renderer extends Base {
      *
      * @param Page $result Single result object.
      * @param Data $options Options as a Data object.
+     * @param Query $query Query object.
      * @return string
      */
-    protected function ___renderResultDesc(Page $result, Data $options): string {
-        $desc = $result->get($options['result_summary_field']);
-        return empty($desc) ? '' : sprintf(
-            $options['templates']['result_desc'],
-            $desc
-        );
+    protected function ___renderResultDesc(Page $result, Data $options, Query $query): string {
+        $desc = $result->get($options['result_summary_field']) ?? '';
+        if (!empty($desc)) {
+            $desc = $this->wire('sanitizer')->text($desc);
+            $desc = $this->maybeHighlight($desc, $query->query, $options);
+            $desc = sprintf($options['templates']['result_desc'], $desc);
+        }
+        return $desc;
     }
 
     /**
@@ -229,6 +233,28 @@ class Renderer extends Base {
         $resultsList = $this->renderResultsList($args);
         $form = $this->renderForm($args);
         return $form . $resultsList;
+    }
+
+    /**
+     * Highlight query string in given string (description text)
+     *
+     * @param string $string Original string.
+     * @param string $query Query as a string.
+     * @param Data $options Options as a Data object.
+     * @return string String with highlights, or the original string if no matches found.
+     */
+    protected function maybeHighlight(string $string, string $query, Data $options): string {
+        if ($options['results_highlight_query'] && stripos($string, $query)) {
+            $string = preg_replace(
+                '/' . preg_quote($query, '/') . '/i',
+                sprintf(
+                    $options['templates']['result_highlight'],
+                    '$0'
+                ),
+                $string
+            );
+        }
+        return $string;
     }
 
     /**

@@ -74,6 +74,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_summary_id' => 'se-results-summary',
             'results_id' => 'se-results',
             'result_summary_field' => 'summary',
+            'results_highlight_query' => true,
             'classes' => [
                 'form' => 'search-form',
                 'form_input' => 'search-form__input',
@@ -91,6 +92,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'result_path' => 'search-result__path',
                 'result_path_item' => 'search-result__path-item',
                 'result_desc' => 'search-result__desc',
+                'result_highlight' => 'search-result__highlight',
             ],
             'strings' => [
                 'form_label' => null,
@@ -117,6 +119,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'result_path' => '<div class="{classes.result_path}">{item.path}</div>',
                 'result_path_item' => '<li class="{classes.result_path_item}">{item.title}</li>',
                 'result_desc' => '<div class="{classes.result_desc}">%s</div>',
+                'result_highlight' => '<strong class="{classes.result_highlight}">%s</strong>',
             ],
         ],
     ];
