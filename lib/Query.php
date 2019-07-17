@@ -16,7 +16,7 @@ namespace SearchEngine;
  * @property-read string pager Rendered pager or empty string if not supported.
  * @property-read string ResultsPager Rendered pager or empty string if not supported.
  */
-class Query extends \ProcessWire\Wire {
+class Query extends Base {
 
     /**
      * The query provided for the find operation
@@ -58,7 +58,14 @@ class Query extends \ProcessWire\Wire {
      *
      * @var string
      */
-    public $pager = '';
+    protected $pager = '';
+
+    /**
+     * Errors array
+     *
+     * @var array
+     */
+    public $errors = [];
 
     /**
      * Constructor method
@@ -72,13 +79,53 @@ class Query extends \ProcessWire\Wire {
      *  - sort (string, sort value, defaults to no defined sort)
      */
     public function __construct($query = '', array $args = []) {
+
+        parent::__construct();
+
+        // Merge default find arguments with provided custom values.
+        $args = array_replace_recursive($this->options['find_args'], $args);
+
+        // Sanitize query string and whitelist query param (if possible).
         $this->query = empty($query) ? '' : $this->wire('sanitizer')->selectorValue($query);
-        if (!empty($args['query_param'])) {
+        if (!empty($this->query) && !empty($args['query_param'])) {
             $this->wire('input')->whitelist($args['query_param'], $this->query);
         }
+
+        // Validate query.
+        $this->errors = $this->validateQuery($this->query);
+
+        // Cache original query, args, and original args in class properties.
         $this->original_query = $query;
         $this->args = $args;
         $this->original_args = $args;
+    }
+
+    /**
+     * Validate provided query string.
+     *
+     * @param string $query Query string.
+     * @return array $errors Errors array.
+     */
+    public function validateQuery(string $query = ''): array {
+
+        // Get the strings array.
+        $strings = $this->getStrings();
+
+        // Validate query.
+        $errors = [];
+        if (empty($query)) {
+            $errors[] = $strings['error_query_missing'];
+        } else {
+            $requirements = $this->options['requirements'];
+            if (!empty($requirements['query_min_length']) && mb_strlen($query) < $requirements['query_min_length']) {
+                $errors['error_query_too_short'] = sprintf(
+                    $strings['error_query_too_short'],
+                    $requirements['query_min_length']
+                );
+            }
+        }
+
+        return $errors;
     }
 
     /**
@@ -92,20 +139,27 @@ class Query extends \ProcessWire\Wire {
      * @return mixed
      */
     public function __get(string $name) {
-        if ($name === 'selector') {
-            return $this->getSelector();
-        }
-        if ($name === 'resultsString' && !empty($this->results)) {
-            return method_exists($this->results, '___getMarkup') ? $this->results->render() : '';
-        }
-        if ($name === 'resultsCount' && !empty($this->results)) {
-            return $this->results->count();
-        }
-        if ($name === 'resultsTotal' && !empty($this->results)) {
-            return $this->results->getTotal();
-        }
-        if (($name === 'pager' || $name === 'resultsPager') && !empty($this->results)) {
-            return $this->results instanceof \ProcessWire\PaginatedArray ? $this->results->renderPager() : '';
+        switch ($name) {
+            case 'selector':
+                return $this->getSelector();
+                break;
+            case 'resultsString':
+                return !empty($this->results) && method_exists($this->results, '___getMarkup') ? $this->results->render() : '';
+                break;
+            case 'resultsCount':
+                return !empty($this->results) ? $this->results->count() : '';
+                break;
+            case 'resultsTotal':
+                return !empty($this->results) ? $this->results->getTotal() : '';
+                break;
+            case 'pager':
+            case 'resultsPager':
+                if (empty($this->pager) && !empty($this->results) && $this->results instanceof \ProcessWire\PaginatedArray) {
+                    $options = $this->wire('modules')->get('SearchEngine')->options;
+                    $this->pager = $this->results->renderPager($this->options['pager_args']);
+                }
+                return $this->pager;
+                break;
         }
         return $this->$name;
     }

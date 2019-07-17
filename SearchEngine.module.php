@@ -5,7 +5,8 @@ namespace ProcessWire;
 use SearchEngine\Config,
     SearchEngine\Finder,
     SearchEngine\Indexer,
-    SearchEngine\Query;
+    SearchEngine\Query,
+    SearchEngine\Renderer;
 
 /**
  * SearchEngine ProcessWire module
@@ -13,7 +14,7 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.3.3
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -60,13 +61,111 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'link' => 'link:',
         ],
         'find_args' => [
-            'limit' => 25,
+            'limit' => 20,
             'sort' => 'sort',
-            'operator' => '%=',
-            'query_param' => null,
+            'operator' => '*=',
+            'query_param' => 'q',
             'selector_extra' => '',
         ],
+        'pager_args' => [
+            // This array is passed to MarkupPagerNav, see https://processwire.com/docs/front-end/markup-pager-nav/ for details.
+            'listMarkup' => '<div class="search-results-pager"><ul class="search-results-pager__list">{out}</ul></div>',
+            'itemMarkup' => '<li class="search-results-pager__list-item {class}">{out}</li>',
+            'linkMarkup' => '<a class="search-results-pager__item" href="{url}"><span class="search-results-pager__item-text">{out}</span></a>',
+            'separatorItemClass' => 'search-results-pager__separator',
+            'nextItemClass' => 'search-results-pager__item search-results-pager__item--next',
+            'previousItemClass' => 'search-results-pager__item search-results-pager__item--previous',
+            'firstItemClass' => 'search-results-pager__item search-results-pager__item--first',
+            'firstNumberItemClass' => 'search-results-pager__item search-results-pager__item--first-num',
+            'firstItemClass' => 'search-results-pager__item search-results-pager__item--first',
+            'lastItemClass' => 'search-results-pager__item search-results-pager__item--last',
+            'lastNumberItemClass' => 'search-results-pager__item search-results-pager__item--last-num',
+            'currentItemClass' => 'search-results-pager__item search-results-pager__item--current',
+        ],
+        'render_args' => [
+            'theme' => 'default',
+            'minified_resources' => true,
+            'form_action' => './',
+            'form_id' => 'se-form',
+            'form_input_id' => 'se-form-input',
+            'results_summary_id' => 'se-results-summary',
+            'results_id' => 'se-results',
+            'result_summary_field' => 'summary',
+            'results_highlight_query' => true,
+            'pager' => true,
+            'classes' => [
+                'form' => 'search-form',
+                'form_input' => 'search-form__input',
+                'form_label' => 'search-form__label',
+                'form_label_text' => 'search-form__label-text',
+                'form_submit' => 'search-form__submit',
+                'form_submit_text' => 'search-form__submit-text',
+                'errors' => 'search-errors',
+                'errors_heading' => 'search-errors__heading',
+                'errors_list' => 'search-errors__list',
+                'errors_list-item' => 'search-errors__list-item',
+                'results' => 'search-results',
+                'results_heading' => 'search-results__heading',
+                'results_summary' => 'search-results__summary',
+                'results_list' => 'search-results__list',
+                'results_list_item' => 'search-results__list-item',
+                'result' => 'search-result',
+                'result_link' => 'search-result__link',
+                'result_path' => 'search-result__path',
+                'result_path_item' => 'search-result__path-item',
+                'result_desc' => 'search-result__desc',
+                'result_highlight' => 'search-result__highlight',
+            ],
+            'strings' => [
+                'form_label' => null,
+                'form_input_placeholder' => null,
+                'form_input_value' => null,
+                'form_submit' => null,
+                'errors_heading' => null,
+                'error_query_missing' => null,
+                'error_query_too_short' => null,
+                'results_heading' => null,
+                'results_summary_one' => null,
+                'results_summary_many' => null,
+                'results_summary_none' => null,
+            ],
+            'templates' => [
+                'form' => '<form id="{form_id}" class="{classes.form}" action="{form_action}" role="search">%s</form>',
+                'form_label' => '<label for="{form_input_id}" class="{classes.form_label}"><span class="{classes.form_label_text}">{strings.form_label}</span></label>',
+                'form_input' => '<input type="search" name="{find_args.query_param}" value="{strings.form_input_value}" minlength="{requirements.query_min_length}" autocomplete="off" placeholder="{strings.form_input_placeholder}" class="{classes.form_input}" id="{form_input_id}">',
+                'form_submit' => '<button type="submit" class="{classes.form_submit}"><span class="{classes.form_submit_text}">{strings.form_submit}</span></button>',
+                'errors' => '<div class="{classes.errors}">%s</div>',
+                'errors_heading' => '<h2 class="{classes.errors_heading}">%s</h2>',
+                'errors_list' => '<ul class="{classes.errors_list}">%s</ul>',
+                'errors_list-item' => '<li class="{classes.errors_list_item}">%s</li>',
+                'results' => '<div id="{results_id}">%s</div>',
+                'results_heading' => '<h2 class="{classes.results_heading}">%s</h2>',
+                'results_summary' => '<p class="{classes.results_summary}" id="{results_summary_id}">%s</p>',
+                'results_list' => '<ul class="{classes.results_list}" aria-labelled-by="{results_summary_id}">%s</ul>',
+                'results_list_item' => '<li class="{classes.results_list_item}">%s</li>',
+                'result' => '<div class="{classes.result}">%s</div>',
+                'result_link' => '<a class="{classes.result_link}" href="{item.path}">{item.title}</a>',
+                'result_path' => '<div class="{classes.result_path}">{item.path}</div>',
+                'result_path_item' => '<li class="{classes.result_path_item}">{item.title}</li>',
+                'result_desc' => '<div class="{classes.result_desc}">%s</div>',
+                'result_highlight' => '<strong class="{classes.result_highlight}">%s</strong>',
+                'styles' => '<link rel="stylesheet" type="text/css" href="%s">',
+                'scripts' => '<script async="true" src="%s"></script>',
+            ],
+        ],
+        'requirements' => [
+            'query_min_length' => 3,
+        ],
     ];
+
+    /**
+     * Default string values
+     *
+     * These get populated in the constructor method.
+     *
+     * @var array
+     */
+    protected $defaultStrings = [];
 
     /**
      * Runtime options, populated in init
@@ -90,11 +189,35 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     protected $finder;
 
     /**
+     * An instance of Renderer
+     *
+     * @var \SearchEngine\Renderer
+     */
+    protected $renderer;
+
+    /**
      * Has the module been initialized?
      *
      * @var bool
      */
     protected $initialized = false;
+
+    /**
+     * Constructor method
+     */
+    public function __construct() {
+        $this->defaultStrings = [
+            'form_label' => $this->_x('Search', 'input label'),
+            'form_input_placeholder' => $this->_('Search the site...'),
+            'form_submit' => $this->_x('Search', 'submit button text'),
+            'results_heading' => $this->_('Search results'),
+            'results_summary_one' => $this->_('One result for "%s":'),
+            'results_summary_many' => $this->_('%2$d results for "%1$s":'),
+            'results_summary_none' => $this->_('No results for "%s".'),
+            'errors_heading' => $this->_('Sorry, we were unable to process your query'),
+            'error_query_too_short' => $this->_('Your query was too short. Please use at least %d characters.'),
+        ];
+    }
 
     /**
      * Add hooks
@@ -206,6 +329,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
 
         // Init SearchEngine Finder.
         $this->finder = $this->wire(new Finder());
+
+        // Init SearchEngine Renderer.
+        $this->renderer = $this->wire(new Renderer());
 
         // Remember that the module has been initialized.
         $this->initialized = true;
@@ -327,6 +453,24 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function __get($key) {
         return $this->$key ?? parent::get($key);
+    }
+
+    /**
+     * Method overloading support
+     *
+     * This method provides easy access to Renderer features: when a render* method is requested
+     * from this module, we check if Renderer has a matching method and then call that instead.
+     *
+     * @param string $method Method name.
+     * @param array $arguments Array of arguments.
+     * @return mixed
+     */
+    public function __call($method, $arguments) {
+        if (strpos($method, "render") === 0) {
+            $this->maybeInit();
+            return $this->renderer->__call($method, $arguments);
+        }
+        return parent::__call($method, $arguments);
     }
 
 }

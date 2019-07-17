@@ -28,4 +28,23 @@ class Base extends \ProcessWire\Wire {
         $this->options = $this->wire('modules')->get('SearchEngine')->options;
     }
 
+    /**
+     * Merge default string values with provided custom strings
+     *
+     * @param array|null $strings Optional custom/override strings.
+     * @return array Array of strings.
+     */
+    protected function getStrings(array $strings = null) {
+        $strings = empty($strings) ? $this->options['render_args']['strings'] : array_replace_recursive(
+            $this->options['render_args']['strings'],
+            $strings
+        );
+        foreach ($this->wire('modules')->get('SearchEngine')->defaultStrings as $string => $value) {
+            if (is_null($strings[$string])) {
+                $strings[$string] = $value;
+            }
+        }
+        return $strings;
+    }
+
 }
