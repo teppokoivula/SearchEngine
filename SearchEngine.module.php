@@ -100,6 +100,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'form_label_text' => 'search-form__label-text',
                 'form_submit' => 'search-form__submit',
                 'form_submit_text' => 'search-form__submit-text',
+                'errors' => 'search-errors',
+                'errors_heading' => 'search-errors__heading',
+                'errors_list' => 'search-errors__list',
+                'errors_list-item' => 'search-errors__list-item',
                 'results' => 'search-results',
                 'results_heading' => 'search-results__heading',
                 'results_summary' => 'search-results__summary',
@@ -117,6 +121,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'form_input_placeholder' => null,
                 'form_input_value' => null,
                 'form_submit' => null,
+                'errors_heading' => null,
+                'error_query_missing' => null,
+                'error_query_too_short' => null,
                 'results_heading' => null,
                 'results_summary_one' => null,
                 'results_summary_many' => null,
@@ -125,8 +132,12 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'templates' => [
                 'form' => '<form id="{form_id}" class="{classes.form}" action="{form_action}" role="search">%s</form>',
                 'form_label' => '<label for="{form_input_id}" class="{classes.form_label}"><span class="{classes.form_label_text}">{strings.form_label}</span></label>',
-                'form_input' => '<input type="search" name="{find_args.query_param}" value="{strings.form_input_value}" autocomplete="off" placeholder="{strings.form_input_placeholder}" class="{classes.form_input}" id="{form_input_id}">',
+                'form_input' => '<input type="search" name="{find_args.query_param}" value="{strings.form_input_value}" minlength="{requirements.query_min_length}" autocomplete="off" placeholder="{strings.form_input_placeholder}" class="{classes.form_input}" id="{form_input_id}">',
                 'form_submit' => '<button type="submit" class="{classes.form_submit}"><span class="{classes.form_submit_text}">{strings.form_submit}</span></button>',
+                'errors' => '<div class="{classes.errors}">%s</div>',
+                'errors_heading' => '<h2 class="{classes.errors_heading}">%s</h2>',
+                'errors_list' => '<ul class="{classes.errors_list}">%s</ul>',
+                'errors_list-item' => '<li class="{classes.errors_list_item}">%s</li>',
                 'results' => '<div id="{results_id}">%s</div>',
                 'results_heading' => '<h2 class="{classes.results_heading}">%s</h2>',
                 'results_summary' => '<p class="{classes.results_summary}" id="{results_summary_id}">%s</p>',
@@ -142,7 +153,19 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'scripts' => '<script async="true" src="%s"></script>',
             ],
         ],
+        'requirements' => [
+            'query_min_length' => 3,
+        ],
     ];
+
+    /**
+     * Default string values
+     *
+     * These get populated in the constructor method.
+     *
+     * @var array
+     */
+    protected $defaultStrings = [];
 
     /**
      * Runtime options, populated in init
@@ -178,6 +201,23 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @var bool
      */
     protected $initialized = false;
+
+    /**
+     * Constructor method
+     */
+    public function __construct() {
+        $this->defaultStrings = [
+            'form_label' => $this->_x('Search', 'input label'),
+            'form_input_placeholder' => $this->_('Search the site...'),
+            'form_submit' => $this->_x('Search', 'submit button text'),
+            'results_heading' => $this->_('Search results'),
+            'results_summary_one' => $this->_('One result for "%s":'),
+            'results_summary_many' => $this->_('%2$d results for "%1$s":'),
+            'results_summary_none' => $this->_('No results for "%s".'),
+            'errors_heading' => $this->_('Sorry, we were unable to process your query'),
+            'error_query_too_short' => $this->_('Your query was too short. Please use at least %d characters.'),
+        ];
+    }
 
     /**
      * Add hooks

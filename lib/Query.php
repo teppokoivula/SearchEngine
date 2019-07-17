@@ -61,6 +61,13 @@ class Query extends Base {
     protected $pager = '';
 
     /**
+     * Errors array
+     *
+     * @var array
+     */
+    public $errors = [];
+
+    /**
      * Constructor method
      *
      * @param mixed $query The query.
@@ -84,10 +91,41 @@ class Query extends Base {
             $this->wire('input')->whitelist($args['query_param'], $this->query);
         }
 
+        // Validate query.
+        $this->errors = $this->validateQuery($this->query);
+
         // Cache original query, args, and original args in class properties.
         $this->original_query = $query;
         $this->args = $args;
         $this->original_args = $args;
+    }
+
+    /**
+     * Validate provided query string.
+     *
+     * @param string $query Query string.
+     * @return array $errors Errors array.
+     */
+    public function validateQuery(string $query = ''): array {
+
+        // Get the strings array.
+        $strings = $this->getStrings();
+
+        // Validate query.
+        $errors = [];
+        if (empty($query)) {
+            $errors[] = $strings['error_query_missing'];
+        } else {
+            $requirements = $this->options['requirements'];
+            if (!empty($requirements['query_min_length']) && mb_strlen($query) < $requirements['query_min_length']) {
+                $errors['error_query_too_short'] = sprintf(
+                    $strings['error_query_too_short'],
+                    $requirements['query_min_length']
+                );
+            }
+        }
+
+        return $errors;
     }
 
     /**

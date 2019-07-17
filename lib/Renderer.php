@@ -16,15 +16,6 @@ use \ProcessWire\Inputfield,
 class Renderer extends Base {
 
     /**
-     * Default string values
-     *
-     * These get populated in the constructor method.
-     *
-     * @var array
-     */
-    protected $defaultStrings = [];
-
-    /**
      * Themes for rendering different views
      *
      * @var array
@@ -46,15 +37,6 @@ class Renderer extends Base {
     public function __construct() {
         parent::__construct();
         $this->themeURL = $this->wire('config')->urls->get('SearchEngine') . 'themes/';
-        $this->defaultStrings = [
-            'form_label' => $this->_x('Search', 'input label'),
-            'form_input_placeholder' => $this->_('Search the site...'),
-            'form_submit' => $this->_x('Search', 'submit button text'),
-            'results_heading' => $this->_('Search results'),
-            'results_summary_one' => $this->_('One result for "%s":'),
-            'results_summary_many' => $this->_('%2$d results for "%1$s":'),
-            'results_summary_none' => $this->_('No results for "%s".'),
-        ];
     }
 
     /**
@@ -160,6 +142,11 @@ class Renderer extends Base {
             return '';
         }
 
+        // Bail out early if there were errors with the query.
+        if (!empty($query->errors)) {
+            return $this->renderErrors($args, $query);
+        }
+
         // Header for results.
         $results_heading = sprintf(
             $args['templates']['results_heading'],
@@ -261,6 +248,39 @@ class Renderer extends Base {
         // If pager_args *haven't* been overridden in the args array, we can fetch the pager from
         // the Query object, where it could already be cached.
         return !empty($args['pager_args']) ? $query->results->renderPager($args['pager_args']) : $query->pager;
+    }
+
+    /**
+     * Render error messages
+     *
+     * @param array $args Array of prepared arguments.
+     * @param array $errors Array of error messages.
+     * @return string Error messages, or empty string if none found.
+     */
+    protected function ___renderErrors(array $args, Query $query): string {
+        $errors = '';
+        if (!empty($query->errors)) {
+            $strings = $this->getStrings($args['strings']);
+            $errors_heading = sprintf(
+                $this->options['render_args']['templates']['errors_heading'],
+                $strings['errors_heading']
+            );
+            foreach ($query->errors as $error) {
+                $errors .= sprintf($this->options['render_args']['templates']['errors_list-item'], $error);
+            }
+            $errors = \ProcessWire\wirePopulateStringTags(
+                sprintf(
+                    $this->options['render_args']['templates']['errors'],
+                    $errors_heading
+                  . sprintf(
+                        $this->options['render_args']['templates']['errors_list'],
+                        $errors
+                    )
+                ),
+                $this->getData($args)
+            );
+        }
+        return $errors;
     }
 
     /**
@@ -433,10 +453,11 @@ class Renderer extends Base {
         $args = array_replace_recursive($this->options['render_args'], $args);
 
         // Merge default string values with provided custom strings.
-        foreach ($this->defaultStrings as $string => $value) {
-            if (is_null($args['strings'][$string])) {
-                $args['strings'][$string] = $value;
-            }
+        $args['strings'] = $this->getStrings($args['strings']);
+
+        // Add requirements to args array if not already present.
+        if (empty($args['requirements'])) {
+            $args['requirements'] = $this->options['requirements'];
         }
 
         // Add find arguments to args array if not already present.
@@ -466,8 +487,8 @@ class Renderer extends Base {
      */
     protected function getData(array $args = []): Data {
 
-        // Convert subarrays to Data objects first.
-        foreach (['strings', 'find_args', 'classes'] as $key) {
+        // Convert subarrays to Data objects.
+        foreach (['strings', 'find_args', 'requirements', 'classes'] as $key) {
             $args[$key] = $this->wire(new Data($args[$key]));
         }
 
