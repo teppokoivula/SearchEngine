@@ -205,6 +205,45 @@ $config->SearchEngine = [
 ];
 ```
 
+## Themes
+
+SearchEngine supports a concept of themes. Themes are located in the `themes` directory, under their own subdirectories (e.g. `/themes/theme-name/`), and each one needs to include (at the very least) a config.php file. Here's an example of the contents of a theme config.php file:
+
+```
+<?php namespace ProcessWire;
+
+$theme_args = [
+    'theme_styles' => [
+        // array of styles, such as:
+        [
+            'name' => 'style',
+            'ext' => 'css',
+        ],
+    ],
+    'theme_scripts' => [
+        // array of scripts, such as:
+        [
+            'name' => 'script',
+            'ext' => 'js',
+        ],
+    ],
+    'render_args' => [
+        // array of render arguments, such as:
+        'form_id' => 'my-search-form',
+        'strings' => [
+            'results_heading' => __('Custom results heading'),
+        ],
+    ],
+    'pager_args' => [
+        // array of pager options
+    ],
+];
+```
+
+Again, technically the only requirement is a config.php file with the ProcessWire namespace, in which you declare a $theme_args array. Everything else is optional.
+
+If a theme includes style and/or script files, for each type there should be a directory (i.e. `/themes/theme-name/scripts/` and/or `/themes/theme-name/styles/`), and for each file there should be both the file named by params (such as style.css) and a minified file with ".min" in its name (such as style.min.css).
+
 ## Requirements
 
 - ProcessWire >= 3.0.112
