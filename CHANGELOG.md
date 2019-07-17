@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New Data class to serve as a wrapper for WireData with improved getDot() support.
 - SearchEngine::render*() methods matching each render-prefixed method in Renderer.
 
+### Changed
+- Default selector operator changed from `%=` to `*=`.
+
 ## [0.3.3] - 2019-07-15
 
 ### Fixed

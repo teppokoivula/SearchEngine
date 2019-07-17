@@ -63,7 +63,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         'find_args' => [
             'limit' => 20,
             'sort' => 'sort',
-            'operator' => '%=',
+            'operator' => '*=',
             'query_param' => 'q',
             'selector_extra' => '',
         ],
