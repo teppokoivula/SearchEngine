@@ -420,7 +420,7 @@ class Renderer extends Base {
                 'scripts',
                 'form',
                 'results',
-            ],
+            ];
         }
 
         // Prepare args.
@@ -433,8 +433,8 @@ class Renderer extends Base {
         return implode([
             $theme && in_array('styles', $what) ? $this->renderStyles($args) : '',
             $theme && in_array('scripts', $what) ? $this->renderScripts($args) : '',
-            in_array('form', $what) ? $form,
-            in_array('results', $what) ? $results,
+            in_array('form', $what) ? $form : '',
+            in_array('results', $what) ? $results : '',
         ]);
     }
 
