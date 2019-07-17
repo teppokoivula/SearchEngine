@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- New Renderer class for rendering a search form and a list of search results.
+- New Renderer class for rendering a search form and/or a list of search results.
 - New Data class to serve as a wrapper for WireData with improved getDot() support.
 - SearchEngine::render*() methods matching each render-prefixed method in Renderer.
 
