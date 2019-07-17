@@ -31,6 +31,8 @@
 .search-form__input {
     flex: 1;
     border-radius: 50%;
+    /* Android */
+    width: 100%;
 }
 
 .search-form__submit {
