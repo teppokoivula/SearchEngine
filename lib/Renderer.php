@@ -123,7 +123,7 @@ class Renderer extends Base {
      *
      * @throws WireException if query parameter is unrecognized. 
      */
-    public function ___renderResultsList(array $args = [], Query $query = null): string {
+    public function ___renderResults(array $args = [], Query $query = null): string {
 
         // Prepare args and get Data object.
         $args = $this->prepareArgs($args);
@@ -394,23 +394,47 @@ class Renderer extends Base {
     /**
      * Render the whole search feature (styles, scripts, form, results, and pager)
      *
-     * @param array $args Optional arguments.
+     * Note that you may omit the first param ($what) and instead provide the args array as the
+     * first param.
+     *
+     * @param array $what Optional array of elements to render, or the args array. If used as the "what" array, may contain one or more of:
+     *   - 'styles'
+     *   - 'scripts'
+     *   - 'form'
+     *   - 'results'
+     * @param array $args Optional arguments. If the "what" array is omitted, you may provide the "args" array as the first param instead.
      * @return string
      */
-    public function ___render(array $args = []): string {
+    public function ___render(array $what = [], array $args = []): string {
+
+        // Optionally allow providing args as the first param. Since "what" will only have numeric
+        // keys and "args" will only have non-numeric keys, we can easily check which is which.
+        if (!is_int(key($what))) {
+            $args = $what;
+        }
+
+        // Add all options to the "what" array if it's empty.
+        if (empty($what)) {
+            $what = [
+                'styles',
+                'scripts',
+                'form',
+                'results',
+            ],
+        }
 
         // Prepare args.
         $args = $this->prepareArgs($args);
         $theme = $args['theme'];
 
         // Render and return rendered markup.
-        $resultsList = $this->renderResultsList($args);
+        $results = $this->renderResults($args);
         $form = $this->renderForm($args);
         return implode([
-            $theme ? $this->renderStyles($args) : '',
-            $theme ? $this->renderScripts($args) : '',
-            $form,
-            $resultsList,
+            $theme && in_array('styles', $what) ? $this->renderStyles($args) : '',
+            $theme && in_array('scripts', $what) ? $this->renderScripts($args) : '',
+            in_array('form', $what) ? $form,
+            in_array('results', $what) ? $results,
         ]);
     }
 
@@ -523,8 +547,8 @@ class Renderer extends Base {
             case 'inputfieldForm':
                 return $this->renderInputfieldForm();
                 break;
-            case 'resultsList':
-                return $this->renderResultsList();
+            case 'results':
+                return $this->renderResults();
                 break;
             case 'styles':
                 return $this->renderStyles();
