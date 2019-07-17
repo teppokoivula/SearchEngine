@@ -9,33 +9,21 @@ use \ProcessWire\Inputfield,
 /**
  * SearchEngine Renderer
  *
- * @version 0.1.0
+ * @property string $themePath Path on disk for the themes directory. Populated in __construct().
+ * @property string $themeURL URL for the themes directory. Populated in __construct().
+ *
+ * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
 class Renderer extends Base {
 
     /**
-     * Themes for rendering different views
-     *
-     * @var array
-     */
-    protected $themes = [
-        'default' => [
-            'styles' => [
-                [
-                    'name' => 'style',
-                    'ext' => 'css',
-                ],
-            ],
-        ],
-    ];
-
-    /**
      * Constructor method
      */
     public function __construct() {
         parent::__construct();
+        $this->themePath = $this->wire('config')->paths->get('SearchEngine') . 'themes/';
         $this->themeURL = $this->wire('config')->urls->get('SearchEngine') . 'themes/';
     }
 
@@ -346,24 +334,20 @@ class Renderer extends Base {
         $args = $this->prepareArgs($args);
         $theme = $args['theme'];
 
-        // Make sure that given theme exists.
-        if (empty($this->themes[$theme])) {
-            throw new WireException(sprintf(
-                $this->_('Theme "%1$s" doesn\'t exist, please use one of: "%2$s".'),
-                $this->wire('sanitizer')->entities($theme),
-                implode(', ', array_keys($this->themes))
-            ));
+        // Bail out early if theme isn't defined.
+        if (empty($theme)) {
+            return [];
         }
 
         // Get and return resources.
-        $resources = $this->themes[$theme][$type] ?? [];
+        $resources = $args['theme_' . $type] ?? [];
         if (empty($resources)) {
             return [];
         }
         $minified = $args['minified_resources'];
         return array_map(function($resource) use ($theme, $minified) {
             $file = $resource['name'] . ($minified ? '.min' : '') . '.' . $resource['ext'];
-            return $this->themeURL . $theme . '/' . $file;
+            return $this->themeURL . $theme . '/' . basename($file);
         }, $resources);
     }
 
@@ -465,16 +449,50 @@ class Renderer extends Base {
      *
      * @param array $args Original arguments array.
      * @return array Prepared arguments array.
+     *
+     * @throws WireException if theme is defined but not fully functional.
      */
     protected function prepareArgs(array $args = []): array {
 
-        // Bail out early if args have already been prepared.
+        // Bail out early if args have already been prepared. This is mainly an optimization for
+        // cases where the "args" array gets passed internally from method to method.
         if (!empty($args['_prepared'])) {
             return $args;
         }
 
         // Merge default render arguments with provided custom values.
         $args = array_replace_recursive($this->options['render_args'], $args);
+
+        // Merge theme config with custom values.
+        if (!empty($args['theme'])) {
+            $args['theme'] = basename($args['theme']);
+            $theme_args_file = $this->themePath . $args['theme'] . '/config.php';
+            $theme_init_done = false;
+            if (is_file($theme_args_file)) {
+                include $theme_args_file;
+                if (!empty($theme_args)) {
+                    // Theme config succesfully loaded.
+                    if (!empty($theme_args['render_args'])) {
+                        $args = array_replace_recursive($args, $theme_args['render_args']);
+                    }
+                    if (!empty($theme_args['pager_args'])) {
+                        $args['pager_args'] = empty($args['pager_args']) ? $theme_args['pager_args'] : array_replace_recursive(
+                            $args['pager_args'],
+                            $theme_args['pager_args']
+                        );
+                    }
+                    $args['theme_styles'] = $theme_args['theme_styles'] ?? [];
+                    $args['theme_scripts'] = $theme_args['theme_scripts'] ?? [];
+                    $theme_init_done = true;
+                }
+            }
+            if (!$theme_init_done) {
+                throw new WireException(sprintf(
+                    $this->_('Unable to init theme "%s".'),
+                    $args['theme']
+                ));
+            }
+        }
 
         // Merge default string values with provided custom strings.
         $args['strings'] = $this->getStrings($args['strings']);
