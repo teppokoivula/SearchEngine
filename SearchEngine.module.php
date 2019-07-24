@@ -14,7 +14,7 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.6.0
+ * @version 0.6.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -239,7 +239,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function getModuleConfigInputfields(array $data) {
         $this->maybeInit();
-        return $this->wire(new Config($data, $this->options))->getFields();
+        return $this->wire(new Config($data))->getFields();
     }
 
     /**

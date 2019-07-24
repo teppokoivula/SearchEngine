@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.0]
+## [0.6.1] - 2019-07-24
+
+### Changed
+- SearchEngine::getModuleConfigInputfields() was passing an extraneous options array to Config::__construct().
+
+## [0.6.0] - 2019-07-24
 
 ### Changed
 - Unless an overriding selector has been provided, Indexer::indexPages() now processes all non-trashed pages. Previously hidden or unpublished pages were not included.
 
-## [0.5.1]
+## [0.5.1] - 2019-07-24
 
 ### Added
 - Display a warning message for cases where manual indexing doesn't find any pages to index.
@@ -20,17 +25,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Avoid warnings caused by type declarations differing from those specified by the parent class.
 
-## [0.5.0]
+## [0.5.0] - 2019-07-17
 
 ### Added
 - Added support for theme-specific config files. See README for more details.
 
-## [0.4.1]
+## [0.4.1] - 2019-07-17
 
 ### Fixed
 - Fixed breaking issues introduced with last minute changes to 0.4.0.
 
-## [0.4.0]
+## [0.4.0] - 2019-07-17
 
 ### Added
 - New Renderer class for rendering a search form and/or a list of search results.
