@@ -36,7 +36,7 @@ class Config extends Base {
      *
      * @return InputfieldWrapper InputfieldWrapper with module config inputfields.
      */
-    public function getFields() {
+    public function getFields(): InputfieldWrapper {
 
         $fields = $this->wire(new InputfieldWrapper());
         $modules = $this->wire('modules');
