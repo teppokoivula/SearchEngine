@@ -14,7 +14,7 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.5.1
+ * @version 0.6.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -266,15 +266,16 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             $indexing_started = new \DateTime();
             $indexed_pages = $this->indexer->indexPages($index_pages_now_selector);
             $elapsed_time = $indexing_started->diff(new \Datetime());
-            $this->message(sprintf(
-                $this->_('%d pages indexed in %d seconds.'),
-                $indexed_pages,
-                $elapsed_time->format('%s')
-            ));
             if ($indexed_pages === 0) {
                 $this->warning(sprintf(
                     $this->_('SearchEngine couldn\'t find any pages to index. Please make sure that your indexing settings are configured properly, and your index field "%s" has been added to at least one template with existing pages.'),
                     $this->wire('sanitizer')->text($data['index_field'] ?? '')
+                ));
+            } else {
+                $this->message(sprintf(
+                    $this->_('%d pages indexed in %d seconds.'),
+                    $indexed_pages,
+                    $elapsed_time->format('%s')
                 ));
             }
             unset($data['index_pages_now']);

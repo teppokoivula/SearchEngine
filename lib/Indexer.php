@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.2.1
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -25,11 +25,19 @@ class Indexer extends Base {
         if (empty($selector)) {
             $index_field = $this->wire('fields')->get($this->options['index_field']);
             $indexed_templates = $index_field->getTemplates()->implode('|', 'name');
-            $selector = "template=" . $indexed_templates;
+            if (!empty($indexed_templates)) {
+                $selector = implode(',', [
+                    'template=' . $indexed_templates,
+                    'include=all',
+                    'parent!=' . $this->wire('config')->trashPageID,
+                ]);
+            }
         }
-        foreach ($this->wire('pages')->findMany($selector) as $page) {
-            if ($this->indexPage($page)) {
-                ++$indexed_pages;
+        if (!empty($selector)) {
+            foreach ($this->wire('pages')->findMany($selector) as $page) {
+                if ($this->indexPage($page)) {
+                    ++$indexed_pages;
+                }
             }
         }
         return $indexed_pages;
