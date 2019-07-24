@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.1.0
+ * @version 0.1.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  *
@@ -138,7 +138,7 @@ class Query extends Base {
      * @param string $name Property name.
      * @return mixed
      */
-    public function __get(string $name) {
+    public function __get($name) {
         switch ($name) {
             case 'selector':
                 return $this->getSelector();

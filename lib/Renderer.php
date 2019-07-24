@@ -12,7 +12,7 @@ use \ProcessWire\Inputfield,
  * @property string $themePath Path on disk for the themes directory. Populated in __construct().
  * @property string $themeURL URL for the themes directory. Populated in __construct().
  *
- * @version 0.2.0
+ * @version 0.2.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -557,7 +557,7 @@ class Renderer extends Base {
      * @param string $name Property name.
      * @return mixed
      */
-    public function __get(string $name) {
+    public function __get($name) {
         switch ($name) {
             case 'form':
                 return $this->renderForm();
