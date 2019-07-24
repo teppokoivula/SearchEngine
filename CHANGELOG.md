@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.1]
 
+### Added
+- Display a warning message for cases where manual indexing doesn't find any pages to index.
+
 ### Fixed
 - Avoid warnings caused by type declarations differing from those specified by the parent class.
 

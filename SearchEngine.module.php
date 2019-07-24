@@ -271,6 +271,12 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 $indexed_pages,
                 $elapsed_time->format('%s')
             ));
+            if ($indexed_pages === 0) {
+                $this->warning(sprintf(
+                    $this->_('SearchEngine couldn\'t find any pages to index. Please make sure that your indexing settings are configured properly, and your index field "%s" has been added to at least one template with existing pages.'),
+                    $this->wire('sanitizer')->text($data['index_field'] ?? '')
+                ));
+            }
             unset($data['index_pages_now']);
             $event->arguments(1, $data);
         }
