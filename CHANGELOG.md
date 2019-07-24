@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1]
+
+### Fixed
+- Avoid warnings caused by type declarations differing from those specified by the parent class.
+
 ## [0.5.0]
 
 ### Added
