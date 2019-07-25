@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.3] - 2019-07-25
+
+### Changed
+- Changed ProcessWire version requirement in composer.json to match the version defined in the module info JSON file.
+
 ## [0.6.2] - 2019-07-25
 
 ### Fixed
