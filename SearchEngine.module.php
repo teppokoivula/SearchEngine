@@ -14,7 +14,7 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.6.1
+ * @version 0.6.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -159,15 +159,6 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     ];
 
     /**
-     * Default string values
-     *
-     * These get populated in the constructor method.
-     *
-     * @var array
-     */
-    protected $defaultStrings = [];
-
-    /**
      * Runtime options, populated in init
      *
      * @var array
@@ -203,24 +194,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     protected $initialized = false;
 
     /**
-     * Constructor method
-     */
-    public function __construct() {
-        $this->defaultStrings = [
-            'form_label' => $this->_x('Search', 'input label'),
-            'form_input_placeholder' => $this->_('Search the site...'),
-            'form_submit' => $this->_x('Search', 'submit button text'),
-            'results_heading' => $this->_('Search results'),
-            'results_summary_one' => $this->_('One result for "%s":'),
-            'results_summary_many' => $this->_('%2$d results for "%1$s":'),
-            'results_summary_none' => $this->_('No results for "%s".'),
-            'errors_heading' => $this->_('Sorry, we were unable to process your query'),
-            'error_query_too_short' => $this->_('Your query was too short. Please use at least %d characters.'),
-        ];
-    }
-
-    /**
-     * Add hooks
+     * The "init" method is executed right after the module has been loaded
+     *
+     * In this method we add necessary hooks.
      */
     public function init() {
 
@@ -342,6 +318,25 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
 
         // Remember that the module has been initialized.
         $this->initialized = true;
+    }
+
+    /**
+     * Return the default strings for the module
+     *
+     * @return array Associative array of translatable strings.
+     */
+    public function getDefaultStrings() {
+        return [
+            'form_label' => $this->_x('Search', 'input label'),
+            'form_input_placeholder' => $this->_('Search the site...'),
+            'form_submit' => $this->_x('Search', 'submit button text'),
+            'results_heading' => $this->_('Search results'),
+            'results_summary_one' => $this->_('One result for "%s":'),
+            'results_summary_many' => $this->_('%2$d results for "%1$s":'),
+            'results_summary_none' => $this->_('No results for "%s".'),
+            'errors_heading' => $this->_('Sorry, we were unable to process your query'),
+            'error_query_too_short' => $this->_('Your query was too short. Please use at least %d characters.'),
+        ];
     }
 
     /**

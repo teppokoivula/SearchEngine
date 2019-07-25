@@ -39,7 +39,7 @@ class Base extends \ProcessWire\Wire {
             $this->options['render_args']['strings'],
             $strings
         );
-        foreach ($this->wire('modules')->get('SearchEngine')->defaultStrings as $string => $value) {
+        foreach ($this->wire('modules')->get('SearchEngine')->getDefaultStrings() as $string => $value) {
             if (is_null($strings[$string])) {
                 $strings[$string] = $value;
             }
