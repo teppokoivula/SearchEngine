@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.4] - 2019-07-25
+
+### Fixed
+- Fix an issue where search result links and paths were wrong on subdirectory installs.
+
 ## [0.6.3] - 2019-07-25
 
 ### Changed
