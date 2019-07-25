@@ -3,9 +3,9 @@
 namespace SearchEngine;
 
 /**
- * SearchEngien Base class
+ * SearchEngine Base class
  *
- * @version 0.1.0
+ * @version 0.1.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
