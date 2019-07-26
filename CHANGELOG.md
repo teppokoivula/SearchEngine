@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.0] - 2019-07-26
+
+### Added
+- Support for parent placeholders in render args class names.
+
+### Changed
+- Changed default render args class names to use parent placeholders.
+
 ## [0.7.0] - 2019-07-26
 
 ### Added
