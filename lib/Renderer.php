@@ -12,7 +12,7 @@ use \ProcessWire\Inputfield,
  * @property string $themePath Path on disk for the themes directory. Populated in __construct().
  * @property string $themeURL URL for the themes directory. Populated in __construct().
  *
- * @version 0.2.2
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -538,6 +538,23 @@ class Renderer extends Base {
         // Convert subarrays to Data objects.
         foreach (['strings', 'find_args', 'requirements', 'classes'] as $key) {
             $args[$key] = $this->wire(new Data($args[$key]));
+        }
+
+        // Replace parent selectors (ampersands, after SCSS syntax) in class names. Keys without
+        // underscores are considered parents – or blocks, if you prefer BEM terminology.
+        $parents = [];
+        foreach ($args['classes'] as $key => $class) {
+            if (strpos($key, '_') === false) {
+                $parents[$key] = $class;
+            }
+        }
+        if (!empty($parents)) {
+            foreach ($args['classes'] as $key => $class) {
+                if (strpos($class, '&') !== false) {
+                    $parent_class = $parents[substr($key, 0, strpos($key, '_'))] ?? '';
+                    $args['classes'][$key] = str_replace('&', $parent_class, $class);
+                }
+            }
         }
 
         return new Data($args);
