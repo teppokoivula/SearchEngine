@@ -14,7 +14,7 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.7.0
+ * @version 0.8.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -23,7 +23,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     /**
      * Default options
      *
-     * You can override these defaults by defining an array of custom values in $config->SearchEngine.
+     * You can override the defaults by defining an array of custom values in $config->SearchEngine.
      *
      * @var array
      */
@@ -68,7 +68,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'selector_extra' => '',
         ],
         'pager_args' => [
-            // This array is passed to MarkupPagerNav, see https://processwire.com/docs/front-end/markup-pager-nav/ for details.
+            // These arguments are passed to MarkupPagerNav. You can find more details from the
+            // documentation: https://processwire.com/docs/front-end/markup-pager-nav/.
             'listMarkup' => '<div class="search-results-pager"><ul class="search-results-pager__list">{out}</ul></div>',
             'itemMarkup' => '<li class="search-results-pager__list-item {class}">{out}</li>',
             'linkMarkup' => '<a class="search-results-pager__item" href="{url}"><span class="search-results-pager__item-text">{out}</span></a>',
@@ -94,27 +95,29 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_highlight_query' => true,
             'pager' => true,
             'classes' => [
+                // Keys without underscores are considered parents (blocks). If a child class name
+                // contains an ampersand (&), it'll be replaced run-time with closest parent class.
                 'form' => 'search-form',
-                'form_input' => 'search-form__input',
-                'form_label' => 'search-form__label',
-                'form_label_text' => 'search-form__label-text',
-                'form_submit' => 'search-form__submit',
-                'form_submit_text' => 'search-form__submit-text',
+                'form_input' => '&__input',
+                'form_label' => '&__label',
+                'form_label_text' => '&__label-text',
+                'form_submit' => '&__submit',
+                'form_submit_text' => '&__submit-text',
                 'errors' => 'search-errors',
-                'errors_heading' => 'search-errors__heading',
-                'errors_list' => 'search-errors__list',
-                'errors_list-item' => 'search-errors__list-item',
+                'errors_heading' => '&__heading',
+                'errors_list' => '&__list',
+                'errors_list-item' => '&__list-item',
                 'results' => 'search-results',
-                'results_heading' => 'search-results__heading',
-                'results_summary' => 'search-results__summary',
-                'results_list' => 'search-results__list',
-                'results_list_item' => 'search-results__list-item',
+                'results_heading' => '&__heading',
+                'results_summary' => '&__summary',
+                'results_list' => '&__list',
+                'results_list_item' => '&__list-item',
                 'result' => 'search-result',
-                'result_link' => 'search-result__link',
-                'result_path' => 'search-result__path',
-                'result_path_item' => 'search-result__path-item',
-                'result_desc' => 'search-result__desc',
-                'result_highlight' => 'search-result__highlight',
+                'result_link' => '&__link',
+                'result_path' => '&__path',
+                'result_path_item' => '&__path-item',
+                'result_desc' => '&__desc',
+                'result_highlight' => '&__highlight',
             ],
             'strings' => [
                 'form_label' => null,
