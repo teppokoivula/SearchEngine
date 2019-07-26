@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.3.0
+ * @version 0.3.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -23,7 +23,7 @@ class Indexer extends Base {
     public function indexPages(string $selector = null) {
         $indexed_pages = 0;
         if (empty($selector)) {
-            $index_field = $this->wire('fields')->get($this->options['index_field']);
+            $index_field = $this->wire('fields')->get($this->getOptions()['index_field']);
             $indexed_templates = $index_field->getTemplates()->implode('|', 'name');
             if (!empty($indexed_templates)) {
                 $selector = implode(',', [
@@ -51,9 +51,10 @@ class Indexer extends Base {
      * @return bool True on success, false on failure.
      */
     public function indexPage(\ProcessWire\Page $page, bool $save = true) {
-        $index_field = $this->options['index_field'];
+        $options = $this->getOptions();
+        $index_field = $options['index_field'];
         if ($page->id && $page->hasField($index_field)) {
-            $index = $this->getPageIndex($page, $this->options['indexed_fields']);
+            $index = $this->getPageIndex($page, $options['indexed_fields']);
             $index = $this->processIndex($index);
             if ($save) {
                 $this->wire('pages')->save($page, $index_field, $index, [
@@ -172,7 +173,7 @@ class Indexer extends Base {
     protected function getURLIndex(string $data): string {
         $index = '';
         if (!empty($data) && preg_match_all('/href=([\"\'])(.*?)\1/i', $data, $matches)) {
-            $link_prefix = $this->options['prefixes']['link'];
+            $link_prefix = $this->getOptions()['prefixes']['link'];
             $index = $link_prefix . implode(' ' . $link_prefix, $matches[2]);
         }
         return $index;

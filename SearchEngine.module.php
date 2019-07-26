@@ -14,7 +14,7 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.6.4
+ * @version 0.7.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -337,6 +337,21 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'errors_heading' => $this->_('Sorry, we were unable to process your query'),
             'error_query_too_short' => $this->_('Your query was too short. Please use at least %d characters.'),
         ];
+    }
+
+    /**
+     * Override previously defined run-time options
+     *
+     * @param array $options Custom options.
+     * @return SearchEngine Self-reference.
+     */
+    public function setOptions(array $options): SearchEngine {
+        $this->maybeInit();
+        $this->options = array_replace_recursive(
+            $this->options,
+            $options
+        );
+        return $this;
     }
 
     /**

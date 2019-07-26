@@ -8,7 +8,7 @@ use ProcessWire\InputfieldWrapper,
 /**
  * SearchEngine Config
  *
- * @version 0.2.0
+ * @version 0.2.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -40,6 +40,7 @@ class Config extends Base {
 
         $fields = $this->wire(new InputfieldWrapper());
         $modules = $this->wire('modules');
+        $options = $this->getOptions();
         $data = $this->data;
 
         // fieldset for indexing options
@@ -52,13 +53,13 @@ class Config extends Base {
         $indexed_fields = $modules->get('InputfieldAsmSelect');
         $indexed_fields->name = 'indexed_fields';
         $indexed_fields->label = $this->_('Select indexed fields');
-        $compatible_fieldtype_options = $this->options['compatible_fieldtypes'] ?? [];
+        $compatible_fieldtype_options = $options['compatible_fieldtypes'] ?? [];
         if (!empty($data['override_compatible_fieldtypes'])) {
             $compatible_fieldtype_options = $data['compatible_fieldtypes'] ?? [];
         }
         if (!empty($compatible_fieldtype_options)) {
             foreach ($this->wire('fields')->getAll() as $field) {
-                if (!in_array($field->type, $compatible_fieldtype_options) || $field->name === $this->options['index_field']) {
+                if (!in_array($field->type, $compatible_fieldtype_options) || $field->name === $options['index_field']) {
                     continue;
                 }
                 $indexed_fields->addOption($field->name);
@@ -66,10 +67,10 @@ class Config extends Base {
         }
         if (!empty($this->wire('config')->SearchEngine[$indexed_fields->name])) {
             $indexed_fields->notes = $this->_('Indexed fields are currently defined in site config. You cannot override config settings here.');
-            $indexed_fields->value = $this->options[$indexed_fields->name];
+            $indexed_fields->value = $options[$indexed_fields->name];
             $indexed_fields->collapsed = Inputfield::collapsedNoLocked;
         } else {
-            $indexed_fields->value = $data[$indexed_fields->name] ?? $this->options[$indexed_fields->name] ?? null;
+            $indexed_fields->value = $data[$indexed_fields->name] ?? $options[$indexed_fields->name] ?? null;
         }
         $indexing_options->add($indexed_fields);
 
@@ -116,10 +117,10 @@ class Config extends Base {
         }
         if (!empty($this->wire('config')->SearchEngine[$index_field->name])) {
             $index_field->notes = $this->_('Index field is currently defined in site config. You cannot override config settings here.');
-            $index_field->value = $this->options[$index_field->name];
+            $index_field->value = $options[$index_field->name];
             $index_field->collapsed = Inputfield::collapsedNoLocked;
         } else {
-            $index_field->value = $data[$index_field->name] ?? $this->options[$index_field->name] ?? null;
+            $index_field->value = $data[$index_field->name] ?? $options[$index_field->name] ?? null;
             $index_field->notes = $this->_('If you select a field that already contains values, those values *will* be overwritten the next time someone triggers manual indexing of pages *or* a page containing selected field is saved. Making changes to this setting can result in *permanent* data loss!');
         }
         $advanced_settings->add($index_field);
@@ -152,10 +153,10 @@ class Config extends Base {
         }
         if (!empty($this->wire('config')->SearchEngine[$compatible_fieldtypes->name])) {
             $compatible_fieldtypes->notes = $this->_('Compatible fieldtypes are currently defined in site config. You cannot override config settings here.');
-            $compatible_fieldtypes->value = $this->options[$compatible_fieldtypes->name];
+            $compatible_fieldtypes->value = $options[$compatible_fieldtypes->name];
             $compatible_fieldtypes->collapsed = Inputfield::collapsedNoLocked;
         } else {
-            $compatible_fieldtypes->value = $data[$compatible_fieldtypes->name] ?? $this->options[$compatible_fieldtypes->name] ?? null;
+            $compatible_fieldtypes->value = $data[$compatible_fieldtypes->name] ?? $options[$compatible_fieldtypes->name] ?? null;
             $compatible_fieldtypes->notes = $this->_('Please note that selecting fieldtypes not selected by default may result in various problems. Change these values only if you\'re sure that you know what you\'re doing.');
         }
         $advanced_settings->add($compatible_fieldtypes);

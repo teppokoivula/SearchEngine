@@ -12,7 +12,7 @@ use \ProcessWire\Inputfield,
  * @property string $themePath Path on disk for the themes directory. Populated in __construct().
  * @property string $themeURL URL for the themes directory. Populated in __construct().
  *
- * @version 0.2.1
+ * @version 0.2.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -71,7 +71,8 @@ class Renderer extends Base {
     public function ___getInputfieldForm(array $args = []): \ProcessWire\Inputfieldform {
 
         $modules = $this->wire('modules');
-        $args = array_replace_recursive($this->options['render_args'], $args);
+        $options = $this->getOptions();
+        $args = array_replace_recursive($options['render_args'], $args);
 
         // Search form.
         $form = $modules->get('InputfieldForm');
@@ -85,7 +86,7 @@ class Renderer extends Base {
 
         // Query (text) field.
         $input = $modules->get('InputfieldText');
-        $input->name = $this->options['find_args']['query_param'] ?? 'q';
+        $input->name = $options['find_args']['query_param'] ?? 'q';
         $input->label = $this->getString('input', $this->_('Search'));
         $input->value = $this->wire('input')->whitelist($input->name);
         $input->placeholder = $this->getString('input_placeholder');
@@ -115,13 +116,14 @@ class Renderer extends Base {
 
         // Prepare args and get Data object.
         $args = $this->prepareArgs($args);
+        $options = $this->getOptions();
         $data = $this->getData($args);
 
         // If query is null, fetch results automatically.
         if (is_null($query)) {
-            $query_term = $this->wire('input')->get($this->options['find_args']['query_param']);
+            $query_term = $this->wire('input')->get($options['find_args']['query_param']);
             if (!empty($query_term)) {
-                $query = $this->wire('modules')->get('SearchEngine')->find($query_term, $this->options['find_args']);
+                $query = $this->wire('modules')->get('SearchEngine')->find($query_term, $options['find_args']);
             }
         }
 
@@ -248,20 +250,21 @@ class Renderer extends Base {
     protected function ___renderErrors(array $args, Query $query): string {
         $errors = '';
         if (!empty($query->errors)) {
+            $options = $this->getOptions();
             $strings = $this->getStrings($args['strings']);
             $errors_heading = sprintf(
-                $this->options['render_args']['templates']['errors_heading'],
+                $options['render_args']['templates']['errors_heading'],
                 $strings['errors_heading']
             );
             foreach ($query->errors as $error) {
-                $errors .= sprintf($this->options['render_args']['templates']['errors_list-item'], $error);
+                $errors .= sprintf($options['render_args']['templates']['errors_list-item'], $error);
             }
             $errors = \ProcessWire\wirePopulateStringTags(
                 sprintf(
-                    $this->options['render_args']['templates']['errors'],
+                    $options['render_args']['templates']['errors'],
                     $errors_heading
                   . sprintf(
-                        $this->options['render_args']['templates']['errors_list'],
+                        $options['render_args']['templates']['errors_list'],
                         $errors
                     )
                 ),
@@ -460,8 +463,11 @@ class Renderer extends Base {
             return $args;
         }
 
+        // Get run-time options.
+        $options = $this->getOptions();
+
         // Merge default render arguments with provided custom values.
-        $args = array_replace_recursive($this->options['render_args'], $args);
+        $args = array_replace_recursive($options['render_args'], $args);
 
         // Merge theme config with custom values.
         if (!empty($args['theme'])) {
@@ -499,17 +505,17 @@ class Renderer extends Base {
 
         // Add requirements to args array if not already present.
         if (empty($args['requirements'])) {
-            $args['requirements'] = $this->options['requirements'];
+            $args['requirements'] = $options['requirements'];
         }
 
         // Add find arguments to args array if not already present.
         if (empty($args['find_args'])) {
-            $args['find_args'] = $this->options['find_args'];
+            $args['find_args'] = $options['find_args'];
         }
 
         // Prefill form input value if query param has been whitelisted.
         if (empty($args['strings']['form_input_value'])) {
-            $args['strings']['form_input_value'] = $this->wire('input')->whitelist($this->options['find_args']['query_param']);
+            $args['strings']['form_input_value'] = $this->wire('input')->whitelist($options['find_args']['query_param']);
         }
 
         // Add a flag to signal that the args array has been prepared.
@@ -544,7 +550,7 @@ class Renderer extends Base {
      * @return string|null String value, or null if string doesn't exist and fallback isn't provided.
      */
     protected function getString(string $name, string $fallback = null): ?string {
-        $string = $this->options['render_args']['strings'][$name] ?? $fallback;
+        $string = $this->getOptions()['render_args']['strings'][$name] ?? $fallback;
         return $string;
     }
 

@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.1.1
+ * @version 0.1.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  *
@@ -83,7 +83,7 @@ class Query extends Base {
         parent::__construct();
 
         // Merge default find arguments with provided custom values.
-        $args = array_replace_recursive($this->options['find_args'], $args);
+        $args = array_replace_recursive($this->getOptions()['find_args'], $args);
 
         // Sanitize query string and whitelist query param (if possible).
         $this->query = empty($query) ? '' : $this->wire('sanitizer')->selectorValue($query);
@@ -116,7 +116,7 @@ class Query extends Base {
         if (empty($query)) {
             $errors[] = $strings['error_query_missing'];
         } else {
-            $requirements = $this->options['requirements'];
+            $requirements = $this->getOptions()['requirements'];
             if (!empty($requirements['query_min_length']) && mb_strlen($query) < $requirements['query_min_length']) {
                 $errors['error_query_too_short'] = sprintf(
                     $strings['error_query_too_short'],
@@ -156,7 +156,7 @@ class Query extends Base {
             case 'resultsPager':
                 if (empty($this->pager) && !empty($this->results) && $this->results instanceof \ProcessWire\PaginatedArray) {
                     $options = $this->wire('modules')->get('SearchEngine')->options;
-                    $this->pager = $this->results->renderPager($this->options['pager_args']);
+                    $this->pager = $this->results->renderPager($this->getOptions()['pager_args']);
                 }
                 return $this->pager;
                 break;
