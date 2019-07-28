@@ -12,7 +12,7 @@ use \ProcessWire\Inputfield,
  * @property string $themePath Path on disk for the themes directory. Populated in __construct().
  * @property string $themeURL URL for the themes directory. Populated in __construct().
  *
- * @version 0.3.0
+ * @version 0.3.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -544,14 +544,22 @@ class Renderer extends Base {
         // underscores are considered parents – or blocks, if you prefer BEM terminology.
         $parents = [];
         foreach ($args['classes'] as $key => $class) {
+            $class = trim($class);
             if (strpos($key, '_') === false) {
+                // Note: in case the class option contains multiple space-separated values, we use
+                // the first one only.
+                $space_pos = strpos($class, ' ');
+                if ($space_pos !== false) {
+                    $class = substr($class, 0, $space_pos);
+                }
                 $parents[$key] = $class;
             }
         }
         if (!empty($parents)) {
             foreach ($args['classes'] as $key => $class) {
                 if (strpos($class, '&') !== false) {
-                    $parent_class = $parents[substr($key, 0, strpos($key, '_'))] ?? '';
+                    $underscore_pos = strpos($key, '_');
+                    $parent_class = $parents[$underscore_pos ? substr($key, 0, $underscore_pos) : $key] ?? '';
                     $args['classes'][$key] = str_replace('&', $parent_class, $class);
                 }
             }

@@ -488,7 +488,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     public function __call($method, $arguments) {
         if (strpos($method, "render") === 0) {
             $this->maybeInit();
-            return $this->renderer->__call($method, $arguments);
+            return call_user_func_array([$this->renderer, $method], $arguments);
         }
         return parent::__call($method, $arguments);
     }
