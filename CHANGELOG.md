@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.2] - 2019-07-29
+
+### Changed
+- Change SearchEngine.info.json format as an attempt to make the Modules directory read it properly.
+
 ## [0.8.1] - 2019-07-28
 
 ### Fixed
