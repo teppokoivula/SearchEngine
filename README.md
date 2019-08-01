@@ -97,6 +97,21 @@ $query = $modules->get('SearchEngine')->find($input->get->q);
 echo $modules->get('SearchEngine')->renderResults([], $query);
 ```
 
+### Rebuilding the search index
+
+If you want to rebuild (recreate) the search index for all pages or pages matching a specific selector, you can do that via the Admin GUI (module configuration screen), or you can perform following request via the API:
+
+```php
+// All indexable pages:
+$modules->get('SearchEngine')->indexPages();
+
+// Indexable pages matching a selector string:
+$modules->get('SearchEngine')->indexPages('template=basic-page');
+
+// Alternatively index just a single page (passing in a Page object):
+$modules->get('SearchEngine')->indexPage($page);
+```
+
 ## Options
 
 By default the module will create a search index field called 'search_index' and store values from Page fields title, headline, summary, and body to said index field when a page is saved. You can modify the default behaviour via the Module config screen in the PocessWire Admin, or by defining $config->SearchEngine array in your site config file or other applicable location.

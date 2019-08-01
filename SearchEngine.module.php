@@ -14,7 +14,22 @@ use SearchEngine\Config,
  * SearchEngine is a module that creates a searchable index of site contents and provides you with
  * the tools needed to easily set up a fast and effective site search feature.
  *
- * @version 0.8.3
+ * Methods provided by Indexer:
+ *
+ * @method int indexPages(string $selector = null) Index multiple pages.
+ * @method bool indexPage(Page $page, $bool $save = true) Index single page.
+ *
+ * Methods provided by Renderer:
+ *
+ * @method string renderForm(array $args = []) Render a search form.
+ * @method string renderInputfieldForm(array $args = []) Render a search form using InputfieldForm.
+ * @method string renderResults(array $args = [], SearchEngine\Query $query = null) Render a list of search results.
+ * @method string renderPager(array $args = [], SearchEngine\Query $query) Render a pager for search results.
+ * @method string renderStyles(array $args = []) Render link tags for stylesheets of a given theme.
+ * @method string renderScripts(array $args = []) Render script tags for a given theme.
+ * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
+ *
+ * @version 0.9.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -478,8 +493,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     /**
      * Method overloading support
      *
-     * This method provides easy access to Renderer features: when a render* method is requested
-     * from this module, we check if Renderer has a matching method and then call that instead.
+     * This method provides easy access to Renderer and Indexer features: when a render* or index*
+     * method is requested from the module, pass the method call to Renderer or Indexer instead.
      *
      * @param string $method Method name.
      * @param array $arguments Array of arguments.
@@ -489,6 +504,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         if (strpos($method, "render") === 0) {
             $this->maybeInit();
             return call_user_func_array([$this->renderer, $method], $arguments);
+        } else if (strpos($method, "index") === 0) {
+            $this->maybeInit();
+            return call_user_func_array([$this->indexer, $method], $arguments);
         }
         return parent::__call($method, $arguments);
     }

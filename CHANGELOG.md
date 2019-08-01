@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.9.0] - 2019-08-01
+
+### Added
+- Added new "pass through" rules (__call()) to the module for Indexer::index* methods.
+- PHPDoc @method tags to the module for additional methods available via the __call() magic method.
+
 ## [0.8.3] - 2019-07-29
 
 ### Changed
