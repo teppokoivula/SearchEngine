@@ -12,7 +12,7 @@ use \ProcessWire\Inputfield,
  * @property string $themePath Path on disk for the themes directory. Populated in __construct().
  * @property string $themeURL URL for the themes directory. Populated in __construct().
  *
- * @version 0.3.1
+ * @version 0.3.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -398,6 +398,7 @@ class Renderer extends Base {
         // keys and "args" will only have non-numeric keys, we can easily check which is which.
         if (!is_int(key($what))) {
             $args = $what;
+            $what = [];
         }
 
         // Add all options to the "what" array if it's empty.
