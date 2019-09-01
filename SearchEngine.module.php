@@ -114,6 +114,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'desc' => 'summary',
                 'url' => 'url',
             ],
+            'results_json_options' => 0,
             'pager' => true,
             'classes' => [
                 // Keys without underscores are considered parents (blocks). If a child class name

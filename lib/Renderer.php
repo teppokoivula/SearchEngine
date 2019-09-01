@@ -249,7 +249,7 @@ class Renderer extends Base {
             $results['total'] = $query->resultsTotal;
         }
 
-        return json_encode($results);
+        return json_encode($results, $args['results_json_options']);
     }
 
     /**
