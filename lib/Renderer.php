@@ -462,6 +462,7 @@ class Renderer extends Base {
         // keys and "args" will only have non-numeric keys, we can easily check which is which.
         if (!is_int(key($what))) {
             $args = $what;
+            $what = [];
         }
 
         // Add all options to the "what" array if it's empty.

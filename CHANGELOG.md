@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New Renderer::___renderResultsJSON() method for rendering search results as a JSON string.
 - Additional CSS rules to make sure that visited links appear correctly in the default output.
 
+## [0.9.1] - 2019-08-29
+
+### Fixed
+- Clear the "what" array if the first param for Renderer::render() is an array of arguments.
+
 ## [0.9.0] - 2019-08-01
 
 ### Added
