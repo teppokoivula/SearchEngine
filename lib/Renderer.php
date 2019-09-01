@@ -235,11 +235,15 @@ class Renderer extends Base {
         if (!empty($query->results)) {
             $results['results'] = [];
             foreach ($query->results as $result) {
-                $results['results'][] = [
-                    'title' => $result->get($options['results_json_fields']['title'] ?? 'title'),
-                    'desc' => $result->get($options['result_json_fields']['desc'] ?? 'summary'),
-                    'url' => $result->get($options['result_json_fields']['url'] ?? 'url'),
-                ];
+                $results['results'][] = array_map(function($field) use ($result) {
+                    if (strpos($field, 'template.') === 0) {
+                        return $result->template->get(substr($field, 9));
+                    } else if (strpos($field, 'parent.') === 0) {
+                        return $result->parent->get(substr($field, 7));
+                    } else {
+                        return $result->get($field);
+                    }
+                }, $args['results_json_fields']);
             }
             $results['count'] = $query->resultsCount;
             $results['total'] = $query->resultsTotal;
