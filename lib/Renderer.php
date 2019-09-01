@@ -12,7 +12,7 @@ use \ProcessWire\Inputfield,
  * @property string $themePath Path on disk for the themes directory. Populated in __construct().
  * @property string $themeURL URL for the themes directory. Populated in __construct().
  *
- * @version 0.3.1
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -186,6 +186,45 @@ class Renderer extends Base {
         );
 
         return $results;
+    }
+
+    /**
+     * Render search results as JSON
+     *
+     * @param array $args Optional arguments.
+     * @param Query|null $query Optional prepopulated Query object.
+     * @return string Results as JSON
+     */
+    public function ___renderResultsJSON(array $args = [], Query $query = null): string {
+
+        // Prepare args, options, and return value placeholder.
+        $args = $this->prepareArgs($args);
+        $options = $this->getOptions();
+        $results = [];
+
+        // If query is null, fetch results automatically.
+        if (is_null($query)) {
+            $results['query'] = $this->wire('input')->get($options['find_args']['query_param']);
+            if (!empty($results['query'])) {
+                $query = $this->wire('modules')->get('SearchEngine')->find($results['query'], $options['find_args']);
+            }
+        }
+
+        // Populate results data.
+        if (!empty($query->results)) {
+            $results['results'] = [];
+            foreach ($query->results as $result) {
+                $results['results'][] = [
+                    'title' => $result->get($options['results_json_fields']['title'] ?? 'title'),
+                    'desc' => $result->get($options['result_json_fields']['desc'] ?? 'summary'),
+                    'url' => $result->get($options['result_json_fields']['url'] ?? 'url'),
+                ];
+            }
+            $results['count'] = $query->resultsCount;
+            $results['total'] = $query->resultsTotal;
+        }
+
+        return json_encode($results);
     }
 
     /**

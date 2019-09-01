@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- New Renderer::___renderResultsJSON() method for rendering search results as a JSON string.
+
 ## [0.9.0] - 2019-08-01
 
 ### Added

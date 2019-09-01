@@ -189,6 +189,13 @@ $config->SearchEngine = [
         // text with a predefined tag and class (default element is `<strong></strong>`).
         'results_highlight_query' => true,
 
+        // These settings define the fields used when search results are rendered as JSON.
+        'results_json_fields' => [
+            'title' => 'title',
+            'desc' => 'summary',
+            'url' => 'url',
+        ],
+
         // This defines whether a pager should be rendered at the end of the results list.
         'pager' => true,
 
