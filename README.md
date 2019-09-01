@@ -97,6 +97,76 @@ $query = $modules->get('SearchEngine')->find($input->get->q);
 echo $modules->get('SearchEngine')->renderResults([], $query);
 ```
 
+### JSON output
+
+The Renderer class provides support for returning search results as a JSON string, which can be particularly useful for implementing AJAX search features. JSON output is returned by the `Renderer::renderResultsJSON()` method, and you can customise returned keys and values via results_json_fields configuration option.
+
+The results_json_fields is an array of keys and field names. There are two "special" field name prefixes – `template.` and `parent.` – which provide access to template and parent page properties.
+
+Here's an example of how you might use the renderResultsJSON() method in your own code:
+
+```
+// Get the SearchEngine module.
+$se = $modules->get('SearchEngine');
+
+// Find pages matching our keyword ("composer"). You could also omit the query and let SearchEngine
+// grab the keyword from the configured query GET param (if present).
+$query = $se->find('composer');
+
+// Return results as JSON.
+$json = $se->renderResultsJSON([
+    'results_json_fields' => [
+        'title' => 'title',
+        'desc' => 'summary',
+        'url' => 'url',
+        'parent' => 'parent.title',
+        'template' => 'template.label',
+    ],
+    'results_json_options' => JSON_PRETTY_PRINT,
+], $query);
+
+var_dump($json);
+```
+
+... which, for an example, might result in following output:
+
+```
+{
+    "results": [
+        {
+            "title": "Git ignore (.gitignore) file",
+            "desc": "<p>The Wireframe boilerplate site profile includes an opinionated .gitignore file based on Bare Minimum Git project.<\/p>",
+            "url": "\/docs\/wireframe-boilerplate\/git-ignore-file\/",
+            "parent": "Wireframe boilerplate",
+            "template": "Basic page"
+        },
+        {
+            "title": "Directory structure",
+            "desc": "<p>The directory structure outlined here is loosely based on the <a href=\"http:\/\/framework.zend.com\/manual\/1.12\/en\/project-structure.project.html\" rel=\"nofollow\">recommended project directory structure for Zend Framework 1.x<\/a>. Each component has it's place in the tree, and each directory exists for a reason.<\/p>",
+            "url": "\/docs\/directory-structure\/",
+            "parent": "Docs",
+            "template": "Basic page"
+        },
+        {
+            "title": "Wireframe boilerplate",
+            "desc": "<p>Wireframe boilerplate is a ProcessWire starter site profile based on the Wireframe output framework.<\/p>",
+            "url": "\/docs\/wireframe-boilerplate\/",
+            "parent": "Docs",
+            "template": "Basic page"
+        },
+        {
+            "title": "ProcessWire Composer Installer",
+            "desc": "<p>ProcessWire Composer Installer provides <a href=\"https:\/\/getcomposer.org\/doc\/articles\/custom-installers.md\" rel=\"nofollow\">Composer custom installers<\/a> for ProcessWire CMS\/CMF modules and site profiles. While not strictly required by Wireframe, it is an easy way to get started with either Wireframe or the Wireframe Boilerplate site profile.<\/p>",
+            "url": "\/docs\/processwire-composer-installer\/",
+            "parent": "Docs",
+            "template": "Basic page"
+        }
+    ],
+    "count": 4,
+    "total": 4
+}
+```
+
 ### Rebuilding the search index
 
 If you want to rebuild (recreate) the search index for all pages or pages matching a specific selector, you can do that via the Admin GUI (module configuration screen), or you can perform following request via the API:
@@ -195,6 +265,10 @@ $config->SearchEngine = [
             'desc' => 'summary',
             'url' => 'url',
         ],
+
+        // This integer is passed to the json_encode call in renderResultsJSON method.
+        // See https://www.php.net/json_encode for supported values.
+        'results_json_options' => 0,
 
         // This defines whether a pager should be rendered at the end of the results list.
         'pager' => true,
