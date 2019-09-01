@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - New Renderer::___renderResultsJSON() method for rendering search results as a JSON string.
+- Additional CSS rules to make sure that visited links appear correctly in the default output.
 
 ## [0.9.0] - 2019-08-01
 
