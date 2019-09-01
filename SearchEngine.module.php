@@ -24,12 +24,13 @@ use SearchEngine\Config,
  * @method string renderForm(array $args = []) Render a search form.
  * @method string renderInputfieldForm(array $args = []) Render a search form using InputfieldForm.
  * @method string renderResults(array $args = [], SearchEngine\Query $query = null) Render a list of search results.
+ * @method string renderResultsJSON(array $args = [], SearchEngine\Query $query = null) Render a list of search results as JSON.
  * @method string renderPager(array $args = [], SearchEngine\Query $query) Render a pager for search results.
  * @method string renderStyles(array $args = []) Render link tags for stylesheets of a given theme.
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.9.1
+ * @version 0.10.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -108,6 +109,12 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_id' => 'se-results',
             'result_summary_field' => 'summary',
             'results_highlight_query' => true,
+            'results_json_fields' => [
+                'title' => 'title',
+                'desc' => 'summary',
+                'url' => 'url',
+            ],
+            'results_json_options' => 0,
             'pager' => true,
             'classes' => [
                 // Keys without underscores are considered parents (blocks). If a child class name

@@ -9,14 +9,35 @@ use \ProcessWire\Inputfield,
 /**
  * SearchEngine Renderer
  *
- * @property string $themePath Path on disk for the themes directory. Populated in __construct().
- * @property string $themeURL URL for the themes directory. Populated in __construct().
+ * @property-read string $form Rendered search form.
+ * @property-read string $inputfieldForm Rendered search form using ProcessWire InputfieldForm class.
+ * @property-read string $results Rendered search results.
+ * @property-read string $styles Rendered styles (link tags).
+ * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.3.2
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
 class Renderer extends Base {
+
+    /**
+     * Path on disk for the themes directory
+     *
+     * Populated in __construct().
+     *
+     * @var string
+     */
+    protected $themePath;
+
+    /**
+     * URL for the themes directory
+     *
+     * Populated in __construct().
+     *
+     * @var string
+     */
+    protected $themeURL;
 
     /**
      * Constructor method
@@ -186,6 +207,49 @@ class Renderer extends Base {
         );
 
         return $results;
+    }
+
+    /**
+     * Render search results as JSON
+     *
+     * @param array $args Optional arguments.
+     * @param Query|null $query Optional prepopulated Query object.
+     * @return string Results as JSON
+     */
+    public function ___renderResultsJSON(array $args = [], Query $query = null): string {
+
+        // Prepare args, options, and return value placeholder.
+        $args = $this->prepareArgs($args);
+        $options = $this->getOptions();
+        $results = [];
+
+        // If query is null, fetch results automatically.
+        if (is_null($query)) {
+            $results['query'] = $this->wire('input')->get($options['find_args']['query_param']);
+            if (!empty($results['query'])) {
+                $query = $this->wire('modules')->get('SearchEngine')->find($results['query'], $options['find_args']);
+            }
+        }
+
+        // Populate results data.
+        if (!empty($query->results)) {
+            $results['results'] = [];
+            foreach ($query->results as $result) {
+                $results['results'][] = array_map(function($field) use ($result) {
+                    if (strpos($field, 'template.') === 0) {
+                        return $result->template->get(substr($field, 9));
+                    } else if (strpos($field, 'parent.') === 0) {
+                        return $result->parent->get(substr($field, 7));
+                    } else {
+                        return $result->get($field);
+                    }
+                }, $args['results_json_fields']);
+            }
+            $results['count'] = $query->resultsCount;
+            $results['total'] = $query->resultsTotal;
+        }
+
+        return json_encode($results, $args['results_json_options']);
     }
 
     /**
@@ -450,6 +514,10 @@ class Renderer extends Base {
 
     /**
      * Prepare arguments for use
+     *
+     * This method takes render args defined via configuration settings etc. and combines them with
+     * provided array of custom arguments. Args required in this class are primarily based on the
+     * render_args setting, but for convenience we're also merging in the find_args setting.
      *
      * @param array $args Original arguments array.
      * @return array Prepared arguments array.
