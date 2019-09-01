@@ -9,14 +9,35 @@ use \ProcessWire\Inputfield,
 /**
  * SearchEngine Renderer
  *
- * @property string $themePath Path on disk for the themes directory. Populated in __construct().
- * @property string $themeURL URL for the themes directory. Populated in __construct().
+ * @property-read string $form Rendered search form.
+ * @property-read string $inputfieldForm Rendered search form using ProcessWire InputfieldForm class.
+ * @property-read string $results Rendered search results.
+ * @property-read string $styles Rendered styles (link tags).
+ * @property-read string $scripts Rendered styles (script tags).
  *
  * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
 class Renderer extends Base {
+
+    /**
+     * Path on disk for the themes directory
+     *
+     * Populated in __construct().
+     *
+     * @var string
+     */
+    protected $themePath;
+
+    /**
+     * URL for the themes directory
+     *
+     * Populated in __construct().
+     *
+     * @var string
+     */
+    protected $themeURL;
 
     /**
      * Constructor method
@@ -488,6 +509,10 @@ class Renderer extends Base {
 
     /**
      * Prepare arguments for use
+     *
+     * This method takes render args defined via configuration settings etc. and combines them with
+     * provided array of custom arguments. Args required in this class are primarily based on the
+     * render_args setting, but for convenience we're also merging in the find_args setting.
      *
      * @param array $args Original arguments array.
      * @return array Prepared arguments array.
