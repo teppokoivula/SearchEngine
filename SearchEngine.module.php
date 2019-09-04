@@ -30,7 +30,7 @@ use SearchEngine\Config,
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.10.0
+ * @version 0.10.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -443,7 +443,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             $index_field->collapsed = Inputfield::collapsedHidden;
             $this->wire('fields')->save($index_field);
             $this->message(sprintf(
-                $this->_('Index filed "%s" created. Please add this field to templates you want to make searchable.'),
+                $this->_('Index field "%s" created. Please add this field to templates you want to make searchable.'),
                 $index_field->name
             ));
         }
