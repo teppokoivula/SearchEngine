@@ -112,7 +112,11 @@ class Indexer extends Base {
             // Check for Page properties, which are not included in the fields property of a Page.
             if (in_array('name', $indexed_fields)) {
                 $name_prefix = $args['name_prefix'] ?? '';
-                $index[self::META_PREFIX . $prefix . 'name'] = $name_prefix . $this->getIndexValue($page, 'name');
+                $meta_key = self::META_PREFIX . 'names';
+                if (empty($index[$meta_key])) {
+                    $index[$meta_key] = [];
+                }
+                $index[$meta_key][rtrim($prefix, '.')] = $name_prefix . $this->getIndexValue($page, 'name');
             }
         }
         return $index;
@@ -155,10 +159,12 @@ class Indexer extends Base {
      */
     protected function ___getRepeatableIndexValue(\Processwire\Page $page, \ProcessWire\Field $field, array $indexed_fields = [], string $prefix = ''): array {
         $index = [];
+        $index_num = 0;
         foreach ($page->get($field->name) as $child) {
             // Note: union operator is slightly faster than array_merge() and makes sense
             // here since we're working with associative arrays only.
-            $index += $this->getPageIndex($child, $indexed_fields, $prefix . $field->name . '.' . $child->name . '.');
+            $index += $this->getPageIndex($child, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.');
+            ++$index_num;
         }
         return $index;
     }
@@ -177,10 +183,12 @@ class Indexer extends Base {
         $page_ref = $page->getUnformatted($field->name);
         if ($page_ref instanceof \ProcessWire\PageArray && $page_ref->count()) {
             $name_prefix = $field->name . ':';
+            $index_num = 0;
             foreach ($page_ref as $page_ref_page) {
-                $index += $this->getPageIndex($page_ref_page, $indexed_fields, $prefix . $field->name . '.' . $page_ref_page->name . '.', [
+                $index += $this->getPageIndex($page_ref_page, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.', [
                     'name_prefix' => $name_prefix,
                 ]);
+                ++$index_num;
             }
         }
         return $index;
@@ -214,9 +222,7 @@ class Indexer extends Base {
             }
             $processed_index = strip_tags($processed_index);
             $processed_index = preg_replace('/\s+/', ' ', $processed_index);
-            if (!empty($meta_index)) {
-                $processed_index .= json_encode($meta_index, JSON_UNESCAPED_UNICODE);
-            }
+            $processed_index .= "\n" . (empty($meta_index) ? '{}' : json_encode($meta_index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
         return $processed_index;
     }
@@ -224,18 +230,17 @@ class Indexer extends Base {
     /**
      * Create an index of URLs
      *
-     * Grab URLs from field data, mash them together into a space separated string,
-     * and return the resulting string. This allows us to search specificallly for
-     * links by using "link:https://URL" syntax ("link:" prefix is configurable).
+     * Find URLs from field data and return them as an array. This allows us to search for links
+     * with "link:https://URL" syntax (link prefix is configurable but defaults to "link:").
      *
      * @param string $data
-     * @return string
+     * @return array
      */
-    protected function getURLIndex(string $data): string {
-        $index = '';
+    protected function getURLIndex(string $data): array {
+        $index = [];
         if (!empty($data) && preg_match_all('/href=([\"\'])(.*?)\1/i', $data, $matches)) {
             $link_prefix = $this->getOptions()['prefixes']['link'];
-            $index = $link_prefix . implode(' ' . $link_prefix, $matches[2]);
+            $index[] = $link_prefix . implode(' ' . $link_prefix, $matches[2]);
         }
         return $index;
     }
