@@ -64,8 +64,9 @@ class Indexer extends Base {
             $index = $this->getPageIndex($page, $options['indexed_fields']);
             $index = $this->processIndex($index);
             if ($save) {
-                $this->wire('pages')->save($page, $index_field, $index, [
+                $page->setAndSave($index_field, $index, [
                     'quiet' => true,
+                    'noHooks' => true,
                 ]);
             } else {
                 $page->set($index_field, $index);

@@ -12,6 +12,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for indexing non-field Page properties (currently applies to name only).
 - New hookable method Indexer::___getPageReferenceIndexValue().
 
+### Changed
+- Index value gets saved in Pages::saved instead of Pages::saveReady so that we can avoid messing with the regular save process.
+
+### Fixed
+- Fixed the "save" behaviour of the Indexer::indexPage() method.
+
 ## [0.10.1] - 2019-09-04
 
 ### Fixed

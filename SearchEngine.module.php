@@ -230,7 +230,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         $this->addHookBefore('Modules::saveModuleConfigData', $this, 'saveConfigData');
 
         // Update search index when a page is saved.
-        $this->addHook('Pages::saveReady', $this, 'savePageIndex');
+        $this->addHookBefore('Pages::saved', $this, 'savePageIndex');
     }
 
     /**
@@ -293,7 +293,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     protected function savePageIndex(HookEvent $event) {
         $this->maybeInit();
         $page = $event->arguments[0];
-        $this->indexer->indexPage($page, false);
+        $this->indexer->indexPage($page);
     }
 
     /**
