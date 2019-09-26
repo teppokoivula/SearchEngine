@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - Support for indexing Page Reference fields.
-- Support for indexing non-field Page properties (currently applies to name only).
+- Support for indexing non-field Page properties (id, name).
 - New hookable method Indexer::___getPageReferenceIndexValue().
 
 ### Changed

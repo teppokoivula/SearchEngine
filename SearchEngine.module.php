@@ -75,7 +75,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'FieldtypePage',
         ],
         'prefixes' => [
+            'id' => '{field.name}:',
             'link' => 'link:',
+            'name' => '{field.name}:',
         ],
         'find_args' => [
             'limit' => 20,

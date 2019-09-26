@@ -101,6 +101,7 @@ class Indexer extends Base {
                         $index += $this->getRepeatableIndexValue($page, $field, $indexed_fields, $prefix);
                     } else if ($field->type instanceof \ProcessWire\FieldtypePage) {
                         $indexed_page_reference_fields = [
+                            'id',
                             'name',
                             'title',
                         ];
@@ -111,13 +112,15 @@ class Indexer extends Base {
                 }
             }
             // Check for Page properties, which are not included in the fields property of a Page.
-            if (in_array('name', $indexed_fields)) {
-                $name_prefix = $args['name_prefix'] ?? '';
-                $meta_key = self::META_PREFIX . 'names';
-                if (empty($index[$meta_key])) {
-                    $index[$meta_key] = [];
+            $properties = [
+                'ids' => 'id',
+                'names' => 'name',
+            ];
+            foreach ($properties as $property_key => $property) {
+                if (in_array($property, $indexed_fields)) {
+                    $property_prefix = $args[$property . '_prefix'] ?? '';
+                    $index[self::META_PREFIX . $property_key . '.' . rtrim($prefix, '.')] = $property_prefix . $this->getIndexValue($page, $property);
                 }
-                $index[$meta_key][rtrim($prefix, '.')] = $name_prefix . $this->getIndexValue($page, 'name');
             }
         }
         return $index;
@@ -183,12 +186,14 @@ class Indexer extends Base {
         $index = [];
         $page_ref = $page->getUnformatted($field->name);
         if ($page_ref instanceof \ProcessWire\PageArray && $page_ref->count()) {
-            $name_prefix = $field->name . ':';
             $index_num = 0;
+            $prefixes = $this->getOptions()['prefixes'];
+            $args = [
+                'id_prefix' => str_replace('{field.name}', $field->name, $prefixes['id']),
+                'name_prefix' => str_replace('{field.name}', $field->name, $prefixes['name']),
+            ];
             foreach ($page_ref as $page_ref_page) {
-                $index += $this->getPageIndex($page_ref_page, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.', [
-                    'name_prefix' => $name_prefix,
-                ]);
+                $index += $this->getPageIndex($page_ref_page, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.', $args);
                 ++$index_num;
             }
         }
@@ -212,7 +217,20 @@ class Indexer extends Base {
                 // Identify and capture values belonging to the meta index (non-field values).
                 if (strpos($index_key, self::META_PREFIX) === 0) {
                     $meta_key = substr($index_key, strlen(self::META_PREFIX));
-                    $meta_index[$meta_key] = $index_value;
+                    if (substr_count($meta_key, '.') > 1) {
+                        // Note: index is always a flat assoc array, but a key with multiple dots
+                        // means that the value needs to be stored as a multi-dimensional array.
+                        list($meta_parent, $meta_child, $meta_name) = explode('.', $meta_key);
+                        if (empty($meta_index[$meta_parent])) {
+                            $meta_index[$meta_parent] = [];
+                        }
+                        if (empty($meta_index[$meta_parent][$meta_child])) {
+                            $meta_index[$meta_parent][$meta_child] = [];
+                        }
+                        $meta_index[$meta_parent][$meta_child] += [$meta_name => $index_value];
+                    } else {
+                        $meta_index[$meta_key] = $index_value;
+                    }
                     unset($index[$index_key]);
                 }
             }
