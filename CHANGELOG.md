@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2019-09-26
+
+### Changed
+- Index value gets saved in Pages::savedPageOrField instead of Pages::saved.
+
 ## [0.11.0] - 2019-09-26
 
 ### Added
