@@ -2,12 +2,6 @@
 
 namespace ProcessWire;
 
-use SearchEngine\Config,
-    SearchEngine\Finder,
-    SearchEngine\Indexer,
-    SearchEngine\Query,
-    SearchEngine\Renderer;
-
 /**
  * SearchEngine ProcessWire module
  *
@@ -30,7 +24,7 @@ use SearchEngine\Config,
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.12.0
+ * @version 0.12.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -243,7 +237,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function getModuleConfigInputfields(array $data) {
         $this->maybeInit();
-        return $this->wire(new Config($data))->getFields();
+        return $this->wire(new \SearchEngine\Config($data))->getFields();
     }
 
     /**
@@ -301,13 +295,13 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     /**
      * Find content matching provided query.
      *
-     * This method is a wrapper for Finder::find().
+     * This method is a wrapper for \SearchEngine\Finder::find().
      *
      * @param mixed $query The query.
      * @param array $args Additional arguments, see Query::__construct() for details.
-     * @return Query Resulting Query object.
+     * @return \SearchEngine\Query Resulting Query object.
      */
-    public function find($query = null, array $args = []): Query {
+    public function find($query = null, array $args = []): \SearchEngine\Query {
         $this->maybeInit();
         return $this->finder->find($query, $args);
     }
@@ -336,13 +330,13 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         );
 
         // Init SearchEngine Indexer.
-        $this->indexer = $this->wire(new Indexer());
+        $this->indexer = $this->wire(new \SearchEngine\Indexer());
 
         // Init SearchEngine Finder.
-        $this->finder = $this->wire(new Finder());
+        $this->finder = $this->wire(new \SearchEngine\Finder());
 
         // Init SearchEngine Renderer.
-        $this->renderer = $this->wire(new Renderer());
+        $this->renderer = $this->wire(new \SearchEngine\Renderer());
 
         // Remember that the module has been initialized.
         $this->initialized = true;
