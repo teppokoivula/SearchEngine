@@ -60,6 +60,10 @@ $searchEngine = $modules->get('SearchEngine');
 </body>
 ```
 
+### Multilanguage use (language support)
+
+SearchEngine supports indexing multilingual content. Once ProcessWire's native multilanguage features are enabled, support for multilanguage indexing can be enabled by converting the index field to FieldtypeTextareaLanguage.
+
 ### Advanced use
 
 If you render the results list with one of the methods mentioned earlier, SearchEngine will automatically look for the query param defined in its settings – and if this param is found (GET), it will perform a search query for you. If you don't want the module to handle this part for you, you can also perform the query yourself (or just don't render the results list).

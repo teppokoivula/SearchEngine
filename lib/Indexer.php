@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.4.0
+ * @version 0.5.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -61,15 +61,34 @@ class Indexer extends Base {
         $options = $this->getOptions();
         $index_field = $options['index_field'];
         if ($page->id && $page->hasField($index_field)) {
-            $index = $this->getPageIndex($page, $options['indexed_fields']);
-            $index = $this->processIndex($index);
-            if ($save) {
-                $page->setAndSave($index_field, $index, [
-                    'quiet' => true,
-                    'noHooks' => true,
-                ]);
+            if ($this->wire('modules')->isInstalled('LanguageSupport') && $this->wire('fields')->get($index_field)->type == 'FieldtypeTextareaLanguage') {
+                foreach ($this->wire('languages') as $language) {
+                    $index = $this->getPageIndex($page, $options['indexed_fields'], '', [
+                        'language' => $language,
+                    ]);
+                    $index = $this->processIndex($index);
+                    $page->get($index_field)->setLanguageValue($language, $index);
+                }
+                if ($save) {
+                    $of = $page->of();
+                    $page->of(false);
+                    $page->save($index_field, [
+                        'quiet' => true,
+                        'noHooks' => true,
+                    ]);
+                    $page->of($of);
+                }
             } else {
-                $page->set($index_field, $index);
+                $index = $this->getPageIndex($page, $options['indexed_fields'], '');
+                $index = $this->processIndex($index);
+                if ($save) {
+                    $page->setAndSave($index_field, $index, [
+                        'quiet' => true,
+                        'noHooks' => true,
+                    ]);
+                } else {
+                    $page->set($index_field, $index);
+                }
             }
             return true;
         }
@@ -87,6 +106,12 @@ class Indexer extends Base {
      */
     protected function ___getPageIndex(\ProcessWire\Page $page, array $indexed_fields = [], string $prefix = '', array $args = []): array {
         $index = [];
+        $user_language = null;
+        if (!empty($args['language'])) {
+            // Change current user's language to the one we're currently processing
+            $user_language = $this->wire('user')->language;
+            $this->wire('user')->language = $args['language'];
+        }
         if ($page->id && !empty($indexed_fields)) {
             $repeatable_fieldtypes = [
                 'FieldtypePageTable',
@@ -123,6 +148,10 @@ class Indexer extends Base {
                 }
             }
         }
+        if (!empty($user_language)) {
+            // Restore current user's original language
+            $this->wire('user')->language = $user_language;
+        }
         return $index;
     }
 
@@ -138,7 +167,7 @@ class Indexer extends Base {
         $field_name = $field;
         if ($field instanceof \ProcessWire\Field) {
             if ($field->type instanceof \ProcessWire\FieldtypeFile) {
-                $value = $page->getUnformatted($field->name)->implode(' ', function($item) {
+                return $page->getUnformatted($field->name)->implode(' ', function($item) {
                     return implode(' ', array_filter([
                         $item->name,
                         $item->description,
