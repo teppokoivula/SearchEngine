@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.12.2
+ * @version 0.13.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -235,16 +235,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function getModuleConfigInputfields(array $data) {
         $this->initOnce();
-        if (!empty($data['index_field'])) {
-            $index_field = $this->wire('fields')->get($data['index_field']);
-            if (!$index_field->getTemplates()->count()) {
-                $this->wire->message(sprintf(
-                    $this->_('Index field "%s" hasn\'t been added to any templates yet. Add to one or more templates to start indexing content.'),
-                    $index_field->name
-                ));
-            }
-        }
-        return $this->wire(new \SearchEngine\Config($data))->getFields();
+        $config = new \SearchEngine\Config($data);
+        $config->validateIndexField();
+        return $config->getFields();
     }
 
     /**
@@ -414,8 +407,6 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * Note: if the index field is used by any templates when the module is uninstalled, it won't be
      * automatically removed. Instead the user will see a message prompting them to delete the field
      * if it's no longer needed.
-     *
-     * @throws WireException if field matching the name of the search index field exists but is incompatible.
      */
     public function install() {
 
@@ -423,21 +414,32 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         $this->initOptions();
 
         // Create search index field (unless it already exists).
-        $index_field = $this->wire('fields')->get($this->options['index_field']);
+        $this->createIndexField($this->options['index_field']);
+    }
+
+    /**
+     * Attempt to create the index field. If suitable field already exists, use the existing field.
+     *
+     * @param string $index_field_name Index field name.
+     * @param string|null $redirect_url Optional redirect URL.
+     * @return null|Field Index field, or null if unsuitable field with conflicting name was found.
+     */
+    public function createIndexField(string $index_field_name, string $redirect_url = null): ?Field {
+        $index_field = $this->getIndexfield($index_field_name);
         if ($index_field) {
-            if ($index_field->type == 'FieldtypeTextarea') {
+            if ($index_field->_is_valid_index_field) {
                 // Use existing index field.
                 $this->message(sprintf(
-                    $this->_('Index field "%s" already exists and is of expected type (FieldtypeTextarea). Using existing field.'),
-                    $index_field->name
+                    $this->_('Index field "%s" already exists and is of expected type (%s). Using existing field.'),
+                    $index_field->name,
+                    $index_field->type->name
                 ));
             } else {
-                // Incompatible field found, throw WireException.
-                throw new WireException(sprintf(
-                    $this->_('Index field "%s" already exists but is not of compatible type (%s). Please remove this field first, or override the "index_field" setting of the SearchEngine module.'),
-                    $index_field->name,
-                    $index_field->type
+                $this->error(sprintf(
+                    $this->_('Index field "%s" already exists but is not of compatible type. Please remove this field and create the index field, or override the "index_field" setting of the SearchEngine module.'),
+                    $index_field->name
                 ));
+                $index_field = null;
             }
         } else {
             // Create new index field.
@@ -451,6 +453,30 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 $index_field->name
             ));
         }
+        if (!empty($redirect_url)) {
+            $this->wire('session')->redirect($redirect_url, false);
+        }
+        return $index_field;
+    }
+
+    /**
+     * Get index field
+     *
+     * @param string $index_field_name Index field name.
+     * @return null|Field Index field or null.
+     */
+    public function getIndexField(string $index_field_name): ?Field {
+        $index_field = $this->wire('fields')->get($index_field_name);
+        if ($index_field) {
+            if ($index_field->type == 'FieldtypeTextarea' || $index_field->type == 'FieldtypeTextareaLanguage') {
+                // Compatible index field found.
+                $index_field->_is_valid_index_field = true;
+            } else {
+                // Incompatible field found, display an error.
+                $index_field->_is_valid_index_field = false;
+            }
+        }
+        return $index_field;
     }
 
     /**
@@ -463,8 +489,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         $this->initOptions();
 
         // Remove search index field (if it exists and unless it's still in use).
-        $index_field = $this->wire('fields')->get($this->options['index_field']);
-        if ($index_field) {
+        $index_field = $this->getIndexField($this->options['index_field']);
+        if ($index_field && $index_field->_is_valid_index_field) {
             $used_by_templates = $index_field->getTemplates();
             if (count($used_by_templates)) {
                 $this->message(sprintf(

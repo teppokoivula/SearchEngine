@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.13.0] - 2019-11-09
+
+### Added
+- New validations for index field for module config screen, and an option for automatically creating the index field.
+
+### Fixed
+- Fixed an issue where module config screen wasn't detecting FieldtypeTextareaLanguage as a valid index field type.
+
 ## [0.12.1] - 2019-11-07
 
 ### Fixed

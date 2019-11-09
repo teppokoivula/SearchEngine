@@ -8,7 +8,7 @@ use ProcessWire\InputfieldWrapper,
 /**
  * SearchEngine Config
  *
- * @version 0.2.1
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -29,6 +29,42 @@ class Config extends Base {
     public function __construct(array $data) {
         parent::__construct();
         $this->data = $data;
+    }
+
+    /**
+     * Validate (and optionally create new) index field
+     */
+    public function validateIndexField() {
+        $index_field_name = $data['index_field'] ?? $this->getOptions()['index_field'] ?? null;
+        if (!empty($index_field_name)) {
+            $index_field_name = $this->wire('sanitizer')->fieldName($index_field_name);
+            $create_link_base = $this->wire('config')->urls->admin . 'module/edit?name=SearchEngine&create_index_field=';
+            $search_engine = $this->wire('modules')->get('SearchEngine');
+            if ($this->wire('input')->get('create_index_field') == 1) {
+                $index_field = $search_engine->createIndexField($index_field_name, $create_link_base . '2');
+            }
+            $index_field = $search_engine->getIndexField($index_field_name);
+            if (!$index_field) {
+                $create_link = ' <a href="' . $create_link_base . '1">'
+                             . $this->_('Click here to create the index field automatically.')
+                             . '</a>';
+                $this->wire->message(sprintf(
+                    $this->_('Index field "%s" (FieldtypeTextarea or FieldtypeTextareaLanguage) doesn\'t exist.'),
+                    $index_field_name
+                ) . $create_link, \ProcessWire\Notice::allowMarkup);
+            } else if (!$index_field->_is_valid_index_field) {
+                $this->wire->error(sprintf(
+                    $this->_('Index field "%s" exists but is of incompatible type (%s). Please create a new index field or convert existing field to a supported type (FieldtypeTextarea or FieldtypeTextareaLanguage).'),
+                    $index_field_name,
+                    $index_field->type->name
+                ));
+            } else if (!$index_field->getTemplates()->count()) {
+                $this->wire->message(sprintf(
+                    $this->_('Index field "%s" hasn\'t been added to any templates yet. Add to one or more templates to start indexing content.'),
+                    $index_field_name
+                ));
+            }
+        }
     }
 
     /**
