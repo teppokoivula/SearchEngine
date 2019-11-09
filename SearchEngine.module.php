@@ -235,6 +235,15 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function getModuleConfigInputfields(array $data) {
         $this->initOnce();
+        if (!empty($data['index_field'])) {
+            $index_field = $this->wire('fields')->get($data['index_field']);
+            if (!$index_field->getTemplates()->count()) {
+                $this->wire->message(sprintf(
+                    $this->_('Index field "%s" hasn\'t been added to any templates yet. Add to one or more templates to start indexing content.'),
+                    $index_field->name
+                ));
+            }
+        }
         return $this->wire(new \SearchEngine\Config($data))->getFields();
     }
 
