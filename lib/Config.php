@@ -110,7 +110,7 @@ class Config extends Base {
         $index_field->name = 'index_field';
         $index_field->label = $this->_('Select index field');
         foreach ($this->wire('fields')->getAll() as $field) {
-            if ($field->type != 'FieldtypeTextarea') {
+            if ($field->type != 'FieldtypeTextarea' && $field->type != 'FieldtypeTextareaLanguage') {
                 continue;
             }
             $index_field->addOption($field->name);
