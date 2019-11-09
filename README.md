@@ -46,14 +46,14 @@ Finally, here's the "manual approach" – this involves some additional steps, b
 $searchEngine = $modules->get('SearchEngine');
 ...
 <head>
-    <?= $searchengine->renderStyles() ?>
-    <?= echo $searchengine->renderScripts() ?>
+    <?= $searchEngine->renderStyles() ?>
+    <?= $searchEngine->renderScripts() ?>
 </head>
 <body>
     <?php
     // Note: results are rendered before form because this way the form instantly
     // has access to whitelisted query string (if a search was already performed).
-    $results = $searchengine->renderResults();
+    $results = $searchEngine->renderResults();
     $form = $searchEngine->renderForm();
     echo $form . $results;
     ?>
@@ -73,7 +73,7 @@ You can access the search index field just like any other ProcessWire field with
 ```php
 if ($q = $sanitizer->selectorValue($input->get->q)) {
     // This finds pages matching the query string and returns them as a PageArray:
-    $results = $pages->find('search_index%=' . $query_string . ', limit=25');
+    $results = $pages->find('search_index%=' . $q . ', limit=25');
 
     // Render results and pager with PageArray::render() and PageArray::renderPager():
     echo $results->render(); // PageArray::render()
