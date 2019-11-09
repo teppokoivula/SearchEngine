@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.12.1
+ * @version 0.12.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -236,7 +236,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @return InputfieldWrapper Wrapper with inputfields needed to configure the module.
      */
     public function getModuleConfigInputfields(array $data) {
-        $this->maybeInit();
+        $this->initOnce();
         return $this->wire(new \SearchEngine\Config($data))->getFields();
     }
 
@@ -255,7 +255,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         }
 
         // Make sure that the module has been initialized.
-        $this->maybeInit();
+        $this->initOnce();
 
         // Build an index and make sure that the index_pages_now setting doesn't get saved.
         $data = $event->arguments[1];
@@ -287,7 +287,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @param HookEvent $event
      */
     protected function savePageIndex(HookEvent $event) {
-        $this->maybeInit();
+        $this->initOnce();
         $page = $event->arguments[0];
         $this->indexer->indexPage($page);
     }
@@ -302,7 +302,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @return \SearchEngine\Query Resulting Query object.
      */
     public function find($query = null, array $args = []): \SearchEngine\Query {
-        $this->maybeInit();
+        $this->initOnce();
         return $this->finder->find($query, $args);
     }
 
@@ -313,7 +313,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * This is done in a seprate module to avoid loading or doing unnecessary stuff, since we can't
      * really limit the scope of the module autoload (need to be able to catch any page save, etc.)
      */
-    protected function maybeInit() {
+    protected function initOnce() {
 
         // Bail out early if the module has already been initialized
         if ($this->initialized) {
@@ -368,7 +368,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @return SearchEngine Self-reference.
      */
     public function setOptions(array $options): SearchEngine {
-        $this->maybeInit();
+        $this->initOnce();
         $this->options = array_replace_recursive(
             $this->options,
             $options
@@ -506,10 +506,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function __call($method, $arguments) {
         if (strpos($method, "render") === 0) {
-            $this->maybeInit();
+            $this->initOnce();
             return call_user_func_array([$this->renderer, $method], $arguments);
         } else if (strpos($method, "index") === 0) {
-            $this->maybeInit();
+            $this->initOnce();
             return call_user_func_array([$this->indexer, $method], $arguments);
         }
         return parent::__call($method, $arguments);

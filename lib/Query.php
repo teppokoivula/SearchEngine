@@ -5,16 +5,16 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.1.2
+ * @version 0.1.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  *
- * @property-read string selector Final selector string.
- * @property-read string resultsString Results rendered as a list (PageArray).
- * @property-read int ResultsCount Number of visible results.
- * @property-read int resultsTotal Number of total results.
- * @property-read string pager Rendered pager or empty string if not supported.
- * @property-read string ResultsPager Rendered pager or empty string if not supported.
+ * @property-read string $selector Final selector string.
+ * @property-read string $resultsString Results rendered as a list (PageArray).
+ * @property-read int $resultsCount Number of visible results.
+ * @property-read int $resultsTotal Number of total results.
+ * @property-read string $pager Rendered pager or empty string if not supported.
+ * @property-read string $resultsPager Rendered pager or empty string if not supported.
  */
 class Query extends Base {
 
@@ -213,7 +213,7 @@ class Query extends Base {
      *
      * @return string
      */
-    public function getSelector() {
+    public function getSelector(): string {
         $options = $this->wire('modules')->get('SearchEngine')->options;
         return implode(', ', array_filter([
             empty($this->args['limit']) ? '' : 'limit=' . $this->args['limit'],
