@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Display additions and removals in module config screen when compatible fieldtypes have been modified.
 
+### Changed
+- Adjustments to MarkupPagerNav default settings and the default theme for a more generic layout.
+
 ## [0.13.0] - 2019-11-09
 
 ### Added

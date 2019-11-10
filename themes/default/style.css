@@ -12,6 +12,7 @@
 
 .search-form__label,
 .search-form__input,
+.search-form__input[type="search"],
 .search-form__submit {
     border: 0;
     font-size: 1rem;
@@ -28,9 +29,13 @@
     width: 1px;
 }
 
-.search-form__input {
-    flex: 1;
+.search-form__input,
+.search-form__input[type="search"] {
     border-radius: 50%;
+    box-shadow: none;
+    flex: 1;
+    height: auto;
+    margin: 0;
     /* Android */
     width: 100%;
 }
@@ -40,6 +45,7 @@
     border-radius: 50%;
     color: #fff;
     cursor: pointer;
+    margin: 0;
     opacity: .8;
     transition: opacity .25s;
 }
@@ -61,6 +67,7 @@
 
 .search-results__list {
     list-style-type: none;
+    margin-left: 0;
     padding-left: 0;
 }
 
@@ -105,48 +112,49 @@
     background: #fff;
     border: .0625rem solid #d9d9d9;
     display: flex;
-    margin: 0 0 2rem 0;
+    flex-wrap: wrap;
+    margin: 0 0 2rem;
     overflow: hidden;
     padding: .25rem;
 }
 
-.search-results-pager__item,
+.search-results-pager__list-item,
 .search-results-pager__separator{
     list-style: none;
     margin: 0;
+    padding: 0;
 }
 
-.search-results-pager a,
-.search-results-pager a:visited,
+.search-results-pager__item,
+.search-results-pager__item:visited,
 .search-results-pager__separator {
     border-right: .0625rem solid #d9d9d9;
     color: #333;
     display: inline-block;
-    padding: .25rem 1rem;
+    padding: .25rem .85rem;
     text-decoration: none;
 }
 
 
-.search-results-pager__item--current a,
-.search-results-pager__item a:hover,
-.search-results-pager__item a:focus {
+.search-results-pager__item:hover,
+.search-results-pager__item:focus {
     background: #ddd;
+    color: #333;
     text-decoration: underline;
 }
 
-.search-results-pager__item--current a,
-.search-results-pager__item--current a:visited,
-.search-results-pager__item--current a:hover,
-.search-results-pager__item--current a:focus {
+.search-results-pager__item--current,
+.search-results-pager__item--current:visited,
+.search-results-pager__item--current:hover,
+.search-results-pager__item--current:focus {
     background: #333;
     color: #fff;
     text-decoration: none;
 }
 
 .search-results-pager__separator {
-    display: inline;
+    display: inline-block;
     color: #777;
-    background: #d2e4ea;
-    padding-left: 3px;
-    padding-right: 3px;
+    background: #d9d9d9;
+    padding: 0 .5rem;
 }
