@@ -8,7 +8,7 @@ use ProcessWire\InputfieldWrapper,
 /**
  * SearchEngine Config
  *
- * @version 0.3.0
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -195,9 +195,43 @@ class Config extends Base {
             $compatible_fieldtypes->value = $data[$compatible_fieldtypes->name] ?? $options[$compatible_fieldtypes->name] ?? null;
             $compatible_fieldtypes->notes = $this->_('Please note that selecting fieldtypes not selected by default may result in various problems. Change these values only if you\'re sure that you know what you\'re doing.');
         }
+        $compatible_fieldtypes->notes .= $this->getCompatibleFieldtypeDiff($compatible_fieldtypes->value);
         $advanced_settings->add($compatible_fieldtypes);
 
         return $fields;
+    }
+
+    /**
+     * Get a list of changes (additions and removals) made to compatible fieldtypes
+     *
+     * @param array $compatible_fieldtypes Current list of compatible fieldtypes.
+     * @return string String representation of the changes.
+     */
+    protected function getCompatibleFieldtypeDiff(array $compatible_fieldtypes): string {
+
+        $out = "";
+        $defaults = \ProcessWire\SearchEngine::$defaultOptions['compatible_fieldtypes'];
+
+        // additions.
+        $compatible_fieldtypes_added = array_diff($compatible_fieldtypes, $defaults);
+        if (!empty($compatible_fieldtypes_added)) {
+            $out .= "\n+ " . sprintf($this->_('Added fieldtypes: %s'), implode(', ', $compatible_fieldtypes_added));
+        }
+
+        // removals.
+        $compatible_fieldtypes_removed = array_diff($defaults, $compatible_fieldtypes);
+        if (!empty($compatible_fieldtypes_removed)) {
+            foreach ($compatible_fieldtypes_removed as $key => $fieldtype) {
+                if (!$this->wire('modules')->isInstalled($fieldtype)) {
+                    unset($compatible_fieldtypes_removed[$key]);
+                }
+            }
+        }
+        if (!empty($compatible_fieldtypes_removed)) {
+            $out .= "\n- " . sprintf($this->_('Removed fieldtypes: %s'), implode(', ', $compatible_fieldtypes_removed));
+        }
+
+        return empty($out) ? "" : "\n" . $out;
     }
     
 }
