@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- If $index_field_name for SearchEngine::getIndexField($index_field_name) is null, use default name from options.
+
 ## [0.14.0] - 2020-01-01
 
 ### Added
