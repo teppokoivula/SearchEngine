@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.14.0
+ * @version 0.15.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -259,8 +259,39 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         // Make sure that the module has been initialized.
         $this->initOnce();
 
-        // Build an index and make sure that the index_pages_now setting doesn't get saved.
+        // The config data being saved.
         $data = $event->arguments[1];
+
+        // Index field name.
+        $index_field = $this->wire('sanitizer')->text($data['index_field'] ?? '');
+
+        // Add/remove the index field to/from templates.
+        if (!empty($index_field)) {
+            $indexed_templates = $data['indexed_templates'];
+            foreach ($this->wire('templates') as $template) {
+                if ($template->flags & Template::flagSystem) continue;
+                $template_should_index = !empty($indexed_templates) && in_array($template->name, $indexed_templates);
+                if ($template_should_index && !$template->hasField($index_field)) {
+                    $template->fieldgroup->add($index_field);
+                    $template->fieldgroup->save();
+                    $this->message(sprintf(
+                        $this->_('Index field "%s" was added to template "%s".'),
+                        $index_field,
+                        $template->name
+                    ));
+                } else if (!$template_should_index && $template->hasField($index_field)) {
+                    $template->fieldgroup->remove($index_field);
+                    $template->fieldgroup->save();
+                    $this->message(sprintf(
+                        $this->_('Index field "%s" was removed from template "%s".'),
+                        $index_field,
+                        $template->name
+                    ));
+                }
+            }
+        }
+
+        // Build an index and make sure that the index_pages_now setting doesn't get saved.
         if (!empty($data['index_pages_now'])) {
             $index_pages_now_selector = $data['index_pages_now_selector'] ?? null;
             $indexing_started = new \DateTime();
@@ -269,7 +300,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             if ($indexed_pages === 0) {
                 $this->warning(sprintf(
                     $this->_('SearchEngine couldn\'t find any pages to index. Please make sure that your indexing settings are configured properly, and your index field "%s" has been added to at least one template with existing pages.'),
-                    $this->wire('sanitizer')->text($data['index_field'] ?? '')
+                    $index_field
                 ));
             } else {
                 $this->message(sprintf(
@@ -465,10 +496,19 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     /**
      * Get index field
      *
-     * @param string $index_field_name Index field name.
+     * @param string|null $index_field_name Index field name. If name is null, get the default name from settings.
      * @return null|Field Index field or null.
      */
-    public function getIndexField(string $index_field_name): ?Field {
+    public function getIndexField(string $index_field_name = null): ?Field {
+
+        // If index field name is null, get default value from options.
+        if (is_null($index_field_name)) {
+            $index_field_name = $this->options['index_field'];
+        }
+
+        // Bail out early if index field name is empty.
+        if (empty($index_field_name)) return null;
+
         $index_field = $this->wire('fields')->get($index_field_name);
         if ($index_field) {
             if ($index_field->type == 'FieldtypeTextarea' || $index_field->type == 'FieldtypeTextareaLanguage') {

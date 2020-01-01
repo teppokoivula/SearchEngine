@@ -110,6 +110,25 @@ class Config extends Base {
         }
         $indexing_options->add($indexed_fields);
 
+        // select indexed templates
+        $indexed_templates = $modules->get('InputfieldCheckboxes');
+        $indexed_templates->name = 'indexed_templates';
+        $indexed_templates->label = $this->_('Indexed templates');
+        $indexed_templates->description = $this->_('In order for a template to be indexed, it needs to include the index field. You can use this setting to add the index field to one or more templates, or remove it from templates it has previously been added to.');
+        $index_field_templates = $this->wire('fields')->get($options['index_field'])->getTemplates()->get('name[]');
+        foreach ($this->wire('templates')->getAll() as $template) {
+            $option_attributes = null;
+            if ($template->flags & \ProcessWire\Template::flagSystem) {
+                if (!in_array($template->name, $index_field_templates)) continue;
+                $option_attributes = ['disabled' => 'disabled'];
+                $indexed_templates->notes = $this->_('One or more system templates are indexed. In order to make system templates indexable (or non-indexable) you need to modify template settings directly.');
+            }
+            $indexed_templates->addOption($template->name, null, $option_attributes);
+        }
+        $indexed_templates->optionColumns = 1;
+        $indexed_templates->value = $index_field_templates;
+        $indexing_options->add($indexed_templates);
+
         // fieldset for manual indexing options
         $manual_indexing = $modules->get('InputfieldFieldset');
         $manual_indexing->label = $this->_('Manual indexing');
