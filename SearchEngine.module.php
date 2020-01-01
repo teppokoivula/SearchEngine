@@ -465,10 +465,19 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     /**
      * Get index field
      *
-     * @param string $index_field_name Index field name.
+     * @param string|null $index_field_name Index field name. If name is null, get the default name from settings.
      * @return null|Field Index field or null.
      */
-    public function getIndexField(string $index_field_name): ?Field {
+    public function getIndexField(string $index_field_name = null): ?Field {
+
+        // If index field name is null, get default value from options.
+        if (is_null($index_field_name)) {
+            $index_field_name = $this->options['index_field'];
+        }
+
+        // Bail out early if index field name is empty.
+        if (empty($index_field_name)) return null;
+
         $index_field = $this->wire('fields')->get($index_field_name);
         if ($index_field) {
             if ($index_field->type == 'FieldtypeTextarea' || $index_field->type == 'FieldtypeTextareaLanguage') {
