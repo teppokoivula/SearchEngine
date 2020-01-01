@@ -202,36 +202,35 @@ class Config extends Base {
     }
 
     /**
-     * Get a list of changes (additions and removals) made to compatible fieldtypes
+     * Get a list of changes (additions and removals) made to the compatible fieldtypes setting
      *
      * @param array $compatible_fieldtypes Current list of compatible fieldtypes.
      * @return string String representation of the changes.
      */
     protected function getCompatibleFieldtypeDiff(array $compatible_fieldtypes): string {
 
+        // get a diff by comparing module default setting value and current setting value
+        $base = \ProcessWire\SearchEngine::$defaultOptions['compatible_fieldtypes'];
+        $diff = array_filter([
+            'added' => implode(', ', array_diff($compatible_fieldtypes, $base)),
+            'removed' => implode(', ', array_filter(array_diff($base, $compatible_fieldtypes), function($fieldtype) {
+                return $this->wire('modules')->isInstalled($fieldtype);
+            })),
+        ]);
+
+        // construct output string
         $out = "";
-        $defaults = \ProcessWire\SearchEngine::$defaultOptions['compatible_fieldtypes'];
-
-        // additions.
-        $compatible_fieldtypes_added = array_diff($compatible_fieldtypes, $defaults);
-        if (!empty($compatible_fieldtypes_added)) {
-            $out .= "\n+ " . sprintf($this->_('Added fieldtypes: %s'), implode(', ', $compatible_fieldtypes_added));
-        }
-
-        // removals.
-        $compatible_fieldtypes_removed = array_diff($defaults, $compatible_fieldtypes);
-        if (!empty($compatible_fieldtypes_removed)) {
-            foreach ($compatible_fieldtypes_removed as $key => $fieldtype) {
-                if (!$this->wire('modules')->isInstalled($fieldtype)) {
-                    unset($compatible_fieldtypes_removed[$key]);
-                }
+        if (!empty($diff)) {
+            $out .= "\n";
+            if (!empty($diff['added'])) {
+                $out .= "\n+ " . sprintf($this->_('Added fieldtypes: %s'), $diff['added']);
+            }
+            if (!empty($diff['removed'])) {
+                $out .= "\n- " . sprintf($this->_('Removed fieldtypes: %s'), $diff['removed']);
             }
         }
-        if (!empty($compatible_fieldtypes_removed)) {
-            $out .= "\n- " . sprintf($this->_('Removed fieldtypes: %s'), implode(', ', $compatible_fieldtypes_removed));
-        }
 
-        return empty($out) ? "" : "\n" . $out;
+        return $out;
     }
     
 }
