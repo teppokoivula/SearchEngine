@@ -359,6 +359,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_summary_many' => $this->_('%2$d results for "%1$s":'),
             'results_summary_none' => $this->_('No results for "%s".'),
             'errors_heading' => $this->_('Sorry, we were unable to process your query'),
+            'error_query_missing' => $this->_('Your query was empty. Please provide a proper query.'),
             'error_query_too_short' => $this->_('Your query was too short. Please use at least %d characters.'),
         ];
     }

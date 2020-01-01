@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Adjustments to MarkupPagerNav default settings and the default theme for a more generic layout.
 
+## [0.13.1] - 2020-01-01
+
+### Fixed
+- Added the missing error description for when the query is empty.
+
 ## [0.13.0] - 2019-11-09
 
 ### Added
