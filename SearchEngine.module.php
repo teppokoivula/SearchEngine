@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.13.1
+ * @version 0.14.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -86,15 +86,17 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'listMarkup' => '<div class="search-results-pager"><ul class="search-results-pager__list">{out}</ul></div>',
             'itemMarkup' => '<li class="search-results-pager__list-item {class}">{out}</li>',
             'linkMarkup' => '<a class="search-results-pager__item" href="{url}"><span class="search-results-pager__item-text">{out}</span></a>',
+            'currentLinkMarkup' => '<a class="search-results-pager__item search-results-pager__item--current" href="{url}"><span class="search-results-pager__item-text">{out}</span></a>',
             'separatorItemClass' => 'search-results-pager__separator',
-            'nextItemClass' => 'search-results-pager__item search-results-pager__item--next',
-            'previousItemClass' => 'search-results-pager__item search-results-pager__item--previous',
-            'firstItemClass' => 'search-results-pager__item search-results-pager__item--first',
+            'nextItemClass' => 'search-results-pager__list-item--next',
+            'previousItemClass' => 'search-results-pager__list-item--previous',
+            'firstItemClass' => 'search-results-pager__item--first',
             'firstNumberItemClass' => 'search-results-pager__item search-results-pager__item--first-num',
-            'firstItemClass' => 'search-results-pager__item search-results-pager__item--first',
-            'lastItemClass' => 'search-results-pager__item search-results-pager__item--last',
-            'lastNumberItemClass' => 'search-results-pager__item search-results-pager__item--last-num',
-            'currentItemClass' => 'search-results-pager__item search-results-pager__item--current',
+            'firstItemClass' => 'search-results-pager__item--first',
+            'lastItemClass' => 'search-results-pager__list-item--last',
+            'firstNumberItemClass' => 'search-results-pager__list-item--first-num',
+            'lastNumberItemClass' => 'search-results-pager__list-item--last-num',
+            'currentItemClass' => 'search-results-pager__list-item--current',
         ],
         'render_args' => [
             'theme' => 'default',
