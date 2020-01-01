@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.14.0] - 2020-01-01
+
 ### Added
 - Display additions and removals in module config screen when compatible fieldtypes have been modified.
 
