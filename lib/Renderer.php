@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.4.0
+ * @version 0.4.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -169,7 +169,10 @@ class Renderer extends Base {
         $results_summary_text = $args['strings']['results_summary_' . $results_summary_type];
         $results_summary = sprintf(
             $args['templates']['results_summary'],
-            vsprintf($results_summary_text, [$query->query, $query->resultsTotal])
+            vsprintf($results_summary_text, [
+                trim($query->query, '\"'),
+                $query->resultsTotal,
+            ])
         );
 
         // Results list.
@@ -607,6 +610,11 @@ class Renderer extends Base {
         // Convert subarrays to Data objects.
         foreach (['strings', 'find_args', 'requirements', 'classes'] as $key) {
             $args[$key] = $this->wire(new Data($args[$key]));
+        }
+
+        // Additional sanitization for strings.
+        foreach ($args['strings'] as $key => $string) {
+            $args['strings'][$key] = trim($string, "\"");
         }
 
         // Replace parent selectors (ampersands, after SCSS syntax) in class names. Keys without
