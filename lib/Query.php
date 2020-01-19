@@ -73,7 +73,7 @@ class Query extends Base {
      * @param mixed $query The query.
      * @param array $args Additional arguments:
      *  - limit (int, limit value, defaults to `50`)
-     *  - operator (string, index field comparison operator, defaults to `%=`)
+     *  - operator (string, index field comparison operator, defaults to `*=`)
      *  - query_param (string, used for whitelisting the query param, defaults to no query param)
      *  - selector_extra (string|array, additional selector or array of selectors, defaults to blank string)
      *  - sort (string, sort value, may contain multiple comma-separated values, defaults to no defined sort)
@@ -83,20 +83,19 @@ class Query extends Base {
         parent::__construct();
 
         // Merge default find arguments with provided custom values.
-        $args = array_replace_recursive($this->getOptions()['find_args'], $args);
+        $this->args = array_replace_recursive($this->getOptions()['find_args'], $args);
 
         // Sanitize query string and whitelist query param (if possible).
         $this->query = $this->sanitizeQuery($query);
-        if (!empty($this->query) && !empty($args['query_param'])) {
-            $this->wire('input')->whitelist($args['query_param'], $this->query);
+        if (!empty($this->query) && !empty($this->args['query_param'])) {
+            $this->wire('input')->whitelist($this->args['query_param'], $this->query);
         }
 
         // Validate query.
         $this->errors = $this->validateQuery($this->query);
 
-        // Cache original query, args, and original args in class properties.
+        // Store original query and original args in class properties.
         $this->original_query = $query;
-        $this->args = $args;
         $this->original_args = $args;
     }
 
@@ -110,6 +109,11 @@ class Query extends Base {
     protected function sanitizeQuery(?string $query = ''): string {
         if (empty($query)) {
             return '';
+        }
+        if ($this->wire('config')->dbEngine == 'InnoDB' && $this->args['operator'] == '*=') {
+            // Further sanitization is required in order to avoid a MySQL bug affecting InnoDB
+            // fulltext search (seemingly related to https://bugs.mysql.com/bug.php?id=78485)
+            $query = str_replace('@', ' ', $query);
         }
         $query = $this->wire('sanitizer')->selectorValue($query);
         return $query;
