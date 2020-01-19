@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.16.0] - 2020-01-19
+
+### Added
+- Module config setting for selecting the operator used for finding content.
+
+### Changed
+- Updated tools for configuring the module either via module config *or* site config.
+- Reorganized Config class structure.
+
 ## [0.15.0] - 2020-01-01
 
 ### Added
