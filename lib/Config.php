@@ -2,13 +2,14 @@
 
 namespace SearchEngine;
 
-use ProcessWire\InputfieldWrapper,
-    ProcessWire\Inputfield;
+use ProcessWire\InputfieldWrapper;
+use ProcessWire\InputfieldFieldset;
+use ProcessWire\Inputfield;
 
 /**
  * SearchEngine Config
  *
- * @version 0.4.0
+ * @version 0.5.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -22,6 +23,13 @@ class Config extends Base {
     protected $data = [];
 
     /**
+     * SearchEngie module Runtime options
+     *
+     * @var array
+     */
+    protected $options = [];
+
+    /**
      * Constructor method
      *
      * @param array $data Config data array.
@@ -29,13 +37,14 @@ class Config extends Base {
     public function __construct(array $data) {
         parent::__construct();
         $this->data = $data;
+        $this->options = $this->getOptions();
     }
 
     /**
      * Validate (and optionally create new) index field
      */
     public function validateIndexField() {
-        $index_field_name = $data['index_field'] ?? $this->getOptions()['index_field'] ?? null;
+        $index_field_name = $this->data['index_field'] ?? $this->options['index_field'] ?? null;
         if (!empty($index_field_name)) {
             $index_field_name = $this->wire('sanitizer')->fieldName($index_field_name);
             $create_link_base = $this->wire('config')->urls->admin . 'module/edit?name=SearchEngine&create_index_field=';
@@ -75,27 +84,39 @@ class Config extends Base {
     public function getFields(): InputfieldWrapper {
 
         $fields = $this->wire(new InputfieldWrapper());
-        $modules = $this->wire('modules');
-        $options = $this->getOptions();
-        $data = $this->data;
+
+        $fields->add($this->getIndexingOptionsFieldset());
+        $fields->add($this->getFinderSettingsFieldset());
+        $fields->add($this->getManualIndexingFieldset());
+        $fields->add($this->getAdvancedSettingsFieldset());
+
+        return $fields;
+    }
+
+    /**
+     * Get a fieldset containing indexing settings
+     *
+     * @return InputfieldFieldset
+     */
+    protected function getIndexingOptionsFieldset(): InputfieldFieldset {
 
         // fieldset for indexing options
-        $indexing_options = $modules->get('InputfieldFieldset');
+        $indexing_options = $this->wire('modules')->get('InputfieldFieldset');
         $indexing_options->label = $this->_('Indexing options');
         $indexing_options->icon = 'database';
-        $fields->add($indexing_options);
+        $indexing_options->columnWidth = 50;
 
         // select indexed fields
-        $indexed_fields = $modules->get('InputfieldAsmSelect');
+        $indexed_fields = $this->wire('modules')->get('InputfieldAsmSelect');
         $indexed_fields->name = 'indexed_fields';
         $indexed_fields->label = $this->_('Select indexed fields');
-        $compatible_fieldtype_options = $options['compatible_fieldtypes'] ?? [];
-        if (!empty($data['override_compatible_fieldtypes'])) {
-            $compatible_fieldtype_options = $data['compatible_fieldtypes'] ?? [];
+        $compatible_fieldtype_options = $this->options['compatible_fieldtypes'] ?? [];
+        if (!empty($this->data['override_compatible_fieldtypes'])) {
+            $compatible_fieldtype_options = $this->data['compatible_fieldtypes'] ?? [];
         }
         if (!empty($compatible_fieldtype_options)) {
             foreach ($this->wire('fields')->getAll() as $field) {
-                if (!in_array($field->type, $compatible_fieldtype_options) || $field->name === $options['index_field']) {
+                if (!in_array($field->type, $compatible_fieldtype_options) || $field->name === $this->options['index_field']) {
                     continue;
                 }
                 $indexed_fields->addOption($field->name);
@@ -103,19 +124,19 @@ class Config extends Base {
         }
         if (!empty($this->wire('config')->SearchEngine[$indexed_fields->name])) {
             $indexed_fields->notes = $this->_('Indexed fields are currently defined in site config. You cannot override config settings here.');
-            $indexed_fields->value = $options[$indexed_fields->name];
+            $indexed_fields->value = $this->options[$indexed_fields->name];
             $indexed_fields->collapsed = Inputfield::collapsedNoLocked;
         } else {
-            $indexed_fields->value = $data[$indexed_fields->name] ?? $options[$indexed_fields->name] ?? null;
+            $indexed_fields->value = $this->data[$indexed_fields->name] ?? $this->options[$indexed_fields->name] ?? null;
         }
         $indexing_options->add($indexed_fields);
 
         // select indexed templates
-        $indexed_templates = $modules->get('InputfieldCheckboxes');
+        $indexed_templates = $this->wire('modules')->get('InputfieldCheckboxes');
         $indexed_templates->name = 'indexed_templates';
         $indexed_templates->label = $this->_('Indexed templates');
         $indexed_templates->description = $this->_('In order for a template to be indexed, it needs to include the index field. You can use this setting to add the index field to one or more templates, or remove it from templates it has previously been added to.');
-        $index_field_templates = $this->wire('fields')->get($options['index_field'])->getTemplates()->get('name[]');
+        $index_field_templates = $this->wire('fields')->get($this->options['index_field'])->getTemplates()->get('name[]');
         foreach ($this->wire('templates')->getAll() as $template) {
             $option_attributes = null;
             if ($template->flags & \ProcessWire\Template::flagSystem) {
@@ -129,39 +150,95 @@ class Config extends Base {
         $indexed_templates->value = $index_field_templates;
         $indexing_options->add($indexed_templates);
 
+        return $indexing_options;
+    }
+
+    /**
+     * Get a fieldset containing finder settings
+     *
+     * @return InputfieldFieldset
+     */
+    protected function getFinderSettingsFieldset(): InputfieldFieldset {
+
+        // fieldset for finder settings
+        $finder_settings = $this->wire('modules')->get('InputfieldFieldset');
+        $finder_settings->label = $this->_('Finder settings');
+        $finder_settings->icon = 'search';
+        $finder_settings->columnWidth = 50;
+
+        // define sort order
+        $sort = $this->wire('modules')->get('InputfieldText');
+        $sort->name = 'find_args__sort';
+        $sort->label = $this->_('Sort order');
+        $sort->description = $this->_('Sort order used when finding content. See [documentation for sorting results](https://processwire.com/docs/selectors/#sort) for more details.');
+        $sort->notes = $this->_('Note: you may use multiple sort fields by separating each field with a comma (sort,title,-date_from).');
+        $sort = $this->maybeUseConfig($sort);
+        $finder_settings->add($sort);
+
+        // select operator
+        $operator = $this->wire('modules')->get('InputfieldSelect');
+        $operator->name = 'find_args__operator';
+        $operator->label = $this->_('Operator');
+        $operator->description = $this->_('Operator used when finding content. See [documentation for operators](https://processwire.com/docs/selectors/#operators) for more details.');
+        $operator->addOptions([
+            '*=' => '[*=] ' . $this->_('Contains the exact word or phrase'),
+            '~=' => '[~=] ' . $this->_('Contains all the words'),
+            '%=' => '[%=] ' . $this->_('Contains the exact word or phrase (using slower SQL LIKE)'),
+        ]);
+        $operator = $this->maybeUseConfig($operator);
+        $finder_settings->add($operator);
+
+        return $finder_settings;
+    }
+
+    /**
+     * Get a fieldset containing manual indexing options
+     *
+     * @return InputfieldFieldset
+     */
+    protected function getManualIndexingFieldset(): InputfieldFieldset {
+
         // fieldset for manual indexing options
-        $manual_indexing = $modules->get('InputfieldFieldset');
+        $manual_indexing = $this->wire('modules')->get('InputfieldFieldset');
         $manual_indexing->label = $this->_('Manual indexing');
         $manual_indexing->icon = 'rocket';
-        $fields->add($manual_indexing);
 
         // checkbox field for triggering page indexing
-        $index_pages_now = $modules->get('InputfieldCheckbox');
+        $index_pages_now = $this->wire('modules')->get('InputfieldCheckbox');
         $index_pages_now->name = 'index_pages_now';
         $index_pages_now->label = $this->_('Index pages now?');
         $index_pages_now->description = $this->_('If you check this field and save module settings, SearchEngine will automatically index all applicable pages.');
         $index_pages_now->notes = $this->_('Note: this operation may take a long time.');
-        $index_pages_now->attr('checked', !empty($data[$index_pages_now->name]));
+        $index_pages_now->attr('checked', !empty($this->data[$index_pages_now->name]));
         $manual_indexing->add($index_pages_now);
 
         // optional selector for automatic page indexing
-        $index_pages_now_selector = $modules->get('InputfieldSelector');
+        $index_pages_now_selector = $this->wire('modules')->get('InputfieldSelector');
         $index_pages_now_selector->name = 'index_pages_now_selector';
         $index_pages_now_selector->label = $this->_('Selector for indexed pages');
         $index_pages_now_selector->description = $this->_('You can use this field to choose the pages that should be indexed. This only takes effect if the "Index pages now?" option has been checked.');
         $index_pages_now_selector->showIf = 'index_pages_now=1';
-        $index_pages_now_selector->value = $data[$index_pages_now_selector->name] ?? null;
+        $index_pages_now_selector->value = $this->data[$index_pages_now_selector->name] ?? null;
         $manual_indexing->add($index_pages_now_selector);
 
+        return $manual_indexing;
+    }
+
+    /**
+     * Get fieldset for advanced settings
+     *
+     * @return InputfieldFieldset
+     */
+    protected function getAdvancedSettingsFieldset(): InputfieldFieldset {
+
         // fieldset for advanced options
-        $advanced_settings = $modules->get('InputfieldFieldset');
+        $advanced_settings = $this->wire('modules')->get('InputfieldFieldset');
         $advanced_settings->label = $this->_('Advanced settings');
         $advanced_settings->icon = 'graduation-cap';
         $advanced_settings->collapsed = Inputfield::collapsedYes;
-        $fields->add($advanced_settings);
 
         // select index field
-        $index_field = $modules->get('InputfieldSelect');
+        $index_field = $this->wire('modules')->get('InputfieldSelect');
         $index_field->name = 'index_field';
         $index_field->label = $this->_('Select index field');
         foreach ($this->wire('fields')->getAll() as $field) {
@@ -170,26 +247,20 @@ class Config extends Base {
             }
             $index_field->addOption($field->name);
         }
-        if (!empty($this->wire('config')->SearchEngine[$index_field->name])) {
-            $index_field->notes = $this->_('Index field is currently defined in site config. You cannot override config settings here.');
-            $index_field->value = $options[$index_field->name];
-            $index_field->collapsed = Inputfield::collapsedNoLocked;
-        } else {
-            $index_field->value = $data[$index_field->name] ?? $options[$index_field->name] ?? null;
-            $index_field->notes = $this->_('If you select a field that already contains values, those values *will* be overwritten the next time someone triggers manual indexing of pages *or* a page containing selected field is saved. Making changes to this setting can result in *permanent* data loss!');
-        }
+        $index_field->notes = $this->_('If you select a field that already contains values, those values *will* be overwritten the next time someone triggers manual indexing of pages *or* a page containing selected field is saved. Making changes to this setting can result in *permanent* data loss!');
+        $index_field = $this->maybeUseConfig($index_field);
         $advanced_settings->add($index_field);
 
         // override values for compatible fieldtypes
-        $override_compatible_fieldtypes = $modules->get('InputfieldCheckbox');
+        $override_compatible_fieldtypes = $this->wire('modules')->get('InputfieldCheckbox');
         $override_compatible_fieldtypes->name = 'override_compatible_fieldtypes';
         $override_compatible_fieldtypes->label = $this->_('Override compatible fieldtypes');
         $override_compatible_fieldtypes->description = $this->_('Check this field if you want to override default compatible fieldtype values here.');
-        $override_compatible_fieldtypes->attr('checked', !empty($data['override_compatible_fieldtypes']));
+        $override_compatible_fieldtypes->attr('checked', !empty($this->data['override_compatible_fieldtypes']));
         $advanced_settings->add($override_compatible_fieldtypes);
 
         // define fieldtypes considered compatible with this module
-        $compatible_fieldtypes = $modules->get('InputfieldAsmSelect');
+        $compatible_fieldtypes = $this->wire('modules')->get('InputfieldAsmSelect');
         $compatible_fieldtypes->name = 'compatible_fieldtypes';
         $compatible_fieldtypes->label = $this->_('Compatible fieldtypes');
         $compatible_fieldtypes->description = $this->_('Fieldtypes considered compatible with this module.');
@@ -200,7 +271,7 @@ class Config extends Base {
             'FieldtypeFieldsetClose',
             'FieldtypeFieldsetPage',
         ];
-        foreach ($modules->find('className^=Fieldtype') as $fieldtype) {
+        foreach ($this->wire('modules')->find('className^=Fieldtype') as $fieldtype) {
             if (in_array($fieldtype->name, $incompatible_fieldtype_options)) {
                 continue;
             }
@@ -208,16 +279,66 @@ class Config extends Base {
         }
         if (!empty($this->wire('config')->SearchEngine[$compatible_fieldtypes->name])) {
             $compatible_fieldtypes->notes = $this->_('Compatible fieldtypes are currently defined in site config. You cannot override config settings here.');
-            $compatible_fieldtypes->value = $options[$compatible_fieldtypes->name];
+            $compatible_fieldtypes->value = $this->options[$compatible_fieldtypes->name];
             $compatible_fieldtypes->collapsed = Inputfield::collapsedNoLocked;
         } else {
-            $compatible_fieldtypes->value = $data[$compatible_fieldtypes->name] ?? $options[$compatible_fieldtypes->name] ?? null;
+            $compatible_fieldtypes->value = $this->data[$compatible_fieldtypes->name] ?? $this->options[$compatible_fieldtypes->name] ?? null;
             $compatible_fieldtypes->notes = $this->_('Please note that selecting fieldtypes not selected by default may result in various problems. Change these values only if you\'re sure that you know what you\'re doing.');
         }
         $compatible_fieldtypes->notes .= $this->getCompatibleFieldtypeDiff($compatible_fieldtypes->value);
         $advanced_settings->add($compatible_fieldtypes);
 
-        return $fields;
+        return $advanced_settings;
+    }
+
+    /**
+     * Check if a config setting is already defined in site config
+     *
+     * Given an inputfield object, this method checks if the value of the config option it
+     * represents has already been defined via site config, and modifies the properties of
+     * the inputfield accordingly.
+     *
+     * @param Inputfield $field Inputfield object.
+     * @return Inputfield Processed Inputfield object.
+     */
+    protected function maybeUseConfig(Inputfield $field): Inputfield {
+
+        // attempt to get value from site config
+        $config_value = $this->getValue($field->name, $this->wire('config')->SearchEngine);
+
+        if (empty($config_value)) {
+            // set default value for inputfield
+            if (!empty($this->data[$field->name])) {
+                $field->value = $this->data[$field->name];
+            } else {
+                $field->value = $this->getValue($field->name, $this->options);
+            }
+        } else {
+            // value defined in site config, disable inputfield
+            $field->notes = sprintf(
+                $this->_('"%s" is currently defined in site config. You cannot override config settings here.'),
+                $field->label
+            );
+            $field->value = $this->getValue($field->name, $this->options);
+            $field->collapsed = Inputfield::collapsedNoLocked;
+        }
+
+        return $field;
+    }
+
+    /**
+     * Get value from nested array of values
+     *
+     * @param string $key Key for the value.
+     * @param array|null $values Values array.
+     * @return mixed Value or null.
+     */
+    protected function getValue(string $key, ?array $values = []) {
+        $value = $values[$key] ?? null;
+        if ($separator_pos = strpos($key, '__')) {
+            $value = $values[substr($key, 0, $separator_pos)][substr($key, $separator_pos + 2)] ?? null;
+        }
+        return $value;
     }
 
     /**
