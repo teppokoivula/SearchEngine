@@ -2,9 +2,9 @@
 
 namespace SearchEngine;
 
-use \ProcessWire\Inputfield,
-    \ProcessWire\Page,
-    \ProcessWire\WireException;
+use ProcessWire\Inputfield;
+use ProcessWire\Page;
+use ProcessWire\WireException;
 
 /**
  * SearchEngine Renderer
