@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.1.3
+ * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  *
@@ -76,7 +76,7 @@ class Query extends Base {
      *  - operator (string, index field comparison operator, defaults to `%=`)
      *  - query_param (string, used for whitelisting the query param, defaults to no query param)
      *  - selector_extra (string|array, additional selector or array of selectors, defaults to blank string)
-     *  - sort (string, sort value, defaults to no defined sort)
+     *  - sort (string, sort value, may contain multiple comma-separated values, defaults to no defined sort)
      */
     public function __construct($query = '', array $args = []) {
 
@@ -86,7 +86,7 @@ class Query extends Base {
         $args = array_replace_recursive($this->getOptions()['find_args'], $args);
 
         // Sanitize query string and whitelist query param (if possible).
-        $this->query = empty($query) ? '' : $this->wire('sanitizer')->selectorValue($query);
+        $this->query = $this->sanitizeQuery($query);
         if (!empty($this->query) && !empty($args['query_param'])) {
             $this->wire('input')->whitelist($args['query_param'], $this->query);
         }
@@ -98,6 +98,21 @@ class Query extends Base {
         $this->original_query = $query;
         $this->args = $args;
         $this->original_args = $args;
+    }
+
+
+    /**
+     * Sanitize provided query string.
+     *
+     * @param string|null $query Query string.
+     * @return string Sanitized query string.
+     */
+    protected function sanitizeQuery(?string $query = ''): string {
+        if (empty($query)) {
+            return '';
+        }
+        $query = $this->wire('sanitizer')->selectorValue($query);
+        return $query;
     }
 
     /**
@@ -113,7 +128,7 @@ class Query extends Base {
 
         // Validate query.
         $errors = [];
-        if (empty($query)) {
+        if (empty($query) || $query == '""') {
             $errors[] = $strings['error_query_missing'];
         } else {
             $requirements = $this->getOptions()['requirements'];
@@ -174,7 +189,7 @@ class Query extends Base {
      */
     public function __set(string $name, $value) {
         if ($name === "query") {
-            $this->query = empty($value) ? '' : $this->wire('sanitizer')->selectorValue($value);
+            $this->query = $this->sanitizeQuery($value);
         } else if ($name === "results") {
             if (!empty($value) && $value instanceof \ProcessWire\WireArray) {
                 $this->$name = count($value) ? $value : null;
@@ -214,10 +229,26 @@ class Query extends Base {
      * @return string
      */
     public function getSelector(): string {
+
         $options = $this->wire('modules')->get('SearchEngine')->options;
+
+        // define sort order
+        $sort = [];
+        if (!empty($this->args['sort'])) {
+            $sort = [];
+            $sort_values = explode(',', $this->args['sort']);
+            foreach ($sort_values as $sort_value) {
+                $sort_value = trim($sort_value, " \t\n\r\0\x0B\"");
+                if (!empty($sort_value)) {
+                    $sort[] = 'sort=' . $this->wire('sanitizer')->selectorValue($sort_value);
+                }
+            }
+        }
+
+        // construct and return selector string
         return implode(', ', array_filter([
             empty($this->args['limit']) ? '' : 'limit=' . $this->args['limit'],
-            empty($this->args['sort']) ? '' : 'sort=' . $this->args['sort'],
+            empty($sort) ? '' : implode(', ', $sort),
             implode([$options['index_field'], $this->args['operator'], $this->query]),
             $this->getStringArgument('selector_extra'),
         ]));
