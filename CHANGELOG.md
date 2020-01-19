@@ -14,7 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Updated tools for configuring the module either via module config *or* site config.
-- Reorganized Config class structure.
+- Minor improvements to the Renderer class.
+- Reorganized the Config class structure.
+
+### Fixed
+- Fixed an issue affecting MySQL InnoDB full text searches.
 
 ## [0.15.0] - 2020-01-01
 
