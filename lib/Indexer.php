@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.5.0
+ * @version 0.6.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -173,6 +173,12 @@ class Indexer extends Base {
                         $item->description,
                     ]));
                 });
+            } else if ($field->type instanceof \ProcessWire\FieldtypeTable) {
+                return $this->sanitizer->unentities(strip_tags(str_replace('</td><td>', ' ', $page->getFormatted($field->name)->render([
+                    'tableClass' => null,
+                    'useWidth' => false,
+                    'thead' => ' ',
+                ]))));
             } else {
                 $field_name = $field->name;
             }
