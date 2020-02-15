@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.6.0
+ * @version 0.6.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -275,7 +275,8 @@ class Indexer extends Base {
                 $meta_index['urls'] = $url_index;
             }
             $processed_index = strip_tags($processed_index);
-            $processed_index = preg_replace('/\s+/', ' ', $processed_index);
+            // Note: "u" flag fixes a potentail macOS PCRE UTF-8 issue: https://github.com/silverstripe/silverstripe-framework/issues/7132
+            $processed_index = preg_replace('/\s+/u', ' ', $processed_index);
             $processed_index .= "\n" . (empty($meta_index) ? '{}' : json_encode($meta_index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
         return $processed_index;
