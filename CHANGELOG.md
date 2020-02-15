@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.17.1] - 2020-02-15
+
+### Fixed
+- A potential Indexer UTF-8 PCRE issue occurring on macOS environments.
+
 ## [0.17.0] - 2020-02-12
 
 ### Added
@@ -23,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Reorganized the Config class structure.
 
 ### Fixed
-- Fixed an issue affecting MySQL InnoDB full text searches.
+- An issue affecting MySQL InnoDB full text searches.
 
 ## [0.15.0] - 2020-01-01
 
@@ -52,12 +57,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New validations for index field for module config screen, and an option for automatically creating the index field.
 
 ### Fixed
-- Fixed an issue where module config screen wasn't detecting FieldtypeTextareaLanguage as a valid index field type.
+- An issue where module config screen wasn't detecting FieldtypeTextareaLanguage as a valid index field type.
 
 ## [0.12.1] - 2019-11-07
 
 ### Fixed
-- Fixed potential conflicts with SearchEngine classes.
+- Potential conflicts with SearchEngine classes.
 
 ## [0.12.0] - 2019-11-07
 
@@ -65,7 +70,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for indexing multilanguage content (language support).
 
 ### Fixed
-- Fixed an issue preventing File and Image field descriptions getting indexed.
+- An issue preventing File and Image field descriptions getting indexed.
 
 ## [0.11.1] - 2019-09-26
 
@@ -83,7 +88,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Index value gets saved in Pages::saved instead of Pages::saveReady so that we can avoid messing with the regular save process.
 
 ### Fixed
-- Fixed the "save" behaviour of the Indexer::indexPage() method.
+- The "save" behaviour of the Indexer::indexPage() method.
 
 ## [0.10.1] - 2019-09-04
 
@@ -139,7 +144,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.6.4] - 2019-07-25
 
 ### Fixed
-- Fix an issue where search result links and paths were wrong on subdirectory installs.
+- An issue where search result links and paths were wrong on subdirectory installs.
 
 ## [0.6.3] - 2019-07-25
 
@@ -177,7 +182,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.4.1] - 2019-07-17
 
 ### Fixed
-- Fixed breaking issues introduced with last minute changes to 0.4.0.
+- Breaking issues introduced with last minute changes to 0.4.0.
 
 ## [0.4.0] - 2019-07-17
 
