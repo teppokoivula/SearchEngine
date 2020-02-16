@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.6.1
+ * @version 0.6.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -220,6 +220,9 @@ class Indexer extends Base {
     protected function ___getPageReferenceIndexValue(\ProcessWire\Page $page, \ProcessWire\Field $field, array $indexed_fields = [], string $prefix = ''): array {
         $index = [];
         $page_ref = $page->getUnformatted($field->name);
+        if ($page_ref instanceof \ProcessWire\Page) {
+            $page_ref = $this->wire(new \ProcessWire\PageArray())->add($page_ref);
+        }
         if ($page_ref instanceof \ProcessWire\PageArray && $page_ref->count()) {
             $index_num = 0;
             $prefixes = $this->getOptions()['prefixes'];
