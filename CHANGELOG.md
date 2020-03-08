@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.18.0] - 2020-03-08
+
+### Added
+- Added support for ProFields: Textareas.
+
+### Changed
+- Improved the readability of the search index.
+
 ## [0.17.3] - 2020-03-08
 
 ### Fixed

@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.6.3
+ * @version 0.7.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -179,6 +179,8 @@ class Indexer extends Base {
                     'useWidth' => false,
                     'thead' => ' ',
                 ]))));
+            } else if ($field->type instanceof \ProcessWire\FieldtypeTextareas) {
+                return $page->getFormatted($field->name)->render('');
             } else {
                 $field_name = $field->name;
             }
@@ -278,6 +280,7 @@ class Indexer extends Base {
             if (!empty($url_index)) {
                 $meta_index['urls'] = $url_index;
             }
+            $processed_index = str_replace('<', ' <', $processed_index);
             $processed_index = strip_tags($processed_index);
             // Note: "u" flag fixes a potentail macOS PCRE UTF-8 issue: https://github.com/silverstripe/silverstripe-framework/issues/7132
             $processed_index = preg_replace('/\s+/u', ' ', $processed_index);
