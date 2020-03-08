@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.6.2
+ * @version 0.6.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -202,6 +202,7 @@ class Indexer extends Base {
         foreach ($page->get($field->name) as $child) {
             // Note: union operator is slightly faster than array_merge() and makes sense
             // here since we're working with associative arrays only.
+            if ($child->status >= \ProcessWire\Page::statusHidden) continue;
             $index += $this->getPageIndex($child, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.');
             ++$index_num;
         }
