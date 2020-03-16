@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.2.0
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  *
@@ -70,15 +70,16 @@ class Query extends Base {
     /**
      * Constructor method
      *
-     * @param mixed $query The query.
+     * @param string|null $query The query.
      * @param array $args Additional arguments:
      *  - limit (int, limit value, defaults to `50`)
      *  - operator (string, index field comparison operator, defaults to `*=`)
      *  - query_param (string, used for whitelisting the query param, defaults to no query param)
      *  - selector_extra (string|array, additional selector or array of selectors, defaults to blank string)
      *  - sort (string, sort value, may contain multiple comma-separated values, defaults to no defined sort)
+     *  - no_validate (bool, set to `true` in order to skip the query validation step)
      */
-    public function __construct($query = '', array $args = []) {
+    public function __construct(?string $query = '', array $args = []) {
 
         parent::__construct();
 
@@ -92,7 +93,9 @@ class Query extends Base {
         }
 
         // Validate query.
-        $this->errors = $this->validateQuery($this->query);
+        if (empty($args['no_validate'])) {
+            $this->errors = $this->validateQuery($this->query);
+        }
 
         // Store original query and original args in class properties.
         $this->original_query = $query;

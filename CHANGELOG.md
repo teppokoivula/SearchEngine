@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.19.0] - 2020-03-16
+
+### Added
+- New argument 'no_validate' for the Query class. Setting this as true skips query param validation.
+
+### Changed
+- Results list no longer needs to be rendered before search form in order to prepopulate form input value.
+
 ## [0.18.0] - 2020-03-08
 
 ### Added

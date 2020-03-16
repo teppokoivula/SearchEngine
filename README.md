@@ -50,13 +50,8 @@ $searchEngine = $modules->get('SearchEngine');
     <?= $searchEngine->renderScripts() ?>
 </head>
 <body>
-    <?php
-    // Note: results are rendered before form because this way the form instantly
-    // has access to whitelisted query string (if a search was already performed).
-    $results = $searchEngine->renderResults();
-    $form = $searchEngine->renderForm();
-    echo $form . $results;
-    ?>
+    <?= $searchEngine->renderForm() ?>
+    <?= $searchEngine->renderResults() ?>
 </body>
 ```
 

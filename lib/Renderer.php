@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.4.1
+ * @version 0.5.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -58,6 +58,22 @@ class Renderer extends Base {
 
         // Prepare args.
         $args = $this->prepareArgs($args);
+
+        // Attempt to prefill form input value.
+        if (empty($args['strings']['form_input_value'])) {
+            $options = $this->getOptions();
+            $query_param = $options['find_args']['query_param'];
+            $args['strings']['form_input_value'] = $this->wire('input')->whitelist($query_param);
+            if (empty($args['strings']['form_input_value'])) {
+                $query_value = $this->wire('input')->get($query_param);
+                if (!empty($query_value)) {
+                    $query = $this->wire(new Query($query_value, [
+                        'no_validate' => true,
+                    ]));
+                    $args['strings']['form_input_value'] = $this->wire('input')->whitelist($query_param);
+                }
+            }
+        }
 
         // Render search form.
         $form_content = sprintf(
@@ -483,13 +499,13 @@ class Renderer extends Base {
         $theme = $args['theme'];
 
         // Render and return rendered markup.
-        $results = $this->renderResults($args);
-        $form = $this->renderForm($args);
+        $results = in_array('results', $what) ? $this->renderResults($args) : '';
+        $form = in_array('results', $what) ? $this->renderForm($args) : '';
         return implode([
             $theme && in_array('styles', $what) ? $this->renderStyles($args) : '',
             $theme && in_array('scripts', $what) ? $this->renderScripts($args) : '',
-            in_array('form', $what) ? $form : '',
-            in_array('results', $what) ? $results : '',
+            $form,
+            $results,
         ]);
     }
 
