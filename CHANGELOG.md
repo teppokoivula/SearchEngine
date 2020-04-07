@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.0] - 2020-04-07
+
+### Added
+- Added support for Fieldset (Page).
+
 ## [0.19.0] - 2020-03-16
 
 ### Added
