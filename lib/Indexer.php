@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.7.0
+ * @version 0.8.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -124,7 +124,11 @@ class Indexer extends Base {
                         // Note: union operator is slightly faster than array_merge() and makes sense
                         // here since we're working with associative arrays only.
                         $index += $this->getRepeatableIndexValue($page, $field, $indexed_fields, $prefix);
+                    } else if ($field->type->className() == 'FieldtypeFieldsetPage') {
+                        $index += $this->getPageIndex($page->getUnformatted($field->name), $indexed_fields, $prefix . $field->name . '.', $args);
                     } else if ($field->type instanceof \ProcessWire\FieldtypePage) {
+                        // Note: unlike with FieldtypeFieldsetPage above, here we want to check for both FieldtypePage
+                        // AND any class that might potentially extend it, which is why we're using instanceof.
                         $indexed_page_reference_fields = [
                             'id',
                             'name',
