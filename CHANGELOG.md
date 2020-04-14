@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.1] - 2020-04-14
+
+### Changed
+- Minor code cleanup here and there.
+- Split processing methods from Indexer to a new Processor class.
+
 ## [0.20.0] - 2020-04-07
 
 ### Added

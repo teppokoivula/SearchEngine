@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.20.0
+ * @version 0.20.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -273,8 +273,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             $indexed_templates = $data['indexed_templates'];
             foreach ($this->wire('templates') as $template) {
                 if ($template->flags & Template::flagSystem) continue;
-                $template_should_index = !empty($indexed_templates) && in_array($template->name, $indexed_templates);
-                if ($template_should_index && !$template->hasField($index_field)) {
+                $is_indexed_template = !empty($indexed_templates) && in_array($template->name, $indexed_templates);
+                if ($is_indexed_template && !$template->hasField($index_field)) {
                     $template->fieldgroup->add($index_field);
                     $template->fieldgroup->save();
                     $this->message(sprintf(
@@ -282,7 +282,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                         $index_field,
                         $template->name
                     ));
-                } else if (!$template_should_index && $template->hasField($index_field)) {
+                } else if (!$is_indexed_template && $template->hasField($index_field)) {
                     $template->fieldgroup->remove($index_field);
                     $template->fieldgroup->save();
                     $this->message(sprintf(
@@ -296,9 +296,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
 
         // Build an index and make sure that the index_pages_now setting doesn't get saved.
         if (!empty($data['index_pages_now'])) {
-            $index_pages_now_selector = $data['index_pages_now_selector'] ?? null;
+            $indexing_selector = $data['index_pages_now_selector'] ?? null;
             $indexing_started = new \DateTime();
-            $indexed_pages = $this->indexer->indexPages($index_pages_now_selector);
+            $indexed_pages = $this->indexer->indexPages($indexing_selector);
             $elapsed_time = $indexing_started->diff(new \Datetime());
             if ($indexed_pages === 0) {
                 $this->warning(sprintf(
