@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.2] - 2020-04-14
+
+### Changed
+- Minor optimizations for Indexer.
+
+### Fixed
+- Make Processor::processIndex() method public.
+
 ## [0.20.1] - 2020-04-14
 
 ### Changed

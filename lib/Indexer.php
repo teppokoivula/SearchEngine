@@ -19,6 +19,21 @@ class Indexer extends Base {
     const META_PREFIX = '_meta.';
 
     /**
+     * Processor instance
+     *
+     * @var Processor
+     */
+    protected $processor;
+
+    /**
+     * Constructor method
+     */
+    public function __construct() {
+        parent::__construct();
+        $this->processor = new Processor;
+    }
+
+    /**
      * Index multiple pages
      *
      * By default this method will index all pages with the search index field. If an optional
@@ -61,13 +76,12 @@ class Indexer extends Base {
         $options = $this->getOptions();
         $index_field = $options['index_field'];
         if ($page->id && $page->hasField($index_field)) {
-            $processor = new Processor;
             if ($this->wire('modules')->isInstalled('LanguageSupport') && $this->wire('fields')->get($index_field)->type == 'FieldtypeTextareaLanguage') {
                 foreach ($this->wire('languages') as $language) {
                     $index = $this->getPageIndex($page, $options['indexed_fields'], '', [
                         'language' => $language,
                     ]);
-                    $index = $processor->processIndex($index);
+                    $index = $this->processor->processIndex($index);
                     $page->get($index_field)->setLanguageValue($language, $index);
                 }
                 if ($save) {
@@ -81,7 +95,7 @@ class Indexer extends Base {
                 }
             } else {
                 $index = $this->getPageIndex($page, $options['indexed_fields'], '');
-                $index = $processor->processIndex($index);
+                $index = $this->processor->processIndex($index);
                 if ($save) {
                     $page->setAndSave($index_field, $index, [
                         'quiet' => true,
