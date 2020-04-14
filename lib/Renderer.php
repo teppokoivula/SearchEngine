@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.5.0
+ * @version 0.5.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -259,9 +259,8 @@ class Renderer extends Base {
                         return $result->template->get(substr($field, 9));
                     } else if (strpos($field, 'parent.') === 0) {
                         return $result->parent->get(substr($field, 7));
-                    } else {
-                        return $result->get($field);
                     }
+                    return $result->get($field);
                 }, $args['results_json_fields']);
             }
             $results['count'] = $query->resultsCount;
