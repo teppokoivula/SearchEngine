@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.8.1
+ * @version 0.8.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -113,13 +113,16 @@ class Indexer extends Base {
     /**
      * Store page data in search index and return it as an array
      *
-     * @param \ProcessWire\Page $page
+     * @param \ProcessWire\Page|null $page
      * @param array $indexed_fields
      * @param string $prefix
      * @param array $args Additional arguments.
      * @return array
      */
-    protected function ___getPageIndex(\ProcessWire\Page $page, array $indexed_fields = [], string $prefix = '', array $args = []): array {
+    protected function ___getPageIndex(?\ProcessWire\Page $page, array $indexed_fields = [], string $prefix = '', array $args = []): array {
+        // This is a precaution (enhancing fault tolerance) in case a null value somehow gets passed here; reportedly
+        // this has occurred with some Repeater/RepeaterMatrix + FieldtypePage combinations.
+        if (is_null($page)) return [];
         $index = [];
         $user_language = null;
         if (!empty($args['language'])) {

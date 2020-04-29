@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.20.3] - 2020-04-29
+
+### Fixed
+- Attempt to fix an issue causing errors with some RepeaterMatrix + FieldsetPage combinations.
+
 ## [0.20.2] - 2020-04-14
 
 ### Changed
