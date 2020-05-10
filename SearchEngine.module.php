@@ -10,8 +10,8 @@ namespace ProcessWire;
  *
  * Methods provided by Indexer:
  *
- * @method int indexPages(string $selector = null) Index multiple pages.
- * @method bool indexPage(Page $page, $bool $save = true) Index single page.
+ * @method int|array indexPages(string $selector = null, bool $save = true, array $args = []) Index multiple pages.
+ * @method bool|array indexPage(Page $page, bool $save = true, array $args = []) Index single page.
  *
  * Methods provided by Renderer:
  *
@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.20.3
+ * @version 0.21.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -325,8 +325,17 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     protected function savePageIndex(HookEvent $event) {
         $this->initOnce();
         $page = $event->arguments[0];
-        $this->indexer->indexPage($page);
+        if ($this->indexer->indexPage($page)) {
+            $this->savedPageIndex($page);
+        }
     }
+
+    /**
+     * Hookable method run right after Page index was saved
+     *
+     * @param Page $page
+     */
+    protected function ___savedPageIndex(Page $page) {}
 
     /**
      * Find content matching provided query.

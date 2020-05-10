@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.8.2
+ * @version 0.9.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -40,10 +40,14 @@ class Indexer extends Base {
      * selector is provided, pages matching that will be indexed instead.
      *
      * @param string $selector Selector string to match pages against.
+     * @param bool $save Boolean that defines whether the index field value should be saved or just set.
+     * @param array $args Additional arguments.
      * @return int The number of indexed pages.
      */
-    public function indexPages(string $selector = null) {
+    public function indexPages(string $selector = null, bool $save = true, array $args = []) {
         $indexed_pages = 0;
+        $return = isset($args['return']) && $args['return'] == 'index' ? 'index' : 'status';
+        $index = [];
         if (empty($selector)) {
             $index_field = $this->wire('fields')->get($this->getOptions()['index_field']);
             $indexed_templates = $index_field->getTemplates()->implode('|', 'name');
@@ -57,12 +61,14 @@ class Indexer extends Base {
         }
         if (!empty($selector)) {
             foreach ($this->wire('pages')->findMany($selector) as $page) {
-                if ($this->indexPage($page)) {
+                if ($return == 'index') {
+                    $index[$page->id] = $this->indexPage($page, $save, $args);
+                } else if ($this->indexPage($page, $save, $args)) {
                     ++$indexed_pages;
                 }
             }
         }
-        return $indexed_pages;
+        return $return == 'status' ? $indexed_pages : $index;
     }
 
     /**
@@ -70,19 +76,28 @@ class Indexer extends Base {
      *
      * @param \ProcessWire\Page $page Page to be indexed.
      * @param bool $save Boolean that defines whether the index field value should be saved or just set.
-     * @return bool True on success, false on failure.
+     * @param array $args Additional arguments.
+     * @return bool|array Index as an array if return arg is 'index', otherwise true on success or false on failure.
      */
-    public function indexPage(\ProcessWire\Page $page, bool $save = true) {
+    public function indexPage(\ProcessWire\Page $page, bool $save = true, array $args = []) {
         $options = $this->getOptions();
+        $return = isset($args['return']) && $args['return'] == 'index' ? 'index' : 'status';
+        $index = [];
         $index_field = $options['index_field'];
-        if ($page->id && $page->hasField($index_field)) {
+        $index_field_exists = $page->hasField($index_field);
+        if (!$index_field_exists) {
+            $save = false;
+        }
+        if ($page->id && ($return == 'index' || $index_field_exists)) {
             if ($this->wire('modules')->isInstalled('LanguageSupport') && $this->wire('fields')->get($index_field)->type == 'FieldtypeTextareaLanguage') {
                 foreach ($this->wire('languages') as $language) {
-                    $index = $this->getPageIndex($page, $options['indexed_fields'], '', [
+                    $index[$language->id] = $this->getPageIndex($page, $options['indexed_fields'], '', [
                         'language' => $language,
                     ]);
-                    $index = $this->processor->processIndex($index);
-                    $page->get($index_field)->setLanguageValue($language, $index);
+                    $index[$language->id] = $this->processor->processIndex($index[$language->id]);
+                    if ($index_field_exists) {
+                        $page->get($index_field)->setLanguageValue($language, $index[$language->id]);
+                    }
                 }
                 if ($save) {
                     $of = $page->of();
@@ -94,20 +109,20 @@ class Indexer extends Base {
                     $page->of($of);
                 }
             } else {
-                $index = $this->getPageIndex($page, $options['indexed_fields'], '');
-                $index = $this->processor->processIndex($index);
+                $index[0] = $this->getPageIndex($page, $options['indexed_fields'], '');
+                $index[0] = $this->processor->processIndex($index[0]);
                 if ($save) {
-                    $page->setAndSave($index_field, $index, [
+                    $page->setAndSave($index_field, $index[0], [
                         'quiet' => true,
                         'noHooks' => true,
                     ]);
-                } else {
-                    $page->set($index_field, $index);
+                } else if ($index_field_exists) {
+                    $page->set($index_field, $index[0]);
                 }
             }
-            return true;
+            return $return == 'status' ? true : $index;
         }
-        return false;
+        return $return == 'status' ? false : $index;
     }
 
     /**

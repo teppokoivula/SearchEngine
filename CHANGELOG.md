@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.21.0] - 2020-05-11
+
+### Added
+- New hookable method SearchEngine::savedPageIndex(Page $page).
+- New args (array) param for Indexer::indexPage() and args (array) + save (bool) params for Indexer::indexPages().
+- Both Indexer::indexPage() and Indexer::indexPages() can now optionally return the index itself as an array.
+
 ## [0.20.3] - 2020-04-29
 
 ### Fixed
