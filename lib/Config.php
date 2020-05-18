@@ -9,7 +9,7 @@ use ProcessWire\Inputfield;
 /**
  * SearchEngine Config
  *
- * @version 0.5.0
+ * @version 0.6.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -23,7 +23,7 @@ class Config extends Base {
     protected $data = [];
 
     /**
-     * SearchEngie module Runtime options
+     * SearchEngine module Runtime options
      *
      * @var array
      */
@@ -83,12 +83,21 @@ class Config extends Base {
      */
     public function getFields(): InputfieldWrapper {
 
+        if ($this->wire('user')->isSuperuser() && $this->wire('input')->get('debug-only')) {
+            $debugger = new Debugger;
+            $debugger->setPage((int) $this->wire('input')->get('debug-page'));
+            exit($debugger->getDebugMarkup());
+        }
+
         $fields = $this->wire(new InputfieldWrapper());
 
         $fields->add($this->getIndexingOptionsFieldset());
         $fields->add($this->getFinderSettingsFieldset());
         $fields->add($this->getManualIndexingFieldset());
         $fields->add($this->getAdvancedSettingsFieldset());
+        if ($this->wire('user')->isSuperuser()) {
+            $fields->add($this->getDebuggerSettingsFieldset());
+        }
 
         return $fields;
     }
@@ -289,6 +298,77 @@ class Config extends Base {
         $advanced_settings->add($compatible_fieldtypes);
 
         return $advanced_settings;
+    }
+
+    /**
+     * Get fieldset for Debugger settings
+     *
+     * @return InputfieldFieldset
+     */
+    protected function getDebuggerSettingsFieldset(): InputfieldFieldset {
+
+        // fieldset for Debugger
+        $debugger_settings = $this->wire('modules')->get('InputfieldFieldset');
+        $debugger_settings->label = $this->_('Debugger');
+        $debugger_settings->icon = 'bug';
+        if (empty($this->data['debugger_enabled'])) {
+            $debugger_settings->collapsed = Inputfield::collapsedYes;
+        }
+
+        // toggle for enabling/disabling Debugger
+        $debugger_enabled = $this->wire('modules')->get('InputfieldCheckbox');
+        $debugger_enabled->name = 'debugger_enabled';
+        $debugger_enabled->label = $this->_('Enable Debugger');
+        $debugger_enabled->attr('checked', !empty($this->data[$debugger_enabled->name]));
+        $debugger_settings->add($debugger_enabled);
+
+        // select page to debug
+        $debugger_selected_page = $this->wire('modules')->get('InputfieldPageListSelect');
+        $debugger_selected_page->name = 'debugger_selected_page';
+        $debugger_selected_page->label = $this->_('Selected Page');
+        $debugger_selected_page->description = $this->_('Select a Page to debug.');
+        $debugger_selected_page->showIf = 'debugger_enabled=1';
+        $debugger_selected_page->value = $this->data[$debugger_selected_page->name] ?? null;
+        $debugger_settings->add($debugger_selected_page);
+
+        if (!empty($this->data['debugger_enabled']) && !empty($this->data['debugger_selected_page'])) {
+
+            // init Debugger
+            $debugger = new Debugger;
+            $debugger->setPage($this->data['debugger_selected_page']);
+
+            // inputfield for debug output
+            $debugger_markup = $this->wire('modules')->get('InputfieldMarkup');
+            $debugger_markup->value = $debugger->getDebugMarkup();
+            $debugger_markup->value = '
+                <p>
+                    <button id="search-engine-debug-refresh" class="ui-button">Refresh <i class="fa fa-refresh"></i></button>
+                </p>
+                <script>
+                $(function() {
+                    let debugPageID = ' . ((int) $this->data['debugger_selected_page']) . ';
+                    const $debugEl = $("#search-engine-debug");
+                    const debugURL = "' . $this->wire('config')->urls->admin . 'module/edit?name=SearchEngine&debug-only=1&debug-page=";
+                    $("#Inputfield_debugger_selected_page").on("pageSelected", function(e, data) {
+                        debugPageID = data.id;
+                        $debugEl.load(debugURL + debugPageID + " #search-engine-debug", function() {
+                            $debugEl.effect("highlight", {}, 1000);
+                        });
+                    });
+                    $("#search-engine-debug-refresh").on("click", function(e) {
+                        e.preventDefault();
+                        $debugEl.load(debugURL + debugPageID + " #search-engine-debug", function() {
+                            $debugEl.effect("highlight", {}, 1000);
+                        });
+                    });
+                })
+                </script>
+            ' . $debugger_markup->value;
+            $debugger_markup->showIf = 'debugger_enabled=1';
+            $debugger_settings->add($debugger_markup);
+        }
+
+        return $debugger_settings;
     }
 
     /**
