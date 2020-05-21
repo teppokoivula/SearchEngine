@@ -8,7 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- New Debugger class and ability to trigger Debugger output from module config screen (superusers only).
+- New Debugger class and ability to trigger Debugger from module config screen (superusers only).
+
+### Fixed
+- Minor inconsistency in Query class, where result/total counters returned empty strings instead of integer 0 for zero results.
 
 ## [0.21.0] - 2020-05-11
 

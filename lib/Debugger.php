@@ -4,11 +4,12 @@ namespace SearchEngine;
 
 use ProcessWire\Page;
 use ProcessWire\User;
+use ProcessWire\WireException;
 
 /**
  * SearchEngine Debugger
  *
- * @version 0.1.0
+ * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -20,6 +21,13 @@ class Debugger extends Base {
      * @var Page
      */
     protected $page;
+
+    /**
+     * Search query
+     *
+     * @var string
+     */
+    protected $query = '';
 
     /**
      * Set Page
@@ -37,6 +45,17 @@ class Debugger extends Base {
             throw new WireException('Invalid or missing Page');
         }
         $this->page = $page;
+        return $this;
+    }
+
+    /**
+     * Set query
+     *
+     * @param string $query Search query
+     * @return Debugger Self-reference
+     */
+    public function setQuery(string $query): Debugger {
+        $this->query = $query;
         return $this;
     }
 
@@ -65,15 +84,16 @@ class Debugger extends Base {
     }
 
     /**
-     * Get markup for debug inputfield
+     * Debug Page and return resulting markup
      *
+     * @param bool $include_container Include container?
      * @return string
      */
-    public function getDebugMarkup(): string {
+    public function debugPage(string $type = 'page', bool $include_container = true): string {
 
-        // bail out early if no page is defined
+        // bail out early if no valid page is defined
         if (!$this->page || !$this->page->id) {
-            return '<em>' . $this->_('No page found.') . '</em>';
+            return '';
         }
 
         // container for debug output
@@ -108,10 +128,10 @@ class Debugger extends Base {
                 $debug['index'] .= '<ul><li>' . implode('</li><li>', array_filter([
                     '<strong>' . $this->_('Characters') . '</strong>: ' . mb_strlen($index),
                     '<strong>' . $this->_('Words') . '</strong>: ' . str_word_count($index),
-                    '<strong>' . $this->_('Words (unique)') . '</strong>: ' . count($index_words)
+                    '<strong>' . $this->_('Unique words') . '</strong>: ' . count($index_words)
                     . '<pre style="white-space: pre-wrap">' . implode(', ', array_unique($index_words)) . '</pre>',
                     '<strong>' . $this->_('Metadata') . '</strong>: '
-                    . '<pre style="white-space: pre-wrap">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . '</pre>',
+                    . '<pre style="white-space: pre-wrap">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</pre>',
                     '<strong>' . $this->_('Index') . '</strong>: '
                     .  '<pre style="white-space: pre-wrap">' . $index . '</pre>',
                 ])) . '</li></ul>';
@@ -121,7 +141,105 @@ class Debugger extends Base {
         }
 
         // return markup
-        return '<div id="search-engine-debug">' . implode($debug) . '</div>';
+        return $include_container ? $this->getDebugContainer(implode($debug), [
+            'type' => 'page',
+        ]) : implode($debug);
+    }
+
+    /**
+     * Debug Query and return resulting markup
+     *
+     * @param bool $include_container Include container?
+     * @return string
+     */
+    public function debugQuery(bool $include_container = true): string {
+
+        // bail out early if no query is defined
+        if (!$this->query) {
+            return '';
+        }
+
+        // SearchEngine, Renderer, and Query
+        $se = $this->wire('modules')->get('SearchEngine');
+        $se->initOnce();
+        $renderer = $se->renderer;
+        $query = $se->find($this->query);
+
+        // container for debug output
+        $debug = [];
+
+        // query info
+        $debug['info'] = '<h2>' . $this->_('Query info') . '</h2>';
+        $debug['info'] .= '<ul><li>' . implode('</li><li>', array_filter([
+            '<strong>' . $this->_('Original query') . '</strong>: '
+            . '<pre style="white-space: pre-wrap">' . $query->original_query . '</pre>'
+            . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->original_query)), mb_strlen($query->original_query)) . ')</p>',
+            '<strong>' . $this->_('Sanitized query') . '</strong>: '
+            . '<pre style="white-space: pre-wrap">' . $query->query . '</pre>'
+            . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->query)), mb_strlen($query->query)) . ')</p>',
+            '<strong>' . $this->_('Sanitization modified query') . '</strong>: '
+            . (
+                $query->original_query === $query->query || $query->original_query === trim($query->query, '"')
+                ? $this->_('No') . ' <i class="fa fa-check" style="color: green" aria-hidden="true"></i>'
+                : $this->_('Yes')  . ' <i class="fa fa-exclamation-triangle" style="color: red" aria-hidden="true"></i>'
+            ),
+            '<strong>' . $this->_('Resulting selector string') . '</strong>: '
+            . '<pre style="white-space: pre-wrap">' . $query->getSelector() . '</pre>',
+        ])) . '</li></ul>';
+
+        // results
+        $json_args = $renderer->prepareArgs([
+            'results_json_options' => JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+        ]);
+        $json_args['results_json_fields'] = array_merge([
+            'title' => 'title',
+            'desc' => 'summary',
+            'url' => 'url',
+            'template' => 'template.name',
+        ], $json_args['results_json_fields']);
+        $debug['results'] = '<h2>' . $this->_('Results') . '</h2>';
+        $debug['results'] .= '<ul><li>' . implode('</li><li>', array_filter([
+            '<strong>' . $this->_('Results') . '</strong>: ' . $query->resultsCount . ' / ' . $query->resultsTotal
+            . '<pre style="white-space: pre-wrap">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
+        ])) . '</li></ul>';
+
+        // return markup
+        return $include_container ? $this->getDebugContainer(implode($debug), [
+            'type' => 'query',
+        ]) : implode($debug);
+    }
+
+    /**
+     * Get container for debug markup
+     *
+     * @param string $content
+     * @param array $data
+     * @return string
+     */
+    public function getDebugContainer(string $content = '', array $data = []): string {
+
+        // inject Debugger script
+        $this->wire('config')->scripts->add(
+            $this->wire('config')->urls->get('SearchEngine') . 'js/Debugger.js'
+        );
+
+        // data attributes for debug output container
+        $data = array_merge([
+            'debug-button-label' => $this->_('Debug'),
+            'refresh-button-label' => $this->_('Refresh'),
+            'page-id' => $this->page && $this->page->id ? $this->page->id : null,
+            'query' => $this->query,
+            'type' => 'page',
+        ], $data);
+
+        // construct and return container markup
+        return '<div class="search-engine-debug" '
+            . implode(" ", array_map(function($key, $value) {
+                return 'data-' . $key . '="' . $value . '"';
+            }, array_keys($data), $data))
+            . '">'
+            . $content
+            . '</div>';
     }
 
 }

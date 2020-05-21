@@ -83,10 +83,16 @@ class Config extends Base {
      */
     public function getFields(): InputfieldWrapper {
 
-        if ($this->wire('user')->isSuperuser() && $this->wire('input')->get('debug-only')) {
+        // Debugger endpoint
+        if ($this->wire('user')->isSuperuser() && $this->wire('input')->get('se-debug')) {
             $debugger = new Debugger;
-            $debugger->setPage((int) $this->wire('input')->get('debug-page'));
-            exit($debugger->getDebugMarkup());
+            if ($this->wire('input')->get('se-debug-page-id')) {
+                $debugger->setPage((int) $this->wire('input')->get('se-debug-page-id'));
+                exit($debugger->debugPage(false));
+            } else if ($this->wire('input')->get('se-debug-query')) {
+                $debugger->setQuery($this->wire('input')->get('se-debug-query'));
+                exit($debugger->debugQuery(false));
+            }
         }
 
         $fields = $this->wire(new InputfieldWrapper());
@@ -307,66 +313,53 @@ class Config extends Base {
      */
     protected function getDebuggerSettingsFieldset(): InputfieldFieldset {
 
+        // init Debugger
+        $debugger = new Debugger;
+        if (!empty($this->data['debugger_page'])) {
+            $debugger->setPage($this->data['debugger_page']);
+        }
+        if (!empty($this->data['debugger_query'])) {
+            $debugger->setQuery($this->data['debugger_query']);
+        }
+
         // fieldset for Debugger
         $debugger_settings = $this->wire('modules')->get('InputfieldFieldset');
         $debugger_settings->label = $this->_('Debugger');
+        $debugger_settings->collapsed = Inputfield::collapsedYes;
         $debugger_settings->icon = 'bug';
-        if (empty($this->data['debugger_enabled'])) {
-            $debugger_settings->collapsed = Inputfield::collapsedYes;
-        }
-
-        // toggle for enabling/disabling Debugger
-        $debugger_enabled = $this->wire('modules')->get('InputfieldCheckbox');
-        $debugger_enabled->name = 'debugger_enabled';
-        $debugger_enabled->label = $this->_('Enable Debugger');
-        $debugger_enabled->attr('checked', !empty($this->data[$debugger_enabled->name]));
-        $debugger_settings->add($debugger_enabled);
 
         // select page to debug
-        $debugger_selected_page = $this->wire('modules')->get('InputfieldPageListSelect');
-        $debugger_selected_page->name = 'debugger_selected_page';
-        $debugger_selected_page->label = $this->_('Selected Page');
-        $debugger_selected_page->description = $this->_('Select a Page to debug.');
-        $debugger_selected_page->showIf = 'debugger_enabled=1';
-        $debugger_selected_page->value = $this->data[$debugger_selected_page->name] ?? null;
-        $debugger_settings->add($debugger_selected_page);
+        $debugger_page = $this->wire('modules')->get('InputfieldPageListSelect');
+        $debugger_page->name = 'debugger_page';
+        $debugger_page->label = $this->_('Selected Page');
+        $debugger_page->description = $this->_('Select a Page to debug.');
+        $debugger_page->value = $this->data[$debugger_page->name] ?? null;
+        $debugger_settings->add($debugger_page);
 
-        if (!empty($this->data['debugger_enabled']) && !empty($this->data['debugger_selected_page'])) {
+        // inputfield for page debug output
+        $debugger_page_markup = $this->wire('modules')->get('InputfieldMarkup');
+        $debugger_page_markup->value = $debugger->getDebugContainer('', [
+            'debug-button-label' => $this->_('Debug Page'),
+            'type' => 'page',
+        ]);
+        $debugger_settings->add($debugger_page_markup);
 
-            // init Debugger
-            $debugger = new Debugger;
-            $debugger->setPage($this->data['debugger_selected_page']);
+        // type in a query to debug
+        $debugger_query = $this->wire('modules')->get('InputfieldText');
+        $debugger_query->name = 'debugger_query';
+        $debugger_query->label = $this->_('Query');
+        $debugger_query->type = 'search';
+        $debugger_query->description = $this->_('Type in the search to debug.');
+        $debugger_query->value = $this->data[$debugger_query->name] ?? '';
+        $debugger_settings->add($debugger_query);
 
-            // inputfield for debug output
-            $debugger_markup = $this->wire('modules')->get('InputfieldMarkup');
-            $debugger_markup->value = $debugger->getDebugMarkup();
-            $debugger_markup->value = '
-                <p>
-                    <button id="search-engine-debug-refresh" class="ui-button">Refresh <i class="fa fa-refresh"></i></button>
-                </p>
-                <script>
-                $(function() {
-                    let debugPageID = ' . ((int) $this->data['debugger_selected_page']) . ';
-                    const $debugEl = $("#search-engine-debug");
-                    const debugURL = "' . $this->wire('config')->urls->admin . 'module/edit?name=SearchEngine&debug-only=1&debug-page=";
-                    $("#Inputfield_debugger_selected_page").on("pageSelected", function(e, data) {
-                        debugPageID = data.id;
-                        $debugEl.load(debugURL + debugPageID + " #search-engine-debug", function() {
-                            $debugEl.effect("highlight", {}, 1000);
-                        });
-                    });
-                    $("#search-engine-debug-refresh").on("click", function(e) {
-                        e.preventDefault();
-                        $debugEl.load(debugURL + debugPageID + " #search-engine-debug", function() {
-                            $debugEl.effect("highlight", {}, 1000);
-                        });
-                    });
-                })
-                </script>
-            ' . $debugger_markup->value;
-            $debugger_markup->showIf = 'debugger_enabled=1';
-            $debugger_settings->add($debugger_markup);
-        }
+        // inputfield for query debug output
+        $debugger_query_markup = $this->wire('modules')->get('InputfieldMarkup');
+        $debugger_query_markup->value = $debugger->getDebugContainer('', [
+            'debug-button-label' => $this->_('Debug Query'),
+            'type' => 'query',
+        ]);
+        $debugger_settings->add($debugger_query_markup);
 
         return $debugger_settings;
     }
