@@ -83,7 +83,7 @@ class Config extends Base {
      */
     public function getFields(): InputfieldWrapper {
 
-        // Debugger endpoint
+        // Debugger AJAX endpoint
         if ($this->wire('user')->isSuperuser() && $this->wire('input')->get('se-debug')) {
             $debugger = new Debugger;
             if ($this->wire('input')->get('se-debug-page-id')) {
@@ -92,6 +92,8 @@ class Config extends Base {
             } else if ($this->wire('input')->get('se-debug-query')) {
                 $debugger->setQuery($this->wire('input')->get('se-debug-query'));
                 exit($debugger->debugQuery(false));
+            } else if ($this->wire('input')->get('se-debug-index')) {
+                exit($debugger->debugIndex(false));
             }
         }
 
@@ -327,6 +329,14 @@ class Config extends Base {
         $debugger_settings->label = $this->_('Debugger');
         $debugger_settings->collapsed = Inputfield::collapsedYes;
         $debugger_settings->icon = 'bug';
+
+        // inputfield for index details
+        $debugger_index_markup = $this->wire('modules')->get('InputfieldMarkup');
+        $debugger_index_markup->value = $debugger->getDebugContainer('', [
+            'debug-button-label' => $this->_('Debug Index'),
+            'type' => 'index',
+        ]);
+        $debugger_settings->add($debugger_index_markup);
 
         // select page to debug
         $debugger_page = $this->wire('modules')->get('InputfieldPageListSelect');

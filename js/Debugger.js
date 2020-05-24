@@ -26,7 +26,33 @@ $(function() {
                 .css('margin-left', '.5rem')
                 .appendTo($button);
 
-            if ($debugContainer.data('type') === 'page') {
+            if ($debugContainer.data('type') === 'index') {
+
+                // enable debug button
+                $button
+                    .removeAttr('disabled')
+                    .attr('class', 'ui-button ui-state-default');
+
+                // listen to button click event
+                $button.on("click", function(e) {
+                    e.preventDefault();
+                    $button
+                        .attr('disabled', 'disabled')
+                        .attr('class', 'ui-button ui-state-disabled');
+                    $buttonIcon.addClass('fa-spin');
+                    $debugContainer.load(debugURL + 'se-debug-index=1', function() {
+                        $buttonText.text($debugContainer.data('refresh-button-label'));
+                        $buttonIcon.attr('class', 'fa fa-refresh');
+                        $button
+                            .removeAttr('disabled')
+                            .attr('class', 'ui-button ui-state-default');
+                        $debugContainer
+                            .css('margin-top', '2rem')
+                            .effect("highlight", {}, 1000);
+                    });
+                });
+
+            } else if ($debugContainer.data('type') === 'page') {
 
                 // get debug page ID
                 let debugPageID = parseInt($debugContainer.data('page-id'));

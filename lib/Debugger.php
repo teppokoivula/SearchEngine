@@ -9,7 +9,7 @@ use ProcessWire\WireException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.2.0
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -84,12 +84,80 @@ class Debugger extends Base {
     }
 
     /**
+     * Debug Index and return resulting markup
+     *
+     * @param bool $include_container Include container?
+     * @return string
+     */
+    public function debugIndex(bool $include_container = true): string {
+
+        // container for debug output
+        $debug = [];
+
+        // prepare variables
+        $index_field = $this->wire('fields')->get($this->getOptions()['index_field']);
+        $indexed_templates = $index_field->getTemplates()->implode('|', 'name');
+        $indexed_fields = $this->getOptions()['indexed_fields'];
+
+        // entire index
+        $index = '';
+        foreach ($this->wire('pages')->findMany($index_field . '!=, include=unpublished, status!=trash') as $indexed_page) {
+            $index .= ' ' . $indexed_page->get($index_field->name);
+        }
+        $index_words = $this->getWords($index, true);
+
+        // content being indexed
+        $debug['indexable_content'] = '<h2>' . $this->_('Content being indexed') . '</h2>';
+        $debug['indexable_content'] .= $this->getDebugList([
+            [
+                'label' => $this->_('Indexed templates'),
+                'value' => str_replace('|', ', ', $indexed_templates),
+            ],
+            [
+                'label' => $this->_('Indexed fields'),
+                'value' => implode(', ', $indexed_fields),
+            ],
+            [
+                'label' => $this->_('Indexable pages'),
+                'value' => $this->wire('pages')->count('template=' . $indexed_templates . ', include=unpublished, status!=trash'),
+            ],
+        ]);
+
+        // indexed content
+        $debug['indexed_content'] = '<h2>' . $this->_('Indexed content') . '</h2>';
+        $debug['indexed_content'] .= $this->getDebugList([
+            [
+                'label' => $this->_('Indexed pages'),
+                'value' => $this->wire('pages')->count($index_field->name . '!=, include=unpublished, status!=trash'),
+            ],
+            [
+                'label' => $this->_('Characters'),
+                'value' => mb_strlen($index),
+            ],
+            [
+                'label' => $this->_('Words'),
+                'value' => str_word_count($index),
+            ],
+            [
+                'label' => $this->_('Unique words'),
+                'value' => count($index_words)
+                        . '<pre style="white-space: pre-wrap">' . implode(', ', $index_words) . '</pre>',
+            ],
+        ]);
+
+        // return markup
+        return $include_container ? $this->getDebugContainer(implode($debug), [
+            'type' => 'index',
+        ]) : implode($debug);
+    }
+
+    /**
      * Debug Page and return resulting markup
      *
      * @param bool $include_container Include container?
      * @return string
      */
-    public function debugPage(string $type = 'page', bool $include_container = true): string {
+    public function debugPage(bool $include_container = true): string {
 
         // bail out early if no valid page is defined
         if (!$this->page || !$this->page->id) {
@@ -101,15 +169,38 @@ class Debugger extends Base {
 
         // page info
         $debug['info'] = '<h2>' . $this->_('Page info') . '</h2>';
-        $debug['info'] .= '<ul><li>' . implode('</li><li>', array_filter([
-            '<strong>' . $this->_('ID') . '</strong>: ' . $this->page->id,
-            '<strong>' . $this->_('Name') . '</strong>: ' . $this->page->name,
-            '<strong>' . $this->_('URL') . '</strong>: ' . $this->page->url,
-            '<strong>' . $this->_('Status') . '</strong>: ' . ($this->page->statusStr ?: 'on'),
-            '<strong>' . $this->_('Created') . '</strong>: ' . $this->page->createdStr . ' (' . ($this->page->createdUser instanceof User ? $this->page->createdUser->name : '#' . $this->page->created_users_id) . ')',
-            $this->page->publishedStr ? '<strong>' . $this->_('Published') . '</strong>: ' . $this->page->publishedStr : '',
-            '<strong>' . $this->_('Modified') . '</strong>: ' . $this->page->modifiedStr . ' (' . ($this->page->modifiedUser instanceof User ? $this->page->modifiedUser->name : '#' . $this->page->modified_users_id) . ')',
-        ])) . '</li></ul>';
+        $debug['info'] .= $this->getDebugList([
+            [
+                'label' => $this->_('ID'),
+                'value' => $this->page->id,
+            ],
+            [
+                'label' => $this->_('Name'),
+                'value' => $this->page->name,
+            ],
+            [
+                'label' => $this->_('URL'),
+                'value' => $this->page->url,
+            ],
+            [
+                'label' => $this->_('Status'),
+                'value' => $this->page->statusStr ?: 'on',
+            ],
+            [
+                'label' => $this->_('Created'),
+                'value' => $this->page->createdStr
+                        . ' (' . ($this->page->createdUser instanceof User ? $this->page->createdUser->name : '#' . $this->page->created_users_id) . ')',
+            ],
+            [
+                'label' => $this->_('Published'),
+                'value' => $this->page->publishedStr,
+            ],
+            [
+                'label' => $this->_('Modified'),
+                'value' => $this->page->modifiedStr
+                        . ' (' . ($this->page->modifiedUser instanceof User ? $this->page->modifiedUser->name : '#' . $this->page->modified_users_id) . ')',
+            ],
+        ]);
 
         // contents of the index
         $debug['index'] = '<h2>' . $this->_('Indexed content') . '</h2>';
@@ -118,23 +209,36 @@ class Debugger extends Base {
             if (empty($index)) {
                 $debug['index'] .= '<em>Index is empty for selected page.</em>';
             } else {
-                $index_words = array_unique(str_word_count($index, true));
+                $index_words = $this->getWords($index, true);
                 $metadata = [];
                 if (strpos($index, '{') !== false && strpos($index, '}')) {
                     if (preg_match('/{.*?}\z/sim', $index, $metadata_matches)) {
                         $metadata = json_decode($metadata_matches[0]);
                     }
                 }
-                $debug['index'] .= '<ul><li>' . implode('</li><li>', array_filter([
-                    '<strong>' . $this->_('Characters') . '</strong>: ' . mb_strlen($index),
-                    '<strong>' . $this->_('Words') . '</strong>: ' . str_word_count($index),
-                    '<strong>' . $this->_('Unique words') . '</strong>: ' . count($index_words)
-                    . '<pre style="white-space: pre-wrap">' . implode(', ', array_unique($index_words)) . '</pre>',
-                    '<strong>' . $this->_('Metadata') . '</strong>: '
-                    . '<pre style="white-space: pre-wrap">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</pre>',
-                    '<strong>' . $this->_('Index') . '</strong>: '
-                    .  '<pre style="white-space: pre-wrap">' . $index . '</pre>',
-                ])) . '</li></ul>';
+                $debug['index'] .= $this->getDebugList([
+                    [
+                        'label' => $this->_('Characters'),
+                        'value' => mb_strlen($index),
+                    ],
+                    [
+                        'label' => $this->_('Words'),
+                        'value' => str_word_count($index),
+                    ],
+                    [
+                        'label' => $this->_('Unique words'),
+                        'value' => count($index_words)
+                                . '<pre style="white-space: pre-wrap">' . implode(', ', $index_words) . '</pre>',
+                    ],
+                    [
+                        'label' => $this->_('Metadata'),
+                        'value' => '<pre style="white-space: pre-wrap">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</pre>',
+                    ],
+                    [
+                        'label' => $this->_('Index'),
+                        'value' => '<pre style="white-space: pre-wrap">' . $index . '</pre>',
+                    ],
+                ]);
             }
         } else {
             $debug['index'] .= '<em>' . $this->_('Selected page has no index field.') . '</em>';
@@ -170,22 +274,30 @@ class Debugger extends Base {
 
         // query info
         $debug['info'] = '<h2>' . $this->_('Query info') . '</h2>';
-        $debug['info'] .= '<ul><li>' . implode('</li><li>', array_filter([
-            '<strong>' . $this->_('Original query') . '</strong>: '
-            . '<pre style="white-space: pre-wrap">' . $query->original_query . '</pre>'
-            . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->original_query)), mb_strlen($query->original_query)) . ')</p>',
-            '<strong>' . $this->_('Sanitized query') . '</strong>: '
-            . '<pre style="white-space: pre-wrap">' . $query->query . '</pre>'
-            . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->query)), mb_strlen($query->query)) . ')</p>',
-            '<strong>' . $this->_('Sanitization modified query') . '</strong>: '
-            . (
-                $query->original_query === $query->query || $query->original_query === trim($query->query, '"')
-                ? $this->_('No') . ' <i class="fa fa-check" style="color: green" aria-hidden="true"></i>'
-                : $this->_('Yes')  . ' <i class="fa fa-exclamation-triangle" style="color: red" aria-hidden="true"></i>'
-            ),
-            '<strong>' . $this->_('Resulting selector string') . '</strong>: '
-            . '<pre style="white-space: pre-wrap">' . $query->getSelector() . '</pre>',
-        ])) . '</li></ul>';
+        $debug['info'] .= $this->getDebugList([
+            [
+                'label' => $this->_('Original query'),
+                'value' => '<pre style="white-space: pre-wrap">' . $query->original_query . '</pre>'
+                           . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->original_query)), mb_strlen($query->original_query)) . ')</p>',
+            ],
+            [
+                'label' => $this->_('Sanitized query'),
+                'value' => '<pre style="white-space: pre-wrap">' . $query->query . '</pre>'
+                        . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->query)), mb_strlen($query->query)) . ')</p>',
+            ],
+            [
+                'label' => $this->_('Sanitization modified query'),
+                'value' => (
+                    $query->original_query === $query->query || $query->original_query === trim($query->query, '"')
+                    ? $this->_('No') . ' <i class="fa fa-check" style="color: green" aria-hidden="true"></i>'
+                    : $this->_('Yes')  . ' <i class="fa fa-exclamation-triangle" style="color: red" aria-hidden="true"></i>'
+                ),
+            ],
+            [
+                'label' => $this->_('Resulting selector string'),
+                'value' => '<pre style="white-space: pre-wrap">' . $query->getSelector() . '</pre>',
+            ],
+        ]);
 
         // results
         $json_args = $renderer->prepareArgs([
@@ -198,10 +310,13 @@ class Debugger extends Base {
             'template' => 'template.name',
         ], $json_args['results_json_fields']);
         $debug['results'] = '<h2>' . $this->_('Results') . '</h2>';
-        $debug['results'] .= '<ul><li>' . implode('</li><li>', array_filter([
-            '<strong>' . $this->_('Results') . '</strong>: ' . $query->resultsCount . ' / ' . $query->resultsTotal
-            . '<pre style="white-space: pre-wrap">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
-        ])) . '</li></ul>';
+        $debug['results'] .= $this->getDebugList([
+            [
+                'label' => $this->_('Results'),
+                'value' => $query->resultsCount . ' / ' . $query->resultsTotal
+                        . '<pre style="white-space: pre-wrap">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
+            ],
+        ]);
 
         // return markup
         return $include_container ? $this->getDebugContainer(implode($debug), [
@@ -240,6 +355,76 @@ class Debugger extends Base {
             . '">'
             . $content
             . '</div>';
+    }
+
+    /**
+     * Render unordered list from an array of debug items
+     *
+     * @param array $items
+     * @return string
+     */
+    protected function getDebugList(array $items): string {
+
+        // filter items and bail out early if the resulting array is empty
+        $items = array_filter($items);
+        if (empty($items)) {
+            return '';
+        }
+
+        // container for output
+        $out = '';
+
+        // append items
+        foreach ($items as $item) {
+            if (is_null($item['value']) || $item['value'] == '') continue;
+            $out .= '<li>'
+                . '<strong>' . $item['label'] . '</strong>: '
+                . $item['value']
+                . '</li>';
+        }
+
+        // return list markup
+        return $out == '' ? '' : '<ul>' . $out . '</ul>';
+    }
+
+    /**
+     * Get unique words from an index
+     *
+     * @param string $index
+     * @param bool $unique
+     * @return array
+     */
+    protected function getWords(string $index = '', bool $unique = false): array {
+
+        // prepare index
+        $index = trim($index);
+        $index = $this->wire('sanitizer')->unentities($index);
+
+        // get words
+        preg_match_all("/[\w-']+/", $index, $index_words);
+        $index_words = $index_words[0];
+        $index_words = array_map(function($word) {
+            $word = trim($word, " \t\n\r\x0B-&");
+            $word = mb_strtolower($word);
+            return $word;
+        }, $index_words);
+        $index_words = array_filter($index_words, function($word) {
+            $word = str_replace('-', '', $word);
+            if (is_numeric($word)) {
+                return strlen($word) > 3;
+            }
+            return mb_strlen($word) > 2;
+        });
+
+        // unique only?
+        if ($unique) {
+            $index_words = array_unique($index_words);
+        }
+
+        // sort words alphabetically
+        sort($index_words);
+
+        return $index_words;
     }
 
 }
