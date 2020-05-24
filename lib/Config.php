@@ -9,9 +9,9 @@ use ProcessWire\Inputfield;
 /**
  * SearchEngine Config
  *
- * @version 0.5.0
+ * @version 0.6.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
- * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
+ * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
 class Config extends Base {
 
@@ -23,7 +23,7 @@ class Config extends Base {
     protected $data = [];
 
     /**
-     * SearchEngie module Runtime options
+     * SearchEngine module Runtime options
      *
      * @var array
      */
@@ -83,12 +83,29 @@ class Config extends Base {
      */
     public function getFields(): InputfieldWrapper {
 
+        // Debugger AJAX endpoint
+        if ($this->wire('user')->isSuperuser() && $this->wire('input')->get('se-debug')) {
+            $debugger = new Debugger;
+            if ($this->wire('input')->get('se-debug-page-id')) {
+                $debugger->setPage((int) $this->wire('input')->get('se-debug-page-id'));
+                exit($debugger->debugPage(false));
+            } else if ($this->wire('input')->get('se-debug-query')) {
+                $debugger->setQuery($this->wire('input')->get('se-debug-query'));
+                exit($debugger->debugQuery(false));
+            } else if ($this->wire('input')->get('se-debug-index')) {
+                exit($debugger->debugIndex(false));
+            }
+        }
+
         $fields = $this->wire(new InputfieldWrapper());
 
         $fields->add($this->getIndexingOptionsFieldset());
         $fields->add($this->getFinderSettingsFieldset());
         $fields->add($this->getManualIndexingFieldset());
         $fields->add($this->getAdvancedSettingsFieldset());
+        if ($this->wire('user')->isSuperuser()) {
+            $fields->add($this->getDebuggerSettingsFieldset());
+        }
 
         return $fields;
     }
@@ -289,6 +306,72 @@ class Config extends Base {
         $advanced_settings->add($compatible_fieldtypes);
 
         return $advanced_settings;
+    }
+
+    /**
+     * Get fieldset for Debugger settings
+     *
+     * @return InputfieldFieldset
+     */
+    protected function getDebuggerSettingsFieldset(): InputfieldFieldset {
+
+        // init Debugger
+        $debugger = new Debugger;
+        if (!empty($this->data['debugger_page'])) {
+            $debugger->setPage($this->data['debugger_page']);
+        }
+        if (!empty($this->data['debugger_query'])) {
+            $debugger->setQuery($this->data['debugger_query']);
+        }
+
+        // fieldset for Debugger
+        $debugger_settings = $this->wire('modules')->get('InputfieldFieldset');
+        $debugger_settings->label = $this->_('Debugger');
+        $debugger_settings->collapsed = Inputfield::collapsedYes;
+        $debugger_settings->icon = 'bug';
+
+        // inputfield for index details
+        $debugger_index_markup = $this->wire('modules')->get('InputfieldMarkup');
+        $debugger_index_markup->value = $debugger->getDebugContainer('', [
+            'debug-button-label' => $this->_('Debug Index'),
+            'type' => 'index',
+        ]);
+        $debugger_settings->add($debugger_index_markup);
+
+        // select page to debug
+        $debugger_page = $this->wire('modules')->get('InputfieldPageListSelect');
+        $debugger_page->name = 'debugger_page';
+        $debugger_page->label = $this->_('Selected Page');
+        $debugger_page->description = $this->_('Select a Page to debug.');
+        $debugger_page->value = $this->data[$debugger_page->name] ?? null;
+        $debugger_settings->add($debugger_page);
+
+        // inputfield for page debug output
+        $debugger_page_markup = $this->wire('modules')->get('InputfieldMarkup');
+        $debugger_page_markup->value = $debugger->getDebugContainer('', [
+            'debug-button-label' => $this->_('Debug Page'),
+            'type' => 'page',
+        ]);
+        $debugger_settings->add($debugger_page_markup);
+
+        // type in a query to debug
+        $debugger_query = $this->wire('modules')->get('InputfieldText');
+        $debugger_query->name = 'debugger_query';
+        $debugger_query->label = $this->_('Query');
+        $debugger_query->type = 'search';
+        $debugger_query->description = $this->_('Type in the search to debug.');
+        $debugger_query->value = $this->data[$debugger_query->name] ?? '';
+        $debugger_settings->add($debugger_query);
+
+        // inputfield for query debug output
+        $debugger_query_markup = $this->wire('modules')->get('InputfieldMarkup');
+        $debugger_query_markup->value = $debugger->getDebugContainer('', [
+            'debug-button-label' => $this->_('Debug Query'),
+            'type' => 'query',
+        ]);
+        $debugger_settings->add($debugger_query_markup);
+
+        return $debugger_settings;
     }
 
     /**
