@@ -9,9 +9,9 @@ use ProcessWire\WireException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.3.0
+ * @version 0.3.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
- * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
+ * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
 class Debugger extends Base {
 
@@ -108,7 +108,7 @@ class Debugger extends Base {
 
         // content being indexed
         $debug['indexable_content'] = '<h2>' . $this->_('Content being indexed') . '</h2>';
-        $debug['indexable_content'] .= $this->getDebugList([
+        $debug['indexable_content'] .= $this->renderList([
             [
                 'label' => $this->_('Indexed templates'),
                 'value' => str_replace('|', ', ', $indexed_templates),
@@ -125,7 +125,7 @@ class Debugger extends Base {
 
         // indexed content
         $debug['indexed_content'] = '<h2>' . $this->_('Indexed content') . '</h2>';
-        $debug['indexed_content'] .= $this->getDebugList([
+        $debug['indexed_content'] .= $this->renderList([
             [
                 'label' => $this->_('Indexed pages'),
                 'value' => $this->wire('pages')->count($index_field->name . '!=, include=unpublished, status!=trash'),
@@ -169,7 +169,7 @@ class Debugger extends Base {
 
         // page info
         $debug['info'] = '<h2>' . $this->_('Page info') . '</h2>';
-        $debug['info'] .= $this->getDebugList([
+        $debug['info'] .= $this->renderList([
             [
                 'label' => $this->_('ID'),
                 'value' => $this->page->id,
@@ -216,7 +216,7 @@ class Debugger extends Base {
                         $metadata = json_decode($metadata_matches[0]);
                     }
                 }
-                $debug['index'] .= $this->getDebugList([
+                $debug['index'] .= $this->renderList([
                     [
                         'label' => $this->_('Characters'),
                         'value' => mb_strlen($index),
@@ -274,7 +274,7 @@ class Debugger extends Base {
 
         // query info
         $debug['info'] = '<h2>' . $this->_('Query info') . '</h2>';
-        $debug['info'] .= $this->getDebugList([
+        $debug['info'] .= $this->renderList([
             [
                 'label' => $this->_('Original query'),
                 'value' => '<pre style="white-space: pre-wrap">' . $query->original_query . '</pre>'
@@ -310,7 +310,7 @@ class Debugger extends Base {
             'template' => 'template.name',
         ], $json_args['results_json_fields']);
         $debug['results'] = '<h2>' . $this->_('Results') . '</h2>';
-        $debug['results'] .= $this->getDebugList([
+        $debug['results'] .= $this->renderList([
             [
                 'label' => $this->_('Results'),
                 'value' => $query->resultsCount . ' / ' . $query->resultsTotal
@@ -363,7 +363,7 @@ class Debugger extends Base {
      * @param array $items
      * @return string
      */
-    protected function getDebugList(array $items): string {
+    protected function renderList(array $items): string {
 
         // filter items and bail out early if the resulting array is empty
         $items = array_filter($items);
@@ -388,7 +388,10 @@ class Debugger extends Base {
     }
 
     /**
-     * Get unique words from an index
+     * Get words from an index
+     *
+     * Note: numeric sequences are also considered words by this method, but they have a slightly
+     * stricter length requirement.
      *
      * @param string $index
      * @param bool $unique
@@ -401,7 +404,7 @@ class Debugger extends Base {
         $index = $this->wire('sanitizer')->unentities($index);
 
         // get words
-        preg_match_all("/[\w-']+/", $index, $index_words);
+        preg_match_all("/[\w-']+/ui", $index, $index_words);
         $index_words = $index_words[0];
         $index_words = array_map(function($word) {
             $word = trim($word, " \t\n\r\x0B-&");

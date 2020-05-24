@@ -7,7 +7,7 @@ namespace SearchEngine;
  *
  * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
- * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
+ * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
 class Base extends \ProcessWire\Wire {
 
