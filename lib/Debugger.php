@@ -296,6 +296,10 @@ class Debugger extends Base {
             [
                 'label' => $this->_('Resulting selector string'),
                 'value' => '<pre style="white-space: pre-wrap">' . $query->getSelector() . '</pre>',
+			],
+			[
+                'label' => $this->_('Resulting SQL query'),
+                'value' => '<pre style="white-space: pre-wrap">' . $query->getSQL() . '</pre>',
             ],
         ]);
 
@@ -333,10 +337,12 @@ class Debugger extends Base {
      */
     public function getDebugContainer(string $content = '', array $data = []): string {
 
-        // inject Debugger script
-        $this->wire('config')->scripts->add(
-            $this->wire('config')->urls->get('SearchEngine') . 'js/Debugger.js'
-        );
+		// inject scripts
+		foreach (['Core', 'Debugger'] as $script) {
+			$this->wire('config')->scripts->add(
+				$this->wire('config')->urls->get('SearchEngine') . 'js/' . $script . '.js'
+			);
+		}
 
         // data attributes for debug output container
         $data = array_merge([

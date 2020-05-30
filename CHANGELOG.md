@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- getSQL() method and sql property for the Query class.
+- Display resulting SQL when debugging queries (as a superuser in the module config screen).
+- PWSE_Core JavaScript class (window.SearchEngine) as a basis for a work-in-progress JS API.
+
+### Changed
+- Debugger JavaScript converted from jQuery to vanilla JS (class Debugger).
+
 ## [0.22.0] - 2020-05-24
 
 ### Added
