@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Improved indexing for FieldtypeOptions.
 - getSQL() method and sql property for the Query class.
 - Display resulting SQL when debugging queries (as a superuser in the module config screen).
 - Enable reindexing the Page object currently being debugged with a single button click.

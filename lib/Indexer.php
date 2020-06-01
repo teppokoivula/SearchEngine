@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.9.0
+ * @version 0.10.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -218,6 +218,8 @@ class Indexer extends Base {
                 ]))));
             } else if ($field->type instanceof \ProcessWire\FieldtypeTextareas) {
                 return $page->getFormatted($field->name)->render('');
+            } else if ($field->type instanceof \ProcessWire\FieldtypeOptions) {
+                return $page->getFormatted($field->name)->render();
             } else {
                 $field_name = $field->name;
             }
