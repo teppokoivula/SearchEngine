@@ -436,4 +436,35 @@ class Debugger extends Base {
         return $index_words;
     }
 
+    /**
+     * Init AJAX API endpoint
+     */
+    public function initAJAXAPI() {
+        if ($this->wire('user')->isSuperuser() && $this->wire('input')->get('se-debug')) {
+            if ($this->wire('input')->get('se-debug-page-id')) {
+                $this->setPage((int) $this->wire('input')->get('se-debug-page-id'));
+                exit($this->debugPage(false));
+            } else if ($this->wire('input')->get('se-reindex-page-id')) {
+                $indexPageID = (int) $this->wire('input')->get('se-reindex-page-id');
+                $indexPage = $this->wire('pages')->get($indexPageID);
+                if ($indexPage && $indexPage->id) {
+                    $indexer = new Indexer;
+                    if ($indexer->indexPage($indexPage)) {
+                        exit('<div class="uk-alert-success" style="color: #32d296; background: #edfbf6" uk-alert>' . $this->_('Page indexed succesfully.') . '</div>');
+                    } else {
+                        exit('<div class="uk-alert-warning" uk-alert>' . $this->_('Error occurred while trying to index the page.') . '</div>');
+                    }
+                } else {
+                    exit('<div class="uk-alert-danger" uk-alert>' . sprintf($this->_('Page not found: %d.'), $indexPageID) . '</div>');
+                }
+                exit($this->debugPage(false));
+            } else if ($this->wire('input')->get('se-debug-query')) {
+                $this->setQuery($this->wire('input')->get('se-debug-query'));
+                exit($this->debugQuery(false));
+            } else if ($this->wire('input')->get('se-debug-index')) {
+                exit($this->debugIndex(false));
+            }
+        }
+    }
+
 }

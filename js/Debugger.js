@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.2.0
+ * @version 0.3.0
  */
 class PWSE_Debugger {
 
@@ -21,27 +21,18 @@ class PWSE_Debugger {
             debugContainers.forEach((debugContainer) => {
 
                 // add debug button
-                const button = document.createElement('button');
-                button.setAttribute('class', 'ui-button ui-state-disabled');
-                button.setAttribute('disabled', 'disabled');
-                debugContainer.parentNode.insertBefore(button, debugContainer);
-                const buttonText = document.createElement('span');
-                buttonText.innerText = debugContainer.getAttribute('data-debug-button-label');
-                button.appendChild(buttonText);
-                const buttonIcon = document.createElement('i');
-                buttonIcon.setAttribute('class', 'fa fa-bug');
-                buttonIcon.setAttribute('style', 'margin-left: .5rem');
-                button.appendChild(buttonIcon);
+                const debugButton = this.makeButton(debugContainer, debugContainer.getAttribute('data-debug-button-label'));
+                debugButton.icon.setAttribute('class', 'fa fa-bug');
 
                 switch (debugContainer.getAttribute('data-type')) {
                     case 'index':
-                        this.initIndex(debugContainer, button, buttonText, buttonIcon)
+                        this.initIndex(debugContainer, debugButton)
                         break;
                     case 'page':
-                        this.initPage(debugContainer, button, buttonText, buttonIcon);
+                        this.initPage(debugContainer, debugButton);
                         break;
                     case 'query':
-                        this.initQuery(debugContainer, button, buttonText, buttonIcon);
+                        this.initQuery(debugContainer, debugButton);
                         break;
                     default:
                         console.error('Unidentified debug container type (' + debugContainer.getAttribute('data-type') + ')');
@@ -54,29 +45,27 @@ class PWSE_Debugger {
      * Init index debug container
      *
      * @param {object} debugContainer
-     * @param {object} button
-     * @param {object} buttonText
-     * @param {object} buttonIcon
+     * @param {object} debugButton
      */
-    initIndex(debugContainer, button, buttonText, buttonIcon) {
+    initIndex(debugContainer, debugButton) {
 
         // enable debug button
-        button.removeAttribute('disabled');
-        button.setAttribute('class', 'ui-button ui-state-default');
+        debugButton.button.removeAttribute('disabled');
+        debugButton.button.setAttribute('class', 'ui-button ui-state-default');
 
-        // listen to button click event
-        button.addEventListener("click", e => {
+        // listen to debug button click event
+        debugButton.button.addEventListener("click", e => {
             e.preventDefault();
-            button.setAttribute('disabled', 'disabled');
-            button.setAttribute('class', 'ui-button ui-state-disabled');
-            buttonIcon.classList.add('fa-spin');
+            debugButton.button.setAttribute('disabled', 'disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            debugButton.icon.classList.add('fa-spin');
             fetch(this.debugURL + 'se-debug-index=1')
                 .then(response => response.text())
                 .then(data => {
-                    buttonText.innerText = debugContainer.getAttribute('data-refresh-button-label');
-                    buttonIcon.setAttribute('class', 'fa fa-refresh');
-                    button.removeAttribute('disabled');
-                    button.setAttribute('class', 'ui-button ui-state-default');
+                    debugButton.text.innerText = debugContainer.getAttribute('data-refresh-button-label');
+                    debugButton.icon.setAttribute('class', 'fa fa-refresh');
+                    debugButton.button.removeAttribute('disabled');
+                    debugButton.button.setAttribute('class', 'ui-button ui-state-default');
                     debugContainer.innerHTML = data;
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
@@ -88,17 +77,20 @@ class PWSE_Debugger {
      * Init page debug container
      *
      * @param {object} debugContainer
-     * @param {object} button
-     * @param {object} buttonText
-     * @param {object} buttonIcon
+     * @param {object} debugButton
      */
-    initPage(debugContainer, button, buttonText, buttonIcon) {
+    initPage(debugContainer, debugButton) {
+
+        // add "reindex" button
+        const reindexButton = this.makeButton(debugContainer, debugContainer.getAttribute('data-reindex-button-label'));
 
         // get debug page ID
         let debugPageID = parseInt(debugContainer.getAttribute('data-page-id'));
         if (debugPageID) {
-            button.removeAttribute('disabled');
-            button.setAttribute('class', 'ui-button ui-state-default');
+            debugButton.button.removeAttribute('disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+            reindexButton.button.removeAttribute('disabled');
+            reindexButton.button.setAttribute('class', 'ui-button ui-state-default');
         }
 
         // listen to page select event
@@ -109,33 +101,61 @@ class PWSE_Debugger {
             debugPageID = debugPageItem.getAttribute('class').match(/(?!PageList)([0-9])+/)[0];
             debugContainer.innerHTML = '';
             debugContainer.setAttribute('style', 'margin-top: 0');
-            buttonText.innerText = debugContainer.getAttribute('data-debug-button-label');
-            buttonIcon.setAttribute('class', 'fa fa-bug');
+            debugButton.text.innerText = debugContainer.getAttribute('data-debug-button-label');
+            debugButton.icon.setAttribute('class', 'fa fa-bug');
             if (debugPageID && (debugPageInput.value != debugPageID)) {
-                button.removeAttribute('disabled');
-                button.setAttribute('class', 'ui-button ui-state-default');
+                debugButton.button.removeAttribute('disabled');
+                debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+                reindexButton.button.removeAttribute('disabled');
+                reindexButton.button.setAttribute('class', 'ui-button ui-state-default');
             } else {
-                button.setAttribute('disabled', 'disabled')
-                button.setAttribute('class', 'ui-button ui-state-disabled');
+                debugButton.button.setAttribute('disabled', 'disabled')
+                debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+                reindexButton.button.setAttribute('disabled', 'disabled')
+                reindexButton.button.setAttribute('class', 'ui-button ui-state-disabled');
             }
         }, true);
 
-        // listen to button click event
-        button.addEventListener("click", e => {
+        // data queue
+        const dataQueue = [];
+
+        // listen to debug button click event
+        debugButton.button.addEventListener("click", e => {
             e.preventDefault();
-            button.setAttribute('disabled', 'disabled');
-            button.setAttribute('class', 'ui-button ui-state-disabled');
-            buttonIcon.classList.add('fa-spin');
+            debugButton.button.setAttribute('disabled', 'disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            debugButton.icon.classList.add('fa-spin');
             fetch(this.debugURL + 'se-debug-page-id=' + debugPageID)
                 .then(response => response.text())
                 .then(data => {
-                    buttonText.innerText = debugContainer.getAttribute('data-refresh-button-label');
-                    buttonIcon.setAttribute('class', 'fa fa-refresh');
-                    button.removeAttribute('disabled');
-                    button.setAttribute('class', 'ui-button ui-state-default');
+                    debugButton.text.innerText = debugContainer.getAttribute('data-refresh-button-label');
+                    debugButton.icon.setAttribute('class', 'fa fa-refresh');
+                    debugButton.button.removeAttribute('disabled');
+                    debugButton.button.setAttribute('class', 'ui-button ui-state-default');
                     debugContainer.innerHTML = data;
+                    if (dataQueue.length) {
+                        debugContainer.innerHTML = dataQueue.pop() + debugContainer.innerHTML;
+                    }
+                    const queueData = debugContainer.queueData
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                });
+        });
+
+        // listen to reindex button click event
+        reindexButton.button.addEventListener("click", e => {
+            e.preventDefault();
+            reindexButton.button.setAttribute('disabled', 'disabled');
+            reindexButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            reindexButton.icon.classList.add('fa-spin');
+            fetch(this.debugURL + 'se-reindex-page-id=' + debugPageID)
+                .then(response => response.text())
+                .then(data => {
+                    reindexButton.icon.classList.remove('fa-spin');
+                    reindexButton.button.removeAttribute('disabled');
+                    reindexButton.button.setAttribute('class', 'ui-button ui-state-default');
+                    dataQueue.push(data);
+                    debugButton.click();
                 });
         });
     }
@@ -144,17 +164,15 @@ class PWSE_Debugger {
      * Init query debug container
      *
      * @param {object} debugContainer
-     * @param {object} button
-     * @param {object} buttonText
-     * @param {object} buttonIcon
+     * @param {object} debugButton
      */
-    initQuery(debugContainer, button, buttonText, buttonIcon) {
+    initQuery(debugContainer, debugButton) {
 
         // get debug query
         let debugQuery = debugContainer.getAttribute('data-query');
         if (debugQuery) {
-            button.removeAttribute('disabled');
-            button.setAttribute('class', 'ui-button ui-state-default');
+            debugButton.button.removeAttribute('disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-default');
         }
 
         // listen to keyup event
@@ -164,36 +182,36 @@ class PWSE_Debugger {
             }
             debugQuery = e.target.value;
             if (debugQuery) {
-                button.removeAttribute('disabled');
-                button.setAttribute('class', 'ui-button ui-state-default');
-                buttonText
+                debugButton.button.removeAttribute('disabled');
+                debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+                debugButton.text
                     .innerText = debugContainer.getAttribute('data-' + (debugQuery == prevQuery ? 'refresh' : 'debug') + '-button-label');
                 if (e.key == 'Enter') {
-                    button.click();
+                    debugButton.click();
                 }
             } else {
-                button.setAttribute('disabled', 'disabled');
-                button.setAttribute('class', 'ui-button ui-state-disabled');
-                buttonText
+                debugButton.button.setAttribute('disabled', 'disabled');
+                debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+                debugButton.text
                     .innerText = debugContainer.getAttribute('data-debug-button-label');
             }
         });
 
-        // listen to button click event
+        // listen to debug button click event
         let prevQuery = debugQuery;
-        button.addEventListener("click", e => {
+        debugButton.button.addEventListener("click", e => {
             e.preventDefault();
-            button.setAttribute('disabled', 'disabled');
-            button.setAttribute('class', 'ui-button ui-state-disabled');
-            buttonIcon.classList.add('fa-spin');
+            debugButton.button.setAttribute('disabled', 'disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            debugButton.icon.classList.add('fa-spin');
             fetch(this.debugURL + 'se-debug-query=' + encodeURIComponent(debugQuery))
                 .then(response => response.text())
                 .then(data => {
                     prevQuery = debugQuery;
-                    buttonText.innerText = debugContainer.getAttribute('data-refresh-button-label');
-                    buttonIcon.setAttribute('class', 'fa fa-refresh');
-                    button.removeAttribute('disabled');
-                    button.setAttribute('class', 'ui-button ui-state-default');
+                    debugButton.text.innerText = debugContainer.getAttribute('data-refresh-button-label');
+                    debugButton.icon.setAttribute('class', 'fa fa-refresh');
+                    debugButton.button.removeAttribute('disabled');
+                    debugButton.button.setAttribute('class', 'ui-button ui-state-default');
                     debugContainer.innerHTML = data;
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
@@ -215,6 +233,30 @@ class PWSE_Debugger {
                 node.style.transition = null;
             }, 250);
         }, 1000);
+    }
+
+    /**
+     * Create new button
+     *
+     * @param {object} parent Parent DOM node
+     * @param {string} label Label for the button
+     * @return {object} Button
+     */
+    makeButton(parent, label) {
+        const button = {
+            button: document.createElement('button'),
+            text: document.createElement('span'),
+            icon: document.createElement('i'),
+        };
+        button.button.setAttribute('class', 'ui-button ui-state-disabled');
+        button.button.setAttribute('disabled', 'disabled');
+        parent.parentNode.insertBefore(button.button, parent);
+        button.text.innerText = label;
+        button.button.appendChild(button.text);
+        button.icon.setAttribute('class', 'fa fa-refresh');
+        button.icon.setAttribute('style', 'margin-left: .5rem');
+        button.button.appendChild(button.icon);
+        return button;
     }
 
 }

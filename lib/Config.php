@@ -84,18 +84,7 @@ class Config extends Base {
     public function getFields(): InputfieldWrapper {
 
         // Debugger AJAX endpoint
-        if ($this->wire('user')->isSuperuser() && $this->wire('input')->get('se-debug')) {
-            $debugger = new Debugger;
-            if ($this->wire('input')->get('se-debug-page-id')) {
-                $debugger->setPage((int) $this->wire('input')->get('se-debug-page-id'));
-                exit($debugger->debugPage(false));
-            } else if ($this->wire('input')->get('se-debug-query')) {
-                $debugger->setQuery($this->wire('input')->get('se-debug-query'));
-                exit($debugger->debugQuery(false));
-            } else if ($this->wire('input')->get('se-debug-index')) {
-                exit($debugger->debugIndex(false));
-            }
-        }
+        (new Debugger)->initAJAXAPI();
 
         $fields = $this->wire(new InputfieldWrapper());
 
@@ -350,6 +339,7 @@ class Config extends Base {
         $debugger_page_markup = $this->wire('modules')->get('InputfieldMarkup');
         $debugger_page_markup->value = $debugger->getDebugContainer('', [
             'debug-button-label' => $this->_('Debug Page'),
+            'reindex-button-label' => $this->_('Reindex Page'),
             'type' => 'page',
         ]);
         $debugger_settings->add($debugger_page_markup);
