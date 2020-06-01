@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.3.0
+ * @version 0.3.1
  */
 class PWSE_Debugger {
 
@@ -155,7 +155,7 @@ class PWSE_Debugger {
                     reindexButton.button.removeAttribute('disabled');
                     reindexButton.button.setAttribute('class', 'ui-button ui-state-default');
                     dataQueue.push(data);
-                    debugButton.click();
+                    debugButton.button.click();
                 });
         });
     }
