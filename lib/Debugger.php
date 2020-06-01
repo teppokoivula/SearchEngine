@@ -5,6 +5,7 @@ namespace SearchEngine;
 use ProcessWire\Page;
 use ProcessWire\User;
 use ProcessWire\WireException;
+use ProcessWire\WirePermissionException;
 
 /**
  * SearchEngine Debugger
@@ -438,32 +439,50 @@ class Debugger extends Base {
 
     /**
      * Init AJAX API endpoint
+     *
+     * @throws WirePermissionException if current user doesn't have the superuser role
      */
     public function initAJAXAPI() {
-        if ($this->wire('user')->isSuperuser() && $this->wire('input')->get('se-debug')) {
-            if ($this->wire('input')->get('se-debug-page-id')) {
-                $this->setPage((int) $this->wire('input')->get('se-debug-page-id'));
-                exit($this->debugPage(false));
-            } else if ($this->wire('input')->get('se-reindex-page-id')) {
-                $indexPageID = (int) $this->wire('input')->get('se-reindex-page-id');
-                $indexPage = $this->wire('pages')->get($indexPageID);
-                if ($indexPage && $indexPage->id) {
-                    $indexer = new Indexer;
-                    if ($indexer->indexPage($indexPage)) {
-                        exit('<div class="uk-alert-success" style="color: #32d296; background: #edfbf6" uk-alert>' . $this->_('Page indexed succesfully.') . '</div>');
-                    } else {
-                        exit('<div class="uk-alert-warning" uk-alert>' . $this->_('Error occurred while trying to index the page.') . '</div>');
-                    }
-                } else {
-                    exit('<div class="uk-alert-danger" uk-alert>' . sprintf($this->_('Page not found: %d.'), $indexPageID) . '</div>');
+
+        // bail out early if se-debug GET param isn't set
+        if (!$this->wire('input')->get('se-debug')) return;
+
+        // require superuser role
+        if (!$this->wire('user')->isSuperuser()) {
+            throw new WirePermissionException("You don't have permission to execute that action");
+        }
+
+        if ($this->wire('input')->get('se-debug-page-id')) {
+
+            // debug single page
+            $this->setPage((int) $this->wire('input')->get('se-debug-page-id'));
+            exit($this->debugPage(false));
+
+        } else if ($this->wire('input')->get('se-reindex-page-id')) {
+
+            // reindex single page
+            $indexPageID = (int) $this->wire('input')->get('se-reindex-page-id');
+            $indexPage = $this->wire('pages')->get($indexPageID);
+            if ($indexPage && $indexPage->id) {
+                $indexer = new Indexer;
+                if ($indexer->indexPage($indexPage)) {
+                    exit('<div class="uk-alert-success" style="color: #32d296; background: #edfbf6" uk-alert>' . $this->_('Page indexed succesfully.') . '</div>');
                 }
-                exit($this->debugPage(false));
-            } else if ($this->wire('input')->get('se-debug-query')) {
-                $this->setQuery($this->wire('input')->get('se-debug-query'));
-                exit($this->debugQuery(false));
-            } else if ($this->wire('input')->get('se-debug-index')) {
-                exit($this->debugIndex(false));
+                exit('<div class="uk-alert-warning" uk-alert>' . $this->_('Error occurred while trying to index the page.') . '</div>');
             }
+            exit('<div class="uk-alert-danger" uk-alert>' . sprintf($this->_('Page not found: %d.'), $indexPageID) . '</div>');
+
+        } else if ($this->wire('input')->get('se-debug-query')) {
+
+            // debug query
+            $this->setQuery($this->wire('input')->get('se-debug-query'));
+            exit($this->debugQuery(false));
+
+        } else if ($this->wire('input')->get('se-debug-index')) {
+
+            // debug index
+            exit($this->debugIndex(false));
+
         }
     }
 
