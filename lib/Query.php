@@ -5,11 +5,12 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.3.1
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
  * @property-read string $selector Final selector string.
+ * @property-read string $sql Final SQL query.
  * @property-read string $resultsString Results rendered as a list (PageArray).
  * @property-read int $resultsCount Number of visible results.
  * @property-read int $resultsTotal Number of total results.
@@ -165,6 +166,9 @@ class Query extends Base {
             case 'selector':
                 return $this->getSelector();
                 break;
+            case 'sql':
+                return $this->getSQL();
+                break;
             case 'resultsString':
                 return !empty($this->results) && method_exists($this->results, '___getMarkup') ? $this->results->render() : '';
                 break;
@@ -259,6 +263,31 @@ class Query extends Base {
             implode([$options['index_field'], $this->args['operator'], $this->query]),
             $this->getStringArgument('selector_extra'),
         ]));
+    }
+
+    /**
+     * Returns SQL query based on all provided arguments
+     *
+     * @return string
+     */
+    public function getSQL(): string {
+
+        // get selector string
+        $selector = $this->getSelector();
+
+        // convert selector string into SQL
+        $selectors = new \ProcessWire\Selectors($selector);
+        $pageFinder = new \ProcessWire\PageFinder();
+        $options = [
+            'returnVerbose' => true,
+            'findOne' => false,
+        ];
+        $query = $pageFinder->getQuery($selectors, $options);
+        if (method_exists($query, 'getDebugQuery')) {
+            // ProcessWire 3.0.158+
+            return $query->getDebugQuery();
+        }
+        return $query->getQuery();
     }
 
 }

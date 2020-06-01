@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.23.0] - 2020-06-01
+
+### Added
+- Improved indexing for FieldtypeOptions.
+- getSQL() method and sql property for the Query class.
+- Display resulting SQL when debugging queries (as a superuser in the module config screen).
+- Enable reindexing the Page object currently being debugged with a single button click.
+- PWSE_Core JavaScript class (window.SearchEngine) as a basis for a work-in-progress JS API.
+
+### Changed
+- Debugger JavaScript features converted from a jQuery script to vanilla JS (PWSE_Debugger class).
+- Debugger PHP AJAX API endpoint moved from Config to Debugger.
+
 ## [0.22.0] - 2020-05-24
 
 ### Added

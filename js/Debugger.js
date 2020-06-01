@@ -1,163 +1,266 @@
-$(function() {
+/**
+ * SearchEngine JS Debugger
+ *
+ * @version 0.3.1
+ */
+class PWSE_Debugger {
 
-    // find debug containers
-    const $debugContainers = $('.search-engine-debug');
+    /**
+     * Constructor method
+     */
+    constructor() {
 
-    if ($debugContainers.length) {
+        // find debug containers
+        const debugContainers = document.querySelectorAll('.search-engine-debug');
 
-        // define base url for debug requests
-        const debugURL = ProcessWire.config.urls.admin + 'module/edit?name=SearchEngine&se-debug=1&';
+        if (debugContainers.length) {
 
-        $debugContainers.each(function() {
+            // define base url for debug requests
+            this.debugURL = SearchEngine.configURL + '&se-debug=1&';
 
-            // debug container
-            const $debugContainer = $(this);
+            debugContainers.forEach((debugContainer) => {
 
-            // add debug button
-            const $button = $('<button>')
-                .attr('class', 'ui-button ui-state-disabled')
-                .attr('disabled', 'disabled')
-                .insertBefore($debugContainer);
-            const $buttonText = $('<span>')
-                .text($debugContainer.data('debug-button-label'))
-                .appendTo($button);
-            const $buttonIcon = $('<i>')
-                .addClass('fa fa-bug')
-                .css('margin-left', '.5rem')
-                .appendTo($button);
+                // add debug button
+                const debugButton = this.makeButton(debugContainer, debugContainer.getAttribute('data-debug-button-label'));
+                debugButton.icon.setAttribute('class', 'fa fa-bug');
 
-            if ($debugContainer.data('type') === 'index') {
-
-                // enable debug button
-                $button
-                    .removeAttr('disabled')
-                    .attr('class', 'ui-button ui-state-default');
-
-                // listen to button click event
-                $button.on("click", function(e) {
-                    e.preventDefault();
-                    $button
-                        .attr('disabled', 'disabled')
-                        .attr('class', 'ui-button ui-state-disabled');
-                    $buttonIcon.addClass('fa-spin');
-                    $debugContainer.load(debugURL + 'se-debug-index=1', function() {
-                        $buttonText.text($debugContainer.data('refresh-button-label'));
-                        $buttonIcon.attr('class', 'fa fa-refresh');
-                        $button
-                            .removeAttr('disabled')
-                            .attr('class', 'ui-button ui-state-default');
-                        $debugContainer
-                            .css('margin-top', '2rem')
-                            .effect("highlight", {}, 1000);
-                    });
-                });
-
-            } else if ($debugContainer.data('type') === 'page') {
-
-                // get debug page ID
-                let debugPageID = parseInt($debugContainer.data('page-id'));
-                if (debugPageID) {
-                    $button
-                        .removeAttr('disabled')
-                        .attr('class', 'ui-button ui-state-default');
+                switch (debugContainer.getAttribute('data-type')) {
+                    case 'index':
+                        this.initIndex(debugContainer, debugButton)
+                        break;
+                    case 'page':
+                        this.initPage(debugContainer, debugButton);
+                        break;
+                    case 'query':
+                        this.initQuery(debugContainer, debugButton);
+                        break;
+                    default:
+                        console.error('Unidentified debug container type (' + debugContainer.getAttribute('data-type') + ')');
                 }
+            });
+        }
+    }
 
-                // listen to page select event
-                $("#Inputfield_debugger_page").on("pageSelected", function(e, data) {
-                    $debugContainer
-                        .html('')
-                        .css('margin-top', 0);
-                    $buttonText.text($debugContainer.data('debug-button-label'));
-                    $buttonIcon.attr('class', 'fa fa-bug');
-                    debugPageID = data.id;
-                    if (debugPageID) {
-                        $button
-                            .removeAttr('disabled')
-                            .attr('class', 'ui-button ui-state-default');
-                    } else {
-                        $button
-                            .attr('disabled', 'disabled')
-                            .attr('class', 'ui-button ui-state-disabled');
-                    }
+    /**
+     * Init index debug container
+     *
+     * @param {object} debugContainer
+     * @param {object} debugButton
+     */
+    initIndex(debugContainer, debugButton) {
+
+        // enable debug button
+        debugButton.button.removeAttribute('disabled');
+        debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+
+        // listen to debug button click event
+        debugButton.button.addEventListener("click", e => {
+            e.preventDefault();
+            debugButton.button.setAttribute('disabled', 'disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            debugButton.icon.classList.add('fa-spin');
+            fetch(this.debugURL + 'se-debug-index=1')
+                .then(response => response.text())
+                .then(data => {
+                    debugButton.text.innerText = debugContainer.getAttribute('data-refresh-button-label');
+                    debugButton.icon.setAttribute('class', 'fa fa-refresh');
+                    debugButton.button.removeAttribute('disabled');
+                    debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+                    debugContainer.innerHTML = data;
+                    debugContainer.setAttribute('style', 'margin-top: 2rem');
+                    this.highlight(debugContainer);
                 });
-
-                // listen to button click event
-                $button.on("click", function(e) {
-                    console.log(e);
-                    e.preventDefault();
-                    $button
-                        .attr('disabled', 'disabled')
-                        .attr('class', 'ui-button ui-state-disabled');
-                    $buttonIcon.addClass('fa-spin');
-                    $debugContainer.load(debugURL + 'se-debug-page-id=' + debugPageID, function() {
-                        $buttonText.text($debugContainer.data('refresh-button-label'));
-                        $buttonIcon.attr('class', 'fa fa-refresh');
-                        $button
-                            .removeAttr('disabled')
-                            .attr('class', 'ui-button ui-state-default');
-                        $debugContainer
-                            .css('margin-top', '2rem')
-                            .effect("highlight", {}, 1000);
-                    });
-                });
-
-            } else if ($debugContainer.data('type') == 'query') {
-
-                // get debug query
-                let debugQuery = $debugContainer.data('query');
-                if (debugQuery) {
-                    $button
-                        .removeAttr('disabled')
-                        .attr('class', 'ui-button ui-state-default');
-                }
-
-                // listen to keyup event
-                $('#Inputfield_debugger_query').on("keyup", function(e) {
-                    if (e.key == 'Enter') {
-                        e.preventDefault();
-                    }
-                    debugQuery = $(this).val();
-                    if (debugQuery) {
-                        $button
-                            .removeAttr('disabled')
-                            .attr('class', 'ui-button ui-state-default');
-                        $buttonText
-                            .text($debugContainer.data((debugQuery == prevQuery ? 'refresh' : 'debug') + '-button-label'));
-                        if (e.key == 'Enter') {
-                            $button.trigger('click');
-                        }
-                    } else {
-                        $button
-                            .attr('disabled', 'disabled')
-                            .attr('class', 'ui-button ui-state-disabled');
-                        $buttonText
-                            .text($debugContainer.data('debug-button-label'));
-                    }
-                });
-
-                // listen to button click event
-                let prevQuery = debugQuery;
-                $button.on("click", function(e) {
-                    e.preventDefault();
-                    $button
-                        .attr('disabled', 'disabled')
-                        .attr('class', 'ui-button ui-state-disabled');
-                    $buttonIcon.addClass('fa-spin');
-                    $debugContainer.load(debugURL + 'se-debug-query=' + encodeURIComponent(debugQuery), function() {
-                        prevQuery = debugQuery;
-                        $buttonText.text($debugContainer.data('refresh-button-label'));
-                        $buttonIcon.attr('class', 'fa fa-refresh');
-                        $button
-                            .removeAttr('disabled')
-                            .attr('class', 'ui-button ui-state-default');
-                        $debugContainer
-                            .css('margin-top', '2rem')
-                            .effect("highlight", {}, 1000);
-                    });
-                });
-
-            }
-
         });
     }
-})
+
+    /**
+     * Init page debug container
+     *
+     * @param {object} debugContainer
+     * @param {object} debugButton
+     */
+    initPage(debugContainer, debugButton) {
+
+        // add "reindex" button
+        const reindexButton = this.makeButton(debugContainer, debugContainer.getAttribute('data-reindex-button-label'));
+
+        // get debug page ID
+        let debugPageID = parseInt(debugContainer.getAttribute('data-page-id'));
+        if (debugPageID) {
+            debugButton.button.removeAttribute('disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+            reindexButton.button.removeAttribute('disabled');
+            reindexButton.button.setAttribute('class', 'ui-button ui-state-default');
+        }
+
+        // listen to page select event
+        const debugPageInput = document.getElementById('Inputfield_debugger_page');
+        debugPageInput.previousSibling.addEventListener("click", e => {
+            if (!e.target.parentNode.classList.contains('PageListActionSelect')) return;
+            let debugPageItem = e.target.closest('.PageListItem');
+            debugPageID = debugPageItem.getAttribute('class').match(/(?!PageList)([0-9])+/)[0];
+            debugContainer.innerHTML = '';
+            debugContainer.setAttribute('style', 'margin-top: 0');
+            debugButton.text.innerText = debugContainer.getAttribute('data-debug-button-label');
+            debugButton.icon.setAttribute('class', 'fa fa-bug');
+            if (debugPageID && (debugPageInput.value != debugPageID)) {
+                debugButton.button.removeAttribute('disabled');
+                debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+                reindexButton.button.removeAttribute('disabled');
+                reindexButton.button.setAttribute('class', 'ui-button ui-state-default');
+            } else {
+                debugButton.button.setAttribute('disabled', 'disabled')
+                debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+                reindexButton.button.setAttribute('disabled', 'disabled')
+                reindexButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            }
+        }, true);
+
+        // data queue
+        const dataQueue = [];
+
+        // listen to debug button click event
+        debugButton.button.addEventListener("click", e => {
+            e.preventDefault();
+            debugButton.button.setAttribute('disabled', 'disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            debugButton.icon.classList.add('fa-spin');
+            fetch(this.debugURL + 'se-debug-page-id=' + debugPageID)
+                .then(response => response.text())
+                .then(data => {
+                    debugButton.text.innerText = debugContainer.getAttribute('data-refresh-button-label');
+                    debugButton.icon.setAttribute('class', 'fa fa-refresh');
+                    debugButton.button.removeAttribute('disabled');
+                    debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+                    debugContainer.innerHTML = data;
+                    if (dataQueue.length) {
+                        debugContainer.innerHTML = dataQueue.pop() + debugContainer.innerHTML;
+                    }
+                    const queueData = debugContainer.queueData
+                    debugContainer.setAttribute('style', 'margin-top: 2rem');
+                    this.highlight(debugContainer);
+                });
+        });
+
+        // listen to reindex button click event
+        reindexButton.button.addEventListener("click", e => {
+            e.preventDefault();
+            reindexButton.button.setAttribute('disabled', 'disabled');
+            reindexButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            reindexButton.icon.classList.add('fa-spin');
+            fetch(this.debugURL + 'se-reindex-page-id=' + debugPageID)
+                .then(response => response.text())
+                .then(data => {
+                    reindexButton.icon.classList.remove('fa-spin');
+                    reindexButton.button.removeAttribute('disabled');
+                    reindexButton.button.setAttribute('class', 'ui-button ui-state-default');
+                    dataQueue.push(data);
+                    debugButton.button.click();
+                });
+        });
+    }
+
+    /**
+     * Init query debug container
+     *
+     * @param {object} debugContainer
+     * @param {object} debugButton
+     */
+    initQuery(debugContainer, debugButton) {
+
+        // get debug query
+        let debugQuery = debugContainer.getAttribute('data-query');
+        if (debugQuery) {
+            debugButton.button.removeAttribute('disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+        }
+
+        // listen to keyup event
+        document.getElementById('Inputfield_debugger_query').addEventListener("keyup", function(e) {
+            if (e.key == 'Enter') {
+                e.preventDefault();
+            }
+            debugQuery = e.target.value;
+            if (debugQuery) {
+                debugButton.button.removeAttribute('disabled');
+                debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+                debugButton.text
+                    .innerText = debugContainer.getAttribute('data-' + (debugQuery == prevQuery ? 'refresh' : 'debug') + '-button-label');
+                if (e.key == 'Enter') {
+                    debugButton.click();
+                }
+            } else {
+                debugButton.button.setAttribute('disabled', 'disabled');
+                debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+                debugButton.text
+                    .innerText = debugContainer.getAttribute('data-debug-button-label');
+            }
+        });
+
+        // listen to debug button click event
+        let prevQuery = debugQuery;
+        debugButton.button.addEventListener("click", e => {
+            e.preventDefault();
+            debugButton.button.setAttribute('disabled', 'disabled');
+            debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
+            debugButton.icon.classList.add('fa-spin');
+            fetch(this.debugURL + 'se-debug-query=' + encodeURIComponent(debugQuery))
+                .then(response => response.text())
+                .then(data => {
+                    prevQuery = debugQuery;
+                    debugButton.text.innerText = debugContainer.getAttribute('data-refresh-button-label');
+                    debugButton.icon.setAttribute('class', 'fa fa-refresh');
+                    debugButton.button.removeAttribute('disabled');
+                    debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+                    debugContainer.innerHTML = data;
+                    debugContainer.setAttribute('style', 'margin-top: 2rem');
+                    this.highlight(debugContainer);
+                });
+        });
+    }
+
+    /**
+     * Highlight (blink/flash) a DOM node
+     *
+     * @param {object} node DOM node
+     */
+    highlight(node) {
+        node.style.transition = 'all .25s ease-in-out';
+        node.style.backgroundColor = 'lightyellow';
+        setTimeout(() => {
+            node.style.backgroundColor = null;
+            setTimeout(() => {
+                node.style.transition = null;
+            }, 250);
+        }, 1000);
+    }
+
+    /**
+     * Create new button
+     *
+     * @param {object} parent Parent DOM node
+     * @param {string} label Label for the button
+     * @return {object} Button
+     */
+    makeButton(parent, label) {
+        const button = {
+            button: document.createElement('button'),
+            text: document.createElement('span'),
+            icon: document.createElement('i'),
+        };
+        button.button.setAttribute('class', 'ui-button ui-state-disabled');
+        button.button.setAttribute('disabled', 'disabled');
+        parent.parentNode.insertBefore(button.button, parent);
+        button.text.innerText = label;
+        button.button.appendChild(button.text);
+        button.icon.setAttribute('class', 'fa fa-refresh');
+        button.icon.setAttribute('style', 'margin-left: .5rem');
+        button.button.appendChild(button.icon);
+        return button;
+    }
+
+}
+
+document.addEventListener("SearchEngineConstructed", function() {
+    window.SearchEngine.Debugger = new PWSE_Debugger();
+});
