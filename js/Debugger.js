@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.3.1
+ * @version 0.3.2
  */
 class PWSE_Debugger {
 
@@ -250,6 +250,7 @@ class PWSE_Debugger {
         };
         button.button.setAttribute('class', 'ui-button ui-state-disabled');
         button.button.setAttribute('disabled', 'disabled');
+        button.button.setAttribute('style', 'position: sticky; top: 1rem; z-index: 1');
         parent.parentNode.insertBefore(button.button, parent);
         button.text.innerText = label;
         button.button.appendChild(button.text);
