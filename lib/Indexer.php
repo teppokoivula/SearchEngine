@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.10.0
+ * @version 0.10.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -99,26 +99,21 @@ class Indexer extends Base {
                         $page->get($index_field)->setLanguageValue($language, $index[$language->id]);
                     }
                 }
-                if ($save) {
-                    $of = $page->of();
-                    $page->of(false);
-                    $page->save($index_field, [
-                        'quiet' => true,
-                        'noHooks' => true,
-                    ]);
-                    $page->of($of);
-                }
             } else {
                 $index[0] = $this->getPageIndex($page, $options['indexed_fields'], '');
                 $index[0] = $this->processor->processIndex($index[0]);
-                if ($save) {
-                    $page->setAndSave($index_field, $index[0], [
-                        'quiet' => true,
-                        'noHooks' => true,
-                    ]);
-                } else if ($index_field_exists) {
+                if ($index_field_exists) {
                     $page->set($index_field, $index[0]);
                 }
+            }
+            if ($save) {
+                $of = $page->of();
+                $page->of(false);
+                $page->save($index_field, [
+                    'quiet' => true,
+                    'noHooks' => true,
+                ]);
+                $page->of($of);
             }
             return $return == 'status' ? true : $index;
         }
