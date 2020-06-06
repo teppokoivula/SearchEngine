@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Processor
  *
- * @version 0.1.2
+ * @version 0.1.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -33,9 +33,8 @@ class Processor extends Base {
                         // means that the value needs to be stored as a multi-dimensional array.
                         list($meta_parent, $meta_child, $meta_name) = explode('.', $meta_key);
                         if (empty($meta_index[$meta_parent])) {
-                            $meta_index[$meta_parent] = [];
-                        }
-                        if (empty($meta_index[$meta_parent][$meta_child])) {
+                            $meta_index[$meta_parent] = [$meta_child => []];
+                        } else if (empty($meta_index[$meta_parent][$meta_child])) {
                             $meta_index[$meta_parent][$meta_child] = [];
                         }
                         $meta_index[$meta_parent][$meta_child] += [$meta_name => $index_value];
@@ -52,7 +51,7 @@ class Processor extends Base {
             }
             $processed_index = str_replace('<', ' <', $processed_index);
             $processed_index = strip_tags($processed_index);
-            // Note: "u" flag fixes a potentail macOS PCRE UTF-8 issue: https://github.com/silverstripe/silverstripe-framework/issues/7132
+            // Note: "u" flag fixes a potential macOS PCRE UTF-8 issue: https://github.com/silverstripe/silverstripe-framework/issues/7132
             $processed_index = preg_replace('/\s+/u', ' ', $processed_index);
             $processed_index .= "\n" . (empty($meta_index) ? '{}' : json_encode($meta_index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
