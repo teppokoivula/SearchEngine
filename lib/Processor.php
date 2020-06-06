@@ -22,6 +22,7 @@ class Processor extends Base {
      */
     public function processIndex(array $index): string {
         $processed_index = '';
+        $index = array_filter($index);
         if (!empty($index)) {
             $meta_index = [];
             foreach ($index as $index_key => $index_value) {
