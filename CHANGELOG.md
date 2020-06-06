@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Support for automatically generating result descriptions from indexed content by specifying _auto_desc as field name. Note that this is cosidered beta; be sure to read the "automatically generating search result descriptions" notes from the README!
+
+### Changed
+- Various minor upgrades and optimizations.
+
+### Fixed
+- Minor issue where search result description highlighting didn't work properly if the hit was at the very beginning of the description.
+
 ## [0.23.0] - 2020-06-01
 
 ### Added

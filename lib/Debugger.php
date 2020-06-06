@@ -10,7 +10,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.3.1
+ * @version 0.3.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -311,6 +311,7 @@ class Debugger extends Base {
         $json_args['results_json_fields'] = array_merge([
             'title' => 'title',
             'desc' => 'summary',
+            '_auto_desc' => '_auto_desc',
             'url' => 'url',
             'template' => 'template.name',
         ], $json_args['results_json_fields']);

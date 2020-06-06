@@ -45,7 +45,7 @@ class Processor extends Base {
                     unset($index[$index_key]);
                 }
             }
-            $processed_index = implode(' ', $index);
+            $processed_index = implode(' ... ', $index);
             $url_index = $this->getURLIndex($processed_index);
             if (!empty($url_index)) {
                 $meta_index['urls'] = $url_index;
