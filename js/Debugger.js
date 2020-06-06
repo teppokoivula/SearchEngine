@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.3.2
+ * @version 0.3.3
  */
 class PWSE_Debugger {
 
@@ -187,7 +187,7 @@ class PWSE_Debugger {
                 debugButton.text
                     .innerText = debugContainer.getAttribute('data-' + (debugQuery == prevQuery ? 'refresh' : 'debug') + '-button-label');
                 if (e.key == 'Enter') {
-                    debugButton.click();
+                    debugButton.button.click();
                 }
             } else {
                 debugButton.button.setAttribute('disabled', 'disabled');
