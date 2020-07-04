@@ -2,6 +2,8 @@
 
 namespace SearchEngine;
 
+use ProcessWire\Field;
+use ProcessWire\Language;
 use ProcessWire\Page;
 use ProcessWire\User;
 use ProcessWire\WireException;
@@ -10,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.3.2
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -29,6 +31,25 @@ class Debugger extends Base {
      * @var string
      */
     protected $query = '';
+
+    /**
+     * Index field
+     *
+     * @var Field
+     */
+    protected $index_field;
+
+    /**
+     * Constructor
+     *
+     * @throws WireException if index field can't be found
+     */
+    public function __construct() {
+        $this->index_field = $this->wire('fields')->get($this->getOptions()['index_field']);
+        if (!$this->index_field || !$this->index_field->id) {
+            throw new WireException('Index field not found');
+        }
+    }
 
     /**
      * Set Page
@@ -64,13 +85,21 @@ class Debugger extends Base {
      * Get index for Page
      *
      * @param Page $page
-     * @return string|null
-     *
-     * @throws WireException if Page can't be found
+     * @param Language|null $language Optional language
+     * @return array|string|null Array if no language has been specified, otherwise string or null
      */
-    public function getIndexFor(Page $page): ?string {
-        $index_field = $this->getOptions()['index_field'];
-        return $page->get($index_field);
+    public function getIndexFor(Page $page, ?Language $language = null) {
+        if ($this->index_field->type == 'FieldtypeTextareaLanguage') {
+            if ($language !== null) {
+                return $page->getLanguageValue($language, $this->index_field->name);
+            }
+            $index = [];
+            foreach ($this->wire('languages') as $language) {
+                $index[$language->name] = $page->getLanguageValue($language, $this->index_field->name);
+            }
+            return $index;
+        }
+        return [$page->get($this->index_field->name)];
     }
 
     /**
@@ -80,8 +109,7 @@ class Debugger extends Base {
      * @return bool
      */
     public function pageHasIndexfield(Page $page): bool {
-        $index_field = $this->getOptions()['index_field'];
-        return $page->template->hasField($index_field);
+        return $page->template->hasField($this->index_field->id);
     }
 
     /**
@@ -93,22 +121,16 @@ class Debugger extends Base {
     public function debugIndex(bool $include_container = true): string {
 
         // container for debug output
-        $debug = [];
+        $debug = [
+            'indexable_content' => '<h2>' . $this->_('Content being indexed') . '</h2>',
+            'indexed_content' => '<h2>' . $this->_('Indexed content') . '</h2>',
+        ];
 
         // prepare variables
-        $index_field = $this->wire('fields')->get($this->getOptions()['index_field']);
-        $indexed_templates = $index_field->getTemplates()->implode('|', 'name');
+        $indexed_templates = $this->index_field->getTemplates()->implode('|', 'name');
         $indexed_fields = $this->getOptions()['indexed_fields'];
 
-        // entire index
-        $index = '';
-        foreach ($this->wire('pages')->findMany($index_field . '!=, include=unpublished, status!=trash') as $indexed_page) {
-            $index .= ' ' . $indexed_page->get($index_field->name);
-        }
-        $index_words = $this->getWords($index, true);
-
         // content being indexed
-        $debug['indexable_content'] = '<h2>' . $this->_('Content being indexed') . '</h2>';
         $debug['indexable_content'] .= $this->renderList([
             [
                 'label' => $this->_('Indexed templates'),
@@ -124,27 +146,45 @@ class Debugger extends Base {
             ],
         ]);
 
-        // indexed content
-        $debug['indexed_content'] = '<h2>' . $this->_('Indexed content') . '</h2>';
-        $debug['indexed_content'] .= $this->renderList([
-            [
-                'label' => $this->_('Indexed pages'),
-                'value' => $this->wire('pages')->count($index_field->name . '!=, include=unpublished, status!=trash'),
-            ],
-            [
-                'label' => $this->_('Characters'),
-                'value' => mb_strlen($index),
-            ],
-            [
-                'label' => $this->_('Words'),
-                'value' => str_word_count($index),
-            ],
-            [
-                'label' => $this->_('Unique words'),
-                'value' => count($index_words)
-                        . '<pre style="white-space: pre-wrap">' . implode(', ', $index_words) . '</pre>',
-            ],
-        ]);
+        // languages
+        $languages = [null];
+        if ($this->index_field->type == 'FieldtypeTextareaLanguage') {
+            $languages = [];
+            foreach ($this->wire('languages') as $language) {
+                $languages[] = $language;
+            }
+        }
+
+        // display debug for each language
+        foreach ($languages as $language) {
+            $index = '';
+            foreach ($this->wire('pages')->findMany($this->index_field . '!=, include=unpublished, status!=trash') as $indexed_page) {
+                $index .= ' ' . $this->getIndexfor($indexed_page, $language);
+            }
+            $index_words = $this->getWords($index, true);
+            if ($language !== null) {
+                $debug['indexed_content'] .= '<h3>' . sprintf($this->_('Language: %s'), $language->name) . '</h3>';
+            }
+            $debug['indexed_content'] .= $this->renderList([
+                [
+                    'label' => $this->_('Indexed pages'),
+                    'value' => $this->wire('pages')->count($this->index_field->name . '!=, include=unpublished, status!=trash'),
+                ],
+                [
+                    'label' => $this->_('Characters'),
+                    'value' => mb_strlen($index),
+                ],
+                [
+                    'label' => $this->_('Words'),
+                    'value' => str_word_count($index),
+                ],
+                [
+                    'label' => $this->_('Unique words'),
+                    'value' => count($index_words)
+                            . '<pre style="white-space: pre-wrap">' . implode(', ', $index_words) . '</pre>',
+                ],
+            ]);
+        }
 
         // return markup
         return $include_container ? $this->getDebugContainer(implode($debug), [
@@ -166,10 +206,12 @@ class Debugger extends Base {
         }
 
         // container for debug output
-        $debug = [];
+        $debug = [
+            'info' => '<h2>' . $this->_('Page info') . '</h2>',
+            'index' => '<h2>' . $this->_('Indexed content') . '</h2>',
+        ];
 
         // page info
-        $debug['info'] = '<h2>' . $this->_('Page info') . '</h2>';
         $debug['info'] .= $this->renderList([
             [
                 'label' => $this->_('ID'),
@@ -204,27 +246,31 @@ class Debugger extends Base {
         ]);
 
         // contents of the index
-        $debug['index'] = '<h2>' . $this->_('Indexed content') . '</h2>';
         if ($this->pageHasIndexfield($this->page)) {
             $index = $this->getIndexFor($this->page);
-            if (empty($index)) {
-                $debug['index'] .= '<em>Index is empty for selected page.</em>';
-            } else {
-                $index_words = $this->getWords($index, true);
+            foreach ($index as $index_language => $index_content) {
+                if ($index_language !== 0) {
+                    $debug['index'] .= '<h3>' . sprintf($this->_('Language: %s'), $index_language) . '</h3>';
+                }
+                if (empty($index_content)) {
+                    $debug['index'] .= '<em>Index is empty for this page.</em>';
+                    continue;
+                }
+                $index_words = $this->getWords($index_content, true);
                 $metadata = [];
-                if (strpos($index, '{') !== false && strpos($index, '}')) {
-                    if (preg_match('/{.*?}\z/sim', $index, $metadata_matches)) {
+                if (strpos($index_content, '{') !== false && strpos($index_content, '}')) {
+                    if (preg_match('/{.*?}\z/sim', $index_content, $metadata_matches)) {
                         $metadata = json_decode($metadata_matches[0]);
                     }
                 }
                 $debug['index'] .= $this->renderList([
                     [
                         'label' => $this->_('Characters'),
-                        'value' => mb_strlen($index),
+                        'value' => mb_strlen($index_content),
                     ],
                     [
                         'label' => $this->_('Words'),
-                        'value' => str_word_count($index),
+                        'value' => str_word_count($index_content),
                     ],
                     [
                         'label' => $this->_('Unique words'),
@@ -236,8 +282,8 @@ class Debugger extends Base {
                         'value' => '<pre style="white-space: pre-wrap">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</pre>',
                     ],
                     [
-                        'label' => $this->_('Index'),
-                        'value' => '<pre style="white-space: pre-wrap">' . $index . '</pre>',
+                        'label' => $this->_('Index content'),
+                        'value' => '<pre style="white-space: pre-wrap">' . $index_content . '</pre>',
                     ],
                 ]);
             }
@@ -264,65 +310,97 @@ class Debugger extends Base {
             return '';
         }
 
-        // SearchEngine, Renderer, and Query
+        // init SearchEngine and fetch Renderer
         $se = $this->wire('modules')->get('SearchEngine');
         $se->initOnce();
         $renderer = $se->renderer;
-        $query = $se->find($this->query);
 
         // container for debug output
-        $debug = [];
+        $debug = [
+            'info' => '<h2>' . $this->_('Query info') . '</h2>',
+            'results' => '<h2>' . $this->_('Results') . '</h2>',
+        ];
 
-        // query info
-        $debug['info'] = '<h2>' . $this->_('Query info') . '</h2>';
-        $debug['info'] .= $this->renderList([
-            [
-                'label' => $this->_('Original query'),
-                'value' => '<pre style="white-space: pre-wrap">' . $query->original_query . '</pre>'
-                           . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->original_query)), mb_strlen($query->original_query)) . ')</p>',
-            ],
-            [
-                'label' => $this->_('Sanitized query'),
-                'value' => '<pre style="white-space: pre-wrap">' . $query->query . '</pre>'
-                        . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->query)), mb_strlen($query->query)) . ')</p>',
-            ],
-            [
-                'label' => $this->_('Sanitization modified query'),
-                'value' => (
-                    $query->original_query === $query->query || $query->original_query === trim($query->query, '"')
-                    ? $this->_('No') . ' <i class="fa fa-check" style="color: green" aria-hidden="true"></i>'
-                    : $this->_('Yes')  . ' <i class="fa fa-exclamation-triangle" style="color: red" aria-hidden="true"></i>'
-                ),
-            ],
-            [
-                'label' => $this->_('Resulting selector string'),
-                'value' => '<pre style="white-space: pre-wrap">' . $query->getSelector() . '</pre>',
-			],
-			[
-                'label' => $this->_('Resulting SQL query'),
-                'value' => '<pre style="white-space: pre-wrap">' . $query->getSQL() . '</pre>',
-            ],
-        ]);
+        // languages
+        $original_language = null;
+        $languages = [null];
+        if ($this->index_field->type == 'FieldtypeTextareaLanguage') {
+            $original_language = $this->wire('user')->language;
+            $languages = [];
+            foreach ($this->wire('languages') as $language) {
+                $languages[] = $language;
+            }
+        }
 
-        // results
-        $json_args = $renderer->prepareArgs([
-            'results_json_options' => JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
-        ]);
-        $json_args['results_json_fields'] = array_merge([
-            'title' => 'title',
-            'desc' => 'summary',
-            '_auto_desc' => '_auto_desc',
-            'url' => 'url',
-            'template' => 'template.name',
-        ], $json_args['results_json_fields']);
-        $debug['results'] = '<h2>' . $this->_('Results') . '</h2>';
-        $debug['results'] .= $this->renderList([
-            [
-                'label' => $this->_('Results'),
-                'value' => $query->resultsCount . ' / ' . $query->resultsTotal
-                        . '<pre style="white-space: pre-wrap">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
-            ],
-        ]);
+        // display debug for each language
+        foreach ($languages as $language) {
+
+            // perform query
+            if ($language !== null) {
+                $this->wire('user')->language = $language;
+            }
+            $query = $se->find($this->query);
+
+            // query info
+            if ($language !== null) {
+                $debug['info'] .= '<h3>' . sprintf($this->_('Language: %s'), $language->name) . '</h3>';
+            }
+            $debug['info'] .= $this->renderList([
+                [
+                    'label' => $this->_('Original query'),
+                    'value' => '<pre style="white-space: pre-wrap">' . $query->original_query . '</pre>'
+                            . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->original_query)), mb_strlen($query->original_query)) . ')</p>',
+                ],
+                [
+                    'label' => $this->_('Sanitized query'),
+                    'value' => '<pre style="white-space: pre-wrap">' . $query->query . '</pre>'
+                            . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->query)), mb_strlen($query->query)) . ')</p>',
+                ],
+                [
+                    'label' => $this->_('Sanitization modified query'),
+                    'value' => (
+                        $query->original_query === $query->query || $query->original_query === trim($query->query, '"')
+                        ? $this->_('No') . ' <i class="fa fa-check" style="color: green" aria-hidden="true"></i>'
+                        : $this->_('Yes')  . ' <i class="fa fa-exclamation-triangle" style="color: red" aria-hidden="true"></i>'
+                    ),
+                ],
+                [
+                    'label' => $this->_('Resulting selector string'),
+                    'value' => '<pre style="white-space: pre-wrap">' . $query->getSelector() . '</pre>',
+                ],
+                [
+                    'label' => $this->_('Resulting SQL query'),
+                    'value' => '<pre style="white-space: pre-wrap">' . $query->getSQL() . '</pre>',
+                ],
+            ]);
+
+            // results
+            if ($language !== null) {
+                $debug['results'] .= '<h3>' . sprintf($this->_('Language: %s'), $language->name) . '</h3>';
+            }
+            $json_args = $renderer->prepareArgs([
+                'results_json_options' => JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
+            ]);
+            $json_args['results_json_fields'] = array_merge([
+                'title' => 'title',
+                'desc' => 'summary',
+                '_auto_desc' => '_auto_desc',
+                'url' => 'url',
+                'template' => 'template.name',
+            ], $json_args['results_json_fields']);
+            $debug['results'] .= $this->renderList([
+                [
+                    'label' => $this->_('Results'),
+                    'value' => $query->resultsCount . ' / ' . $query->resultsTotal
+                            . '<pre style="white-space: pre-wrap">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
+                ],
+            ]);
+        }
+
+        // reset language
+        if ($original_language) {
+            $this->wire('user')->language = $original_language;
+        }
 
         // return markup
         return $include_container ? $this->getDebugContainer(implode($debug), [
@@ -339,12 +417,12 @@ class Debugger extends Base {
      */
     public function getDebugContainer(string $content = '', array $data = []): string {
 
-		// inject scripts
-		foreach (['Core', 'Debugger'] as $script) {
-			$this->wire('config')->scripts->add(
-				$this->wire('config')->urls->get('SearchEngine') . 'js/' . $script . '.js'
-			);
-		}
+        // inject scripts
+        foreach (['Core', 'Debugger'] as $script) {
+            $this->wire('config')->scripts->add(
+                $this->wire('config')->urls->get('SearchEngine') . 'js/' . $script . '.js'
+            );
+        }
 
         // data attributes for debug output container
         $data = array_merge([
