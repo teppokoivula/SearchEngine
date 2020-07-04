@@ -86,12 +86,12 @@ class Debugger extends Base {
      *
      * @param Page $page
      * @param Language|null $language Optional language
-     * @return array|string|null Array if no language has been specified, otherwise string or null
+     * @return array
      */
-    public function getIndexFor(Page $page, ?Language $language = null) {
+    public function getIndexFor(Page $page, ?Language $language = null): array {
         if ($this->index_field->type == 'FieldtypeTextareaLanguage') {
             if ($language !== null) {
-                return $page->getLanguageValue($language, $this->index_field->name);
+                return [$page->getLanguageValue($language, $this->index_field->name)];
             }
             $index = [];
             foreach ($this->wire('languages') as $language) {
@@ -159,7 +159,7 @@ class Debugger extends Base {
         foreach ($languages as $language) {
             $index = '';
             foreach ($this->wire('pages')->findMany($this->index_field . '!=, include=unpublished, status!=trash') as $indexed_page) {
-                $index .= ' ' . $this->getIndexfor($indexed_page, $language);
+                $index .= ' ' . $this->getIndexfor($indexed_page, $language)[0];
             }
             $index_words = $this->getWords($index, true);
             if ($language !== null) {
