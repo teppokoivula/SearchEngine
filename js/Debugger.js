@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.3.3
+ * @version 0.4.0
  */
 class PWSE_Debugger {
 
@@ -69,6 +69,7 @@ class PWSE_Debugger {
                     debugContainer.innerHTML = data;
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                    window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
     }
@@ -139,6 +140,7 @@ class PWSE_Debugger {
                     const queueData = debugContainer.queueData
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                    window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
 
@@ -215,6 +217,7 @@ class PWSE_Debugger {
                     debugContainer.innerHTML = data;
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                    window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
     }

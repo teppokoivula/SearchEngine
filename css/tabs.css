@@ -1,0 +1,26 @@
+.search-engine-debug-tabs [role="tablist"] {
+    border-bottom: 1px solid rgba(0, 0, 0, .15);
+    display: block;
+    list-style-type: none;
+    padding: 0;
+}
+
+.search-engine-debug-tabs [role="tablist"] li {
+    display: inline-block;
+    margin-bottom: -1px;
+    position: relative;
+}
+
+.search-engine-debug-tabs [role="tablist"] li a {
+    border: 1px solid transparent;
+    border-radius: .25rem .25rem 0 0;
+    display: inline-block;
+    padding: .5rem 1rem;
+}
+
+.search-engine-debug-tabs [role="tablist"] li a[aria-selected="true"] {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, .15);
+    border-bottom: 1px solid transparent;
+    color: currentColor;
+}
