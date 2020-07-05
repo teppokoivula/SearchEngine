@@ -9,7 +9,7 @@ use ProcessWire\Inputfield;
 /**
  * SearchEngine Config
  *
- * @version 0.6.0
+ * @version 0.6.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -321,7 +321,7 @@ class Config extends Base {
 
         // inputfield for index details
         $debugger_index_markup = $this->wire('modules')->get('InputfieldMarkup');
-        $debugger_index_markup->value = $debugger->getDebugContainer('', [
+        $debugger_index_markup->value = $debugger->renderDebugContainer('', [
             'debug-button-label' => $this->_('Debug Index'),
             'type' => 'index',
         ]);
@@ -337,7 +337,7 @@ class Config extends Base {
 
         // inputfield for page debug output
         $debugger_page_markup = $this->wire('modules')->get('InputfieldMarkup');
-        $debugger_page_markup->value = $debugger->getDebugContainer('', [
+        $debugger_page_markup->value = $debugger->renderDebugContainer('', [
             'debug-button-label' => $this->_('Debug Page'),
             'reindex-button-label' => $this->_('Reindex Page'),
             'type' => 'page',
@@ -355,7 +355,7 @@ class Config extends Base {
 
         // inputfield for query debug output
         $debugger_query_markup = $this->wire('modules')->get('InputfieldMarkup');
-        $debugger_query_markup->value = $debugger->getDebugContainer('', [
+        $debugger_query_markup->value = $debugger->renderDebugContainer('', [
             'debug-button-label' => $this->_('Debug Query'),
             'type' => 'query',
         ]);

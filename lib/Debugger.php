@@ -445,13 +445,13 @@ class Debugger extends Base {
     }
 
     /**
-     * Get container for debug markup
+     * Render container for debug markup
      *
      * @param string $content
      * @param array $data
      * @return string
      */
-    public function getDebugContainer(string $content = '', array $data = []): string {
+    public function renderDebugContainer(string $content = '', array $data = []): string {
 
         // inject scripts
         foreach (['Core', 'Tabs', 'Debugger'] as $script) {
@@ -551,7 +551,7 @@ class Debugger extends Base {
             }
             $out .= $subsection['content'];
         }
-        return $include_container ? $this->getDebugContainer($out, $container_data) : $out;
+        return $include_container ? $this->renderDebugContainer($out, $container_data) : $out;
     }
 
     /**

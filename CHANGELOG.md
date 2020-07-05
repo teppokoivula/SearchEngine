@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Various minor upgrades and optimizations.
+- Debugger::getDebugContainer() renamed as Debugger::renderDebugContainer().
 
 ### Fixed
 - Minor issue where search result description highlighting didn't work properly if the hit was at the very beginning of the description.
