@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.4.0
+ * @version 0.4.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
@@ -181,7 +181,6 @@ class Query extends Base {
             case 'pager':
             case 'resultsPager':
                 if (empty($this->pager) && !empty($this->results) && $this->results instanceof \ProcessWire\PaginatedArray) {
-                    $options = $this->wire('modules')->get('SearchEngine')->options;
                     $this->pager = $this->results->renderPager($this->getOptions()['pager_args']);
                 }
                 return $this->pager;
@@ -281,7 +280,13 @@ class Query extends Base {
         $options = [
             'returnVerbose' => true,
             'findOne' => false,
+            // rest of the options are expected by PageFinder
+            'returnParentIDs' => false,
+            'reverseSort' => false,
+            'alwaysAllowIDs' => [],
         ];
+        // we're not using the result of this operation but PageFinder needs it to populate options
+        $pageFinder->find($selectors, $options);
         $query = $pageFinder->getQuery($selectors, $options);
         if (method_exists($query, 'getDebugQuery')) {
             // ProcessWire 3.0.158+

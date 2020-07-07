@@ -166,6 +166,8 @@ var_dump($json);
 }
 ```
 
+Note that a returned field value (for a specific search result) may be an empty string, but it may also be null. Null return values occur, for an example, if you've specified a field that doesn't exist for that particular page.
+
 ### Rebuilding the search index
 
 If you want to rebuild (recreate) the search index for all pages or pages matching a specific selector, you can do that via the Admin GUI (module configuration screen), or you can perform following request via the API:
@@ -299,6 +301,13 @@ $config->SearchEngine = [
 
 ];
 ```
+
+## Automatically generating search result descriptions (summaries)
+
+As of version 0.24.0, SearchEngine has the capability to automatically generate descriptions for search results. You can trigger this behaviour by specifying `_auto_desc` as the name of the `desc` key. Note, though, that this comes with some notable caveats:
+
+- Before enabling this feature, you need to be *absolutely* certain that everything you're indexing can also be publicly displayed. When SearchEngine generates the description automatically, it doesn't know which parts of the index are intended to be displayed publicly, and which parts might've been added to the index just to make them searchable.
+- Automatically generated descriptions may, at least for the time being, contain data from multiple fields. This means that such snippets may not be entirely logical (and they very likely won't be complete sentences etc.)
 
 ## Themes
 

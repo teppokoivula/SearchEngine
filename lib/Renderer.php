@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.5.1
+ * @version 0.6.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -254,13 +254,8 @@ class Renderer extends Base {
         if (!empty($query->results)) {
             $results['results'] = [];
             foreach ($query->results as $result) {
-                $results['results'][] = array_map(function($field) use ($result) {
-                    if (strpos($field, 'template.') === 0) {
-                        return $result->template->get(substr($field, 9));
-                    } else if (strpos($field, 'parent.') === 0) {
-                        return $result->parent->get(substr($field, 7));
-                    }
-                    return $result->get($field);
+                $results['results'][] = array_map(function($field) use ($result, $options, $query) {
+                    return $this->getResultValue($result, $field, $query, $options['index_field']);
                 }, $args['results_json_fields']);
             }
             $results['count'] = $query->resultsCount;
@@ -299,11 +294,93 @@ class Renderer extends Base {
      * @return string
      */
     protected function ___renderResultDesc(Page $result, Data $data, Query $query): string {
-        $desc = $result->get($data['result_summary_field']) ?? '';
-        if (!empty($desc)) {
-            $desc = $this->wire('sanitizer')->text($desc);
-            $desc = $this->maybeHighlight($desc, $query->query, $data);
-            $desc = sprintf($data['templates']['result_desc'], $desc);
+        $value = $this->getResultValue($result, $data['result_summary_field'], $query, $data['index_field'] ?: null);
+        if (!is_string($value)) {
+            if (!$this->canBeString($value)) return '';
+            $value = (string) $value;
+        }
+        if (!empty($value)) {
+            // Note: text sanitizer has maxLength of 255 by default. This currently limits the max length of the
+            // description text, and also needs to be taken into account for in the getResultAutodesc() method.
+            $value = $this->wire('sanitizer')->text($value);
+            $value = $this->maybeHighlight($value, $query->query, $data);
+            $value = sprintf($data['templates']['result_desc'], $value);
+        }
+        return $value;
+    }
+
+    /**
+     * Check if a value can be converted to string
+     *
+     * @see https://stackoverflow.com/questions/5496656/check-if-item-can-be-converted-to-string
+     *
+     * @param $value mixed
+     * @return bool
+     */
+    protected function canBeString($value): bool {
+        return (!is_array($value) && !is_object($value) && settype($value, 'string') !== false) ||
+               (is_object($value) && method_exists($value, '__toString' ));
+    }
+
+    /**
+     * Return a value from result (Page) field
+     *
+     * This method also supports fallback values, as well as dynamic "pseudo" fields such as "_auto_desc".
+     *
+     * @param Page $result
+     * @param string $field
+     * @param Query $query
+     * @param string $index_field Optional index field name.
+     * @return mixed
+     */
+    protected function getResultValue(Page $result, string $field, Query $query, string $index_field = null) {
+        $value = '';
+        $fields = [$field];
+        if (strpos($fields[0], '|') !== false) {
+            // Note: custom fallback field logic is necessary because otherwise our dynamic fields wouldn't work as
+            // expected; ProcessWire has no knowledge of these values, after all, so they'd likely always be null.
+            $fields = explode('|', $fields[0]);
+        }
+        $value = '';
+        foreach ($fields as $field) {
+            if ($field === '_auto_desc') {
+                if (is_null($index_field)) {
+                    $index_field = $this->getOptions()['index_field'];
+                }
+                $value = $this->getResultAutoDesc($result, $query, $index_field);
+            } else if (strpos($field, 'template.') === 0) {
+                $value = $result->template->get(substr($field, 9));
+            } else if (strpos($field, 'parent.') === 0) {
+                $value = $result->parent->get(substr($field, 7));
+            } else {
+                $value = $result->get($field);
+            }
+            if (!empty($value)) break;
+        }
+        return $value;
+    }
+
+    /**
+     * Get an automatically generated description for a single search result
+     *
+     * @param Page $result Single result object.
+     * @param Query $query Query object.
+     * @param string $index_field Index field.
+     * @return string
+     */
+    protected function getResultAutoDesc(Page $result, Query $query, string $index_field): string {
+        $desc = '';
+        $index = $result->get($index_field) ?? '';
+        if (!empty($index)) {
+            $desc_padding = round((249 - mb_strlen($query->query)) / 2);
+            $index = preg_split('/\r\n|\n/u', $index)[0];
+            if (preg_match('/.{0,' . $desc_padding . '}' . $query->query . '.{0,' . $desc_padding . '}/ui', $index, $matches)) {
+                $desc = $matches[0];
+                $desc_length = mb_strlen($desc);
+                $add_prefix = mb_strpos($desc, '...') === 0 || mb_substr($index, 0, $desc_length) !== $desc;
+                $add_suffix = mb_substr($index, -$desc_length) !== $desc || mb_strrpos($desc, '.') !== $desc_length;
+                $desc = ($add_prefix ? '...' . $desc : $desc) . ($add_suffix ? '...' : '');
+            }
         }
         return $desc;
     }
@@ -517,7 +594,7 @@ class Renderer extends Base {
      * @return string String with highlights, or the original string if no matches found.
      */
     protected function maybeHighlight(string $string, string $query, Data $data): string {
-        if ($data['results_highlight_query'] && stripos($string, $query)) {
+        if ($data['results_highlight_query'] && stripos($string, $query) !== false) {
             $string = preg_replace(
                 '/' . preg_quote($query, '/') . '/i',
                 sprintf(

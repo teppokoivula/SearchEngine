@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.3.1
+ * @version 0.4.0
  */
 class PWSE_Debugger {
 
@@ -69,6 +69,7 @@ class PWSE_Debugger {
                     debugContainer.innerHTML = data;
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                    window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
     }
@@ -139,6 +140,7 @@ class PWSE_Debugger {
                     const queueData = debugContainer.queueData
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                    window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
 
@@ -187,7 +189,7 @@ class PWSE_Debugger {
                 debugButton.text
                     .innerText = debugContainer.getAttribute('data-' + (debugQuery == prevQuery ? 'refresh' : 'debug') + '-button-label');
                 if (e.key == 'Enter') {
-                    debugButton.click();
+                    debugButton.button.click();
                 }
             } else {
                 debugButton.button.setAttribute('disabled', 'disabled');
@@ -215,6 +217,7 @@ class PWSE_Debugger {
                     debugContainer.innerHTML = data;
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                    window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
     }
@@ -250,6 +253,7 @@ class PWSE_Debugger {
         };
         button.button.setAttribute('class', 'ui-button ui-state-disabled');
         button.button.setAttribute('disabled', 'disabled');
+        button.button.setAttribute('style', 'position: sticky; top: 1rem; z-index: 1');
         parent.parentNode.insertBefore(button.button, parent);
         button.text.innerText = label;
         button.button.appendChild(button.text);
