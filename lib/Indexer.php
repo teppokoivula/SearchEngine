@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.10.1
+ * @version 0.10.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -96,7 +96,7 @@ class Indexer extends Base {
                     ]);
                     $index[$language->id] = $this->processor->processIndex($index[$language->id]);
                     if ($index_field_exists) {
-                        $page->get($index_field)->setLanguageValue($language, $index[$language->id]);
+                        $page->getUnformatted($index_field)->setLanguageValue($language, $index[$language->id]);
                     }
                 }
             } else {
