@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Support for automatically generating result descriptions from indexed content by specifying _auto_desc as field name. Note that this is cosidered beta; be sure to read the "automatically generating search result descriptions" notes from the README!
+- Support for automatically generating result descriptions from indexed content by specifying _auto_desc as field name. Note that this is considered beta; be sure to read the "automatically generating search result descriptions" notes from the README!
 - Multi-language support for Debugger.
 
 ### Changed

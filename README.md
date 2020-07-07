@@ -306,8 +306,8 @@ $config->SearchEngine = [
 
 As of version 0.24.0, SearchEngine has the capability to automatically generate a description for search results. You can trigger this behaviour by specifying `_auto_desc` as the name of the `desc` key. Note, though, that this comes with some notable caveats:
 
-- Before enabling this feature, you need to be *absolutely* certain that everything you're indexing can also be publicly displayed. When SearchEngine generates the description automatically, it doesn't know which parts of the index are intended to be displayed publicly, and which parts were added to the index just to make them searchable.
-- Automatically generated descriptions may, at least for the time being, contain data from multiple fields. This means that they may not be entirely logical (and they very likely won't be complete sentences etc.)
+- Before enabling this feature, you need to be *absolutely* certain that everything you're indexing can also be publicly displayed. When SearchEngine generates the description automatically, it doesn't know which parts of the index are intended to be displayed publicly, and which parts might've been added to the index just to make them searchable.
+- Automatically generated descriptions may, at least for the time being, contain data from multiple fields. This means that such snippets may not be entirely logical (and they very likely won't be complete sentences etc.)
 
 ## Themes
 
