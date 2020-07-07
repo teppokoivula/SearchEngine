@@ -301,7 +301,7 @@ class Renderer extends Base {
         }
         if (!empty($value)) {
             // Note: text sanitizer has maxLength of 255 by default. This currently limits the max length of the
-            // description text, and also neds to be taken into account for in the getResultAutodesc() method.
+            // description text, and also needs to be taken into account for in the getResultAutodesc() method.
             $value = $this->wire('sanitizer')->text($value);
             $value = $this->maybeHighlight($value, $query->query, $data);
             $value = sprintf($data['templates']['result_desc'], $value);
