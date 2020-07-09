@@ -53,5 +53,5 @@ class PWSE_Config {
 }
 
 document.addEventListener("SearchEngineConstructed", function() {
-    window.SearchEngine.Tabs = new PWSE_Config();
+    window.SearchEngine.Config = new PWSE_Config();
 });
