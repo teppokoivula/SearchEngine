@@ -9,7 +9,7 @@ use ProcessWire\Inputfield;
 /**
  * SearchEngine Config
  *
- * @version 0.6.1
+ * @version 0.7.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -85,6 +85,13 @@ class Config extends Base {
 
         // Debugger AJAX endpoint
         (new Debugger)->initAJAXAPI();
+
+        // inject scripts
+        foreach (['Core', 'Config'] as $script) {
+            $this->wire('config')->scripts->add(
+                $this->wire('config')->urls->get('SearchEngine') . 'js/' . $script . '.js'
+            );
+        }
 
         $fields = $this->wire(new InputfieldWrapper());
 
@@ -191,8 +198,46 @@ class Config extends Base {
             '~=' => '[~=] ' . $this->_('Contains all the words'),
             '%=' => '[%=] ' . $this->_('Contains the exact word or phrase (using slower SQL LIKE)'),
         ]);
+        if (version_compare($this->wire('config')->version, '3.0.160') > -1) {
+            // new operators introduced in ProcessWire 3.0.160
+            $operator->addOptions([
+                '~*=' => '[~*=] ' . $this->_('Contains words partial') . ' (ProcessWire 3.0.160+)',
+                '~~=' => '[~~=] ' . $this->_('Contains words live') . ' (ProcessWire 3.0.160+)',
+                '~%=' => '[~%=] ' . $this->_('Contains words like') . ' (ProcessWire 3.0.160+)',
+                '~+=' => '[~+=] ' . $this->_('Contains words and expand') . ' (ProcessWire 3.0.160+)',
+                '~|=' => '[~|=] ' . $this->_('Contains any words') . ' (ProcessWire 3.0.160+)',
+                '~|*=' => '[~|*=] ' . $this->_('Contains any partial words') . ' (ProcessWire 3.0.160+)',
+                '~|%=' => '[~|%=] ' . $this->_('Contains any words like') . ' (ProcessWire 3.0.160+)',
+                '*+=' => '[*+=] ' . $this->_('Contains phrase and expand') . ' (ProcessWire 3.0.160+)',
+                '**=' => '[**=] ' . $this->_('Contains match') . ' (ProcessWire 3.0.160+)',
+                '**+=' => '[**+=] ' . $this->_('Contains match and expand') . ' (ProcessWire 3.0.160+)',
+                '#=' => '[#=] ' . $this->_('Advanced text search') . ' (ProcessWire 3.0.160+)',
+            ]);
+            $operator->notes .= $this->_('You can read more about all the ProcessWire 3.0.160+ operators from the [announcement blog post](https://processwire.com/blog/posts/pw-3.0.160/).');
+        }
         $operator = $this->maybeUseConfig($operator);
         $finder_settings->add($operator);
+
+        // operator instructions
+        $operator_details = $this->wire('modules')->get('InputfieldMarkup');
+        $operator_details->value = '<ul id="search-engine-operator-instructions" tabindex="-1" data-toggle-label="' . $this->_('Toggle operator details') . '">';
+        $operator_data_array = \ProcessWire\Selectors::getOperators([
+            'getValueType' => 'verbose',
+        ]);
+        $valid_operators = array_keys($operator->options);
+        foreach ($operator_data_array as $operator_data) {
+            if (!in_array($operator_data['operator'], $valid_operators)) continue;
+            $operator_details->value .= '<li data-operator="' . $operator_data['operator'] . '">'
+                . '<strong>'
+                . '[' . $operator_data['operator'] . '] ' . $operator_data['label']
+                . '</strong>'
+                . '<br>'
+                . $operator_data['description']
+                . '</li>';
+        }
+        $operator_details->value .= '</ul>'
+            . '<script>document.getElementById("search-engine-operator-instructions").setAttribute("hidden", "");</script>';
+        $finder_settings->add($operator_details);
 
         return $finder_settings;
     }
