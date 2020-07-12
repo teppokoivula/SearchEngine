@@ -10,29 +10,60 @@ class PWSE_Config {
      */
     constructor() {
 
-        // toggle operator instructions
-        const operatorInstructions = document.getElementById('search-engine-operator-instructions');
-        if (operatorInstructions) {
-            operatorInstructions.setAttribute('hidden', '');
-            const operatorInstructionsToggle = document.createElement('button');
-            operatorInstructionsToggle.classList.add('ui-button', 'ui-state-default');
-            operatorInstructionsToggle.innerHTML = operatorInstructions.getAttribute('data-toggle-label');
-            operatorInstructionsToggle.innerHTML += ' <i class="fa fa-question-circle"></i>';
-            operatorInstructionsToggle.addEventListener('click', e => {
+        // toggle operator details
+        const operatorDetails = document.getElementById('pwse-operator-details');
+        if (operatorDetails) {
+            operatorDetails.setAttribute('hidden', '');
+            const operatorDetailsToggle = document.createElement('button');
+            operatorDetailsToggle.classList.add('ui-button', 'ui-state-default');
+            operatorDetailsToggle.innerHTML = operatorDetails.getAttribute('data-toggle-label');
+            operatorDetailsToggle.innerHTML += ' <i class="fa fa-question-circle"></i>';
+            operatorDetailsToggle.addEventListener('click', e => {
                 e.preventDefault();
-                operatorInstructions.toggleAttribute('hidden');
-                if (!operatorInstructions.hasAttribute('hidden')) {
-                    this.highlight(operatorInstructions);
-                }
+                operatorDetails.toggleAttribute('hidden');
                 if (typeof window.InputfieldColumnWidths === 'function') {
                     window.InputfieldColumnWidths();
                 }
             });
-            operatorInstructions.parentNode.prepend(operatorInstructionsToggle);
+            operatorDetails.parentNode.prepend(operatorDetailsToggle);
             if (typeof window.InputfieldColumnWidths === 'function') {
                 window.InputfieldColumnWidths();
             }
+
+            // operator select
+            const operatorSelect = document.getElementById('Inputfield_find_args__operator');
+            if (operatorSelect) {
+                operatorSelect.addEventListener('change', e => {
+                    this.setOperator(e.target.value);
+                });
+            }
+
+            // operator buttons
+            const operatorButtons = document.querySelectorAll('.pwse-operator-details__button');
+            if (operatorButtons.length) {
+                operatorButtons.forEach(button => {
+                    button.addEventListener('click', e => {
+                        e.preventDefault();
+                        this.setOperator(e.target.getAttribute('data-operator'));
+                    });
+                });
+            }
         }
+    }
+
+    /**
+     * Set operator
+     *
+     * @param {String} operator
+     */
+    setOperator(operator) {
+        const activeOperator = document.querySelector('.pwse-operator-details__list-item--active');
+        if (activeOperator) {
+            activeOperator.classList.remove('pwse-operator-details__list-item--active');
+        }
+        const operatorButton = document.querySelector('button[data-operator="' + operator + '"]');
+        operatorButton.closest('.pwse-operator-details__list-item').classList.add('pwse-operator-details__list-item--active');
+        document.getElementById('Inputfield_find_args__operator').value = operator;
     }
 
     /**
