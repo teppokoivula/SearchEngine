@@ -236,7 +236,7 @@ class Config extends Base {
         $operator = $this->maybeUseConfig($operator);
         $finder_settings->add($operator);
 
-        // operator instructions
+        // operator details
         $operator_details = $this->wire('modules')->get('InputfieldMarkup');
         $operator_details->value = '<ul id="pwse-operator-details" class="pwse-operator-details" tabindex="-1" data-toggle-label="' . $this->_('Toggle operator details') . '">';
         $operator_data_array = \ProcessWire\Selectors::getOperators([
