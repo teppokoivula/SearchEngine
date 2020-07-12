@@ -1,0 +1,38 @@
+.pwse-operator-details {
+    list-style-type: 0;
+    padding-left: 0;
+}
+
+.pwse-operator-details__list-item {
+    list-style-type: none;
+    padding: 1.25rem 0;
+}
+
+.pwse-operator-details__list-item--active {
+    background: lightyellow;
+}
+
+.pwse-operator-details__list-item:not(:last-child) {
+    border-bottom: .0625rem solid #ddd;
+}
+
+.pwse-operator-details__header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.pwse-operator-details__button {
+    display: inline-block;
+    margin-right: 1rem;
+    min-width: 2.5rem;
+}
+
+.pwse-operator-details__list-item--active .pwse-operator-details__button {
+    background: transparent;
+}
+
+.pwse-operator-details__description {
+    padding: 1rem 0 0;
+    opacity: .75;
+}
