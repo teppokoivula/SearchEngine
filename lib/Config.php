@@ -9,7 +9,7 @@ use ProcessWire\Inputfield;
 /**
  * SearchEngine Config
  *
- * @version 0.7.0
+ * @version 0.7.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -221,42 +221,51 @@ class Config extends Base {
                 '**+=',
                 '#=',
             ]);
-        }
-        foreach ($operator_options as $operator_option) {
-            $operator_option_class = \ProcessWire\Selectors::$selectorTypes[$operator_option] ?? null;
-            if ($operator_option_class) {
-                $operator_option_class = '\ProcessWire\\' . $operator_option_class;
-                $operator->addOption(
-                    $operator_option,
-                    '[' . $operator_option . '] ' . $operator_option_class::getLabel()
-                );
+            foreach ($operator_options as $operator_option) {
+                $operator_option_class = \ProcessWire\Selectors::$selectorTypes[$operator_option] ?? null;
+                if ($operator_option_class) {
+                    $operator_option_class = '\ProcessWire\\' . $operator_option_class;
+                    $operator->addOption(
+                        $operator_option,
+                        '[' . $operator_option . '] ' . $operator_option_class::getLabel()
+                    );
+                }
             }
+        } else {
+            // fallback for ProcessWire < 3.0.160
+            $operator->addOptions([
+                '*=' => '[*=] ' . $this->_('Contains the exact word or phrase'),
+                '~=' => '[~=] ' . $this->_('Contains all the words'),
+                '%=' => '[%=] ' . $this->_('Contains the exact word or phrase (using slower SQL LIKE)'),
+            ]);
         }
         $operator->notes .= $this->_('More information in the [documentation page for operators](https://processwire.com/docs/selectors/operators/).');
         $operator = $this->maybeUseConfig($operator);
         $finder_settings->add($operator);
 
-        // operator details
-        $operator_details = $this->wire('modules')->get('InputfieldMarkup');
-        $operator_details->value = '<ul id="pwse-operator-details" class="pwse-operator-details" tabindex="-1" data-toggle-label="' . $this->_('Toggle operator details') . '">';
-        $operator_data_array = \ProcessWire\Selectors::getOperators([
-            'getValueType' => 'verbose',
-        ]);
-        $valid_operators = array_keys($operator->options);
-        foreach ($operator_data_array as $operator_data) {
-            if (!in_array($operator_data['operator'], $valid_operators)) continue;
-            $operator_details_active = $operator->value == $operator_data['operator'] ? 'pwse-operator-details__list-item--active' : '';
-            $operator_details->value .= '<li class="pwse-operator-details__list-item ' . $operator_details_active . '">'
-                . '<div class="pwse-operator-details__header">'
-                . '<button class="pwse-operator-details__button uk-button" data-operator="' . $operator_data['operator'] . '">' . $operator_data['operator'] . '</button>'
-                . '<span class="pwse-operator-details__label">' . $operator_data['label'] . '</span>'
-                . '</div>'
-                . '<div class="pwse-operator-details__description">' . $operator_data['description'] . '</div>'
-                . '</li>';
+        if (version_compare($this->wire('config')->version, '3.0.160') > -1) {
+            // operator details: provide additional information for each available operator
+            $operator_details = $this->wire('modules')->get('InputfieldMarkup');
+            $operator_details->value = '<ul id="pwse-operator-details" class="pwse-operator-details" tabindex="-1" data-toggle-label="' . $this->_('Toggle operator details') . '">';
+            $operator_data_array = \ProcessWire\Selectors::getOperators([
+                'getValueType' => 'verbose',
+            ]);
+            $valid_operators = array_keys($operator->options);
+            foreach ($operator_data_array as $operator_data) {
+                if (!in_array($operator_data['operator'], $valid_operators)) continue;
+                $operator_details_active = $operator->value == $operator_data['operator'] ? 'pwse-operator-details__list-item--active' : '';
+                $operator_details->value .= '<li class="pwse-operator-details__list-item ' . $operator_details_active . '">'
+                                          . '<div class="pwse-operator-details__header">'
+                                          . '<button class="pwse-operator-details__button uk-button" data-operator="' . $operator_data['operator'] . '">' . $operator_data['operator'] . '</button>'
+                                          . '<span class="pwse-operator-details__label">' . $operator_data['label'] . '</span>'
+                                          . '</div>'
+                                          . '<div class="pwse-operator-details__description">' . $operator_data['description'] . '</div>'
+                                          . '</li>';
+            }
+            $operator_details->value .= '</ul>'
+                                      . '<script>document.getElementById("pwse-operator-details").setAttribute("hidden", "");</script>';
+            $finder_settings->add($operator_details);
         }
-        $operator_details->value .= '</ul>'
-            . '<script>document.getElementById("pwse-operator-details").setAttribute("hidden", "");</script>';
-        $finder_settings->add($operator_details);
 
         return $finder_settings;
     }

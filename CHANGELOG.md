@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.25.1] - 2020-07-16
+
+### Fixed
+- Config screen error affecting ProcessWire versions < 3.0.160.
+
 ## [0.25.0] - 2020-07-12
 
 ### Added
