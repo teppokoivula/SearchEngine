@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.25.1
+ * @version 0.25.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -325,9 +325,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     protected function savePageIndex(HookEvent $event) {
         $this->initOnce();
         $page = $event->arguments[0];
-        if ($this->indexer->indexPage($page)) {
-            $this->savedPageIndex($page);
-        }
+        $this->indexer->indexPage($page);
     }
 
     /**
@@ -335,7 +333,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      *
      * @param Page $page
      */
-    protected function ___savedPageIndex(Page $page) {}
+    public function ___savedPageIndex(Page $page) {}
 
     /**
      * Find content matching provided query.
