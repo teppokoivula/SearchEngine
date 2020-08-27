@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.25.2
+ * @version 0.26.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -355,12 +355,14 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * If the module hasn't been initialized yet, this method will perform the required init setup.
      * This is done in a seprate module to avoid loading or doing unnecessary stuff, since we can't
      * really limit the scope of the module autoload (need to be able to catch any page save, etc.)
+     *
+     * @return bool True on first run, false if already initialized.
      */
-    protected function initOnce() {
+    public function initOnce(): bool {
 
         // Bail out early if the module has already been initialized
         if ($this->initialized) {
-            return;
+            return false;
         }
 
         // Init runtime options.
@@ -383,6 +385,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
 
         // Remember that the module has been initialized.
         $this->initialized = true;
+
+        // return true on first run
+        return true;
     }
 
     /**
