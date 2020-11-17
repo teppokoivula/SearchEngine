@@ -72,9 +72,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'FieldtypeTextareas',
         ],
         'prefixes' => [
-            'id' => '',
+            'id' => ':',
             'link' => 'link:',
-            'name' => '',
+            'name' => ':',
         ],
         'find_args' => [
             'limit' => 20,
