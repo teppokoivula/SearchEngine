@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Processor
  *
- * @version 0.1.3
+ * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -14,8 +14,8 @@ class Processor extends Base {
     /**
      * Process index for storage
      *
-     * This method converts an index array to a string, sanitizes it removing content we don't
-     * want in the index (tags etc.) and finally appends an index of links to the index string.
+     * This method converts an index array to a string, sanitizes it removing content we don't want in the index (tags
+     * etc.) and finally appends an index of links to the index string.
      *
      * @param array $index Index as an array.
      * @return string Processed index string.
@@ -29,16 +29,22 @@ class Processor extends Base {
                 // Identify and capture values belonging to the meta index (non-field values).
                 if (strpos($index_key, Indexer::META_PREFIX) === 0) {
                     $meta_key = substr($index_key, strlen(Indexer::META_PREFIX));
-                    if (substr_count($meta_key, '.') > 1) {
-                        // Note: index is always a flat assoc array, but a key with multiple dots
-                        // means that the value needs to be stored as a multi-dimensional array.
-                        list($meta_parent, $meta_child, $meta_name) = explode('.', $meta_key);
+                    if (strpos($meta_key, '.')) {
+                        // Note: index is always a flat assoc array, but a key with multiple dots means that the value
+                        // needs to be stored as a multi-dimensional array.
+                        $key_parts = explode('.', $meta_key);
+                        $meta_parent = array_shift($key_parts);
+                        // Remove numeric key parts. This is done so that one can search for specific value in specific
+                        // page ref field (page_ref=1234). This also gets rid of possible duplicates, which we wouldn't
+                        // need anyway (searching for page_ref.0.1234 or page_ref.1.1234 is not a common use case.)
+                        $key_parts = array_filter($key_parts, function($value) {
+                            return !is_numeric($value);
+                        });
+                        $meta_name = implode('.', $key_parts);
                         if (empty($meta_index[$meta_parent])) {
-                            $meta_index[$meta_parent] = [$meta_child => []];
-                        } else if (empty($meta_index[$meta_parent][$meta_child])) {
-                            $meta_index[$meta_parent][$meta_child] = [];
+                            $meta_index[$meta_parent] = [];
                         }
-                        $meta_index[$meta_parent][$meta_child] += [$meta_name => $index_value];
+                        $meta_index[$meta_parent][] = $meta_name . $index_value;
                     } else {
                         $meta_index[$meta_key] = $index_value;
                     }
@@ -52,7 +58,7 @@ class Processor extends Base {
             }
             $processed_index = str_replace('<', ' <', $processed_index);
             $processed_index = strip_tags($processed_index);
-            // Note: "u" flag fixes a potential macOS PCRE UTF-8 issue: https://github.com/silverstripe/silverstripe-framework/issues/7132
+            // Note: "u" flag fixes a potential macOS PCRE UTF-8 issue, https://github.com/silverstripe/silverstripe-framework/issues/7132
             $processed_index = preg_replace('/\s+/u', ' ', $processed_index);
             $processed_index .= "\n" . (empty($meta_index) ? '{}' : json_encode($meta_index, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
         }
@@ -62,8 +68,8 @@ class Processor extends Base {
     /**
      * Create an index of URLs
      *
-     * Find URLs from field data and return them as an array. This allows us to search for links
-     * with "link:https://URL" syntax (link prefix is configurable but defaults to "link:").
+     * Find URLs in field data and return them as an array. This allows us to search for links with `link:https://URL`
+     * syntax (link prefix is configurable but defaults to "link:").
      *
      * @param string $data
      * @return array
@@ -72,7 +78,9 @@ class Processor extends Base {
         $index = [];
         if (!empty($data) && preg_match_all('/href=([\"\'])(.*?)\1/i', $data, $matches)) {
             $link_prefix = $this->getOptions()['prefixes']['link'];
-            $index[] = $link_prefix . implode(' ' . $link_prefix, $matches[2]);
+            foreach ($matches[2] as $link) {
+                $index[] = $link_prefix . $link;
+            }
         }
         return $index;
     }

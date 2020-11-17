@@ -2,14 +2,22 @@
 
 namespace SearchEngine;
 
-use ProcessWire\InputfieldWrapper;
-use ProcessWire\InputfieldFieldset;
 use ProcessWire\Inputfield;
+use ProcessWire\InputfieldAsmSelect;
+use ProcessWire\InputfieldCheckbox;
+use ProcessWire\InputfieldCheckboxes;
+use ProcessWire\InputfieldFieldset;
+use ProcessWire\InputfieldMarkup;
+use ProcessWire\InputfieldPageListSelect;
+use ProcessWire\InputfieldSelect;
+use ProcessWire\InputfieldSelector;
+use ProcessWire\InputfieldText;
+use ProcessWire\InputfieldWrapper;
 
 /**
  * SearchEngine Config
  *
- * @version 0.7.1
+ * @version 0.8.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -120,16 +128,20 @@ class Config extends Base {
      */
     protected function getIndexingOptionsFieldset(): InputfieldFieldset {
 
-        // fieldset for indexing options
+        /** @var InputfieldFieldset Indexing options */
         $indexing_options = $this->wire('modules')->get('InputfieldFieldset');
         $indexing_options->label = $this->_('Indexing options');
         $indexing_options->icon = 'database';
         $indexing_options->columnWidth = 50;
 
-        // select indexed fields
+        /** @var InputfieldAsmSelect Indexed fields */
         $indexed_fields = $this->wire('modules')->get('InputfieldAsmSelect');
         $indexed_fields->name = 'indexed_fields';
         $indexed_fields->label = $this->_('Select indexed fields');
+        $indexed_fields->addOptions([
+            'id' => 'id',
+            'name' => 'name',
+        ]);
         $compatible_fieldtype_options = $this->options['compatible_fieldtypes'] ?? [];
         if (!empty($this->data['override_compatible_fieldtypes'])) {
             $compatible_fieldtype_options = $this->data['compatible_fieldtypes'] ?? [];
@@ -151,7 +163,7 @@ class Config extends Base {
         }
         $indexing_options->add($indexed_fields);
 
-        // select indexed templates
+        /** @var InputfieldCheckboxes Indexed templates */
         $indexed_templates = $this->wire('modules')->get('InputfieldCheckboxes');
         $indexed_templates->name = 'indexed_templates';
         $indexed_templates->label = $this->_('Indexed templates');
@@ -180,13 +192,13 @@ class Config extends Base {
      */
     protected function getFinderSettingsFieldset(): InputfieldFieldset {
 
-        // fieldset for finder settings
+        /** @var InputfieldFieldset Finder settings */
         $finder_settings = $this->wire('modules')->get('InputfieldFieldset');
         $finder_settings->label = $this->_('Finder settings');
         $finder_settings->icon = 'search';
         $finder_settings->columnWidth = 50;
 
-        // define sort order
+        /** @var InputfieldText Sort order */
         $sort = $this->wire('modules')->get('InputfieldText');
         $sort->name = 'find_args__sort';
         $sort->label = $this->_('Sort order');
@@ -195,7 +207,7 @@ class Config extends Base {
         $sort = $this->maybeUseConfig($sort);
         $finder_settings->add($sort);
 
-        // select operator
+        /** @var InputfieldSelect Operator */
         $operator = $this->wire('modules')->get('InputfieldSelect');
         $operator->name = 'find_args__operator';
         $operator->label = $this->_('Operator');
@@ -244,7 +256,7 @@ class Config extends Base {
         $finder_settings->add($operator);
 
         if (version_compare($this->wire('config')->version, '3.0.160') > -1) {
-            // operator details: provide additional information for each available operator
+            /** @var InputfieldMarkup Additional information for each available operator */
             $operator_details = $this->wire('modules')->get('InputfieldMarkup');
             $operator_details->value = '<ul id="pwse-operator-details" class="pwse-operator-details" tabindex="-1" data-toggle-label="' . $this->_('Toggle operator details') . '">';
             $operator_data_array = \ProcessWire\Selectors::getOperators([
@@ -277,12 +289,12 @@ class Config extends Base {
      */
     protected function getManualIndexingFieldset(): InputfieldFieldset {
 
-        // fieldset for manual indexing options
+        /** @var InputfieldFieldset Manual indexing options */
         $manual_indexing = $this->wire('modules')->get('InputfieldFieldset');
         $manual_indexing->label = $this->_('Manual indexing');
         $manual_indexing->icon = 'rocket';
 
-        // checkbox field for triggering page indexing
+        /** @var InputfieldCheckbox Checkbox for triggering page indexing */
         $index_pages_now = $this->wire('modules')->get('InputfieldCheckbox');
         $index_pages_now->name = 'index_pages_now';
         $index_pages_now->label = $this->_('Index pages now?');
@@ -291,7 +303,7 @@ class Config extends Base {
         $index_pages_now->attr('checked', !empty($this->data[$index_pages_now->name]));
         $manual_indexing->add($index_pages_now);
 
-        // optional selector for automatic page indexing
+        /** @var InputfieldSelector Optional selector for automatic page indexing */
         $index_pages_now_selector = $this->wire('modules')->get('InputfieldSelector');
         $index_pages_now_selector->name = 'index_pages_now_selector';
         $index_pages_now_selector->label = $this->_('Selector for indexed pages');
@@ -310,13 +322,13 @@ class Config extends Base {
      */
     protected function getAdvancedSettingsFieldset(): InputfieldFieldset {
 
-        // fieldset for advanced options
+        /** @var InputfieldFieldset Advanced options */
         $advanced_settings = $this->wire('modules')->get('InputfieldFieldset');
         $advanced_settings->label = $this->_('Advanced settings');
         $advanced_settings->icon = 'graduation-cap';
         $advanced_settings->collapsed = Inputfield::collapsedYes;
 
-        // select index field
+        /** @var InputfieldSelect Index field */
         $index_field = $this->wire('modules')->get('InputfieldSelect');
         $index_field->name = 'index_field';
         $index_field->label = $this->_('Select index field');
@@ -330,7 +342,7 @@ class Config extends Base {
         $index_field = $this->maybeUseConfig($index_field);
         $advanced_settings->add($index_field);
 
-        // override values for compatible fieldtypes
+        /** @var InputfieldCheckbox Override values for compatible fieldtypes */
         $override_compatible_fieldtypes = $this->wire('modules')->get('InputfieldCheckbox');
         $override_compatible_fieldtypes->name = 'override_compatible_fieldtypes';
         $override_compatible_fieldtypes->label = $this->_('Override compatible fieldtypes');
@@ -338,7 +350,7 @@ class Config extends Base {
         $override_compatible_fieldtypes->attr('checked', !empty($this->data['override_compatible_fieldtypes']));
         $advanced_settings->add($override_compatible_fieldtypes);
 
-        // define fieldtypes considered compatible with this module
+        /** @var InputfieldAsmSelect Fieldtypes considered compatible with this module */
         $compatible_fieldtypes = $this->wire('modules')->get('InputfieldAsmSelect');
         $compatible_fieldtypes->name = 'compatible_fieldtypes';
         $compatible_fieldtypes->label = $this->_('Compatible fieldtypes');
@@ -386,13 +398,13 @@ class Config extends Base {
             $debugger->setQuery($this->data['debugger_query']);
         }
 
-        // fieldset for Debugger
+        /** @var InputfieldFieldset Fieldset for Debugger */
         $debugger_settings = $this->wire('modules')->get('InputfieldFieldset');
         $debugger_settings->label = $this->_('Debugger');
         $debugger_settings->collapsed = Inputfield::collapsedYes;
         $debugger_settings->icon = 'bug';
 
-        // inputfield for index details
+        /** @var InputfieldMarkup Index details */
         $debugger_index_markup = $this->wire('modules')->get('InputfieldMarkup');
         $debugger_index_markup->value = $debugger->renderDebugContainer('', [
             'debug-button-label' => $this->_('Debug Index'),
@@ -400,7 +412,7 @@ class Config extends Base {
         ]);
         $debugger_settings->add($debugger_index_markup);
 
-        // select page to debug
+        /** @var InputfieldPageListSelect Select page to debug */
         $debugger_page = $this->wire('modules')->get('InputfieldPageListSelect');
         $debugger_page->name = 'debugger_page';
         $debugger_page->label = $this->_('Selected Page');
@@ -408,7 +420,7 @@ class Config extends Base {
         $debugger_page->value = $this->data[$debugger_page->name] ?? null;
         $debugger_settings->add($debugger_page);
 
-        // inputfield for page debug output
+        /** @var InputfieldMarkup Page debug output */
         $debugger_page_markup = $this->wire('modules')->get('InputfieldMarkup');
         $debugger_page_markup->value = $debugger->renderDebugContainer('', [
             'debug-button-label' => $this->_('Debug Page'),
@@ -417,7 +429,7 @@ class Config extends Base {
         ]);
         $debugger_settings->add($debugger_page_markup);
 
-        // type in a query to debug
+        /** @var InputfieldText Query to debug */
         $debugger_query = $this->wire('modules')->get('InputfieldText');
         $debugger_query->name = 'debugger_query';
         $debugger_query->label = $this->_('Query');
@@ -426,7 +438,7 @@ class Config extends Base {
         $debugger_query->value = $this->data[$debugger_query->name] ?? '';
         $debugger_settings->add($debugger_query);
 
-        // inputfield for query debug output
+        /** @var InputfieldMarkup Query debug output */
         $debugger_query_markup = $this->wire('modules')->get('InputfieldMarkup');
         $debugger_query_markup->value = $debugger->renderDebugContainer('', [
             'debug-button-label' => $this->_('Debug Query'),
