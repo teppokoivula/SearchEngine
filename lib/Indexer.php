@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.10.3
+ * @version 0.11.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -174,10 +174,18 @@ class Indexer extends Base {
                 'ids' => 'id',
                 'names' => 'name',
             ];
+            $prefixes = $this->getOptions()['prefixes'];
             foreach ($properties as $property_key => $property) {
                 if (in_array($property, $indexed_fields)) {
+                    $provided_prefix = empty($prefix) ? 'page' : rtrim($prefix, '.');
+                    if (!isset($args[$property . '_prefix']) && !empty($prefixes[$property]) && $prefixes[$property] != ':') {
+                        $args[$property . '_prefix'] = str_replace('{field.name}', $provided_prefix, $prefixes[$property]);
+                    } else if (empty($prefix)) {
+                        $args[$property . '_prefix'] = $property . ':';
+                    }
                     $property_prefix = $args[$property . '_prefix'] ?? '';
-                    $index[self::META_PREFIX . $property_key . '.' . rtrim($prefix, '.')] = $property_prefix . $this->getIndexValue($page, $property);
+                    $property_prefix = (ctype_alnum($property_prefix[0] ?? '') ? '.' : '') . $property_prefix;
+                    $index[self::META_PREFIX . $property_key . '.' . $provided_prefix] = $property_prefix . $this->getIndexValue($page, $property);
                 }
             }
         }
@@ -200,12 +208,20 @@ class Indexer extends Base {
         $field_name = $field;
         if ($field instanceof \ProcessWire\Field) {
             if ($field->type instanceof \ProcessWire\FieldtypeFile) {
-                return $page->getUnformatted($field->name)->implode(' ', function($item) {
+                $field_value = $page->getUnformatted($field->name);
+                if ($field_value instanceof \ProcessWire\WireArray) {
+                    return $field_value->implode(' ', function($item) {
+                        return implode(' ', array_filter([
+                            $item->name,
+                            $item->description,
+                        ]));
+                    });
+                } else if ($field_value instanceof \ProcessWire\Pagefile) {
                     return implode(' ', array_filter([
-                        $item->name,
-                        $item->description,
+                        $field_value->name,
+                        $field_value->description,
                     ]));
-                });
+                }
             } else if ($field->type instanceof \ProcessWire\FieldtypeTable) {
                 return $this->sanitizer->unentities(strip_tags(str_replace('</td><td>', ' ', $page->getFormatted($field->name)->render([
                     'tableClass' => null,
@@ -240,7 +256,12 @@ class Indexer extends Base {
             // Note: union operator is slightly faster than array_merge() and makes sense
             // here since we're working with associative arrays only.
             if ($child->status >= \ProcessWire\Page::statusHidden) continue;
-            $index += $this->getPageIndex($child, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.');
+            $prefixes = $this->getOptions()['prefixes'];
+            $args = [
+                'id_prefix' => str_replace('{field.name}', $field->name, $prefixes['id'] ?? ''),
+                'name_prefix' => str_replace('{field.name}', $field->name, $prefixes['name'] ?? ''),
+            ];
+            $index += $this->getPageIndex($child, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.', $args);
             ++$index_num;
         }
         return $index;
@@ -265,11 +286,15 @@ class Indexer extends Base {
             $index_num = 0;
             $prefixes = $this->getOptions()['prefixes'];
             $args = [
-                'id_prefix' => str_replace('{field.name}', $field->name, $prefixes['id']),
-                'name_prefix' => str_replace('{field.name}', $field->name, $prefixes['name']),
+                'id_prefix' => str_replace('{field.name}', $field->name, $prefixes['id'] ?? ''),
+                'name_prefix' => str_replace('{field.name}', $field->name, $prefixes['name'] ?? ''),
             ];
             foreach ($page_ref as $page_ref_page) {
-                $index += $this->getPageIndex($page_ref_page, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.', $args);
+                $page_ref_prefix = $prefix . $field->name . '.';
+                if ($field->get('derefAsPage') === \ProcessWire\FieldtypePage::derefAsPageArray) {
+                    $page_ref_prefix .= $index_num . '.';
+                }
+                $index += $this->getPageIndex($page_ref_page, $indexed_fields, $page_ref_prefix, $args);
                 ++$index_num;
             }
         }
