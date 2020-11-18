@@ -175,17 +175,17 @@ class Indexer extends Base {
                 'names' => 'name',
             ];
             $prefixes = $this->getOptions()['prefixes'];
-            foreach ($properties as $property_key => $property) {
+            foreach ($properties as $property_group => $property) {
                 if (in_array($property, $indexed_fields)) {
-                    $provided_prefix = empty($prefix) ? 'page' : rtrim($prefix, '.');
+                    $field_prefix = empty($prefix) ? 'page' : rtrim($prefix, '.');
+                    $property_prefix = $prefixes[$property] ?? '';
                     if (!isset($args[$property . '_prefix']) && !empty($prefixes[$property]) && $prefixes[$property] != ':') {
-                        $args[$property . '_prefix'] = str_replace('{field.name}', $provided_prefix, $prefixes[$property]);
-                    } else if (empty($prefix)) {
-                        $args[$property . '_prefix'] = $property . ':';
+                        $property_prefix = str_replace('{field.name}', $field_prefix, $prefixes[$property]);
+                    } else if ($field_prefix === 'page') {
+                        $property_prefix = $property . ':';
                     }
-                    $property_prefix = $args[$property . '_prefix'] ?? '';
                     $property_prefix = (ctype_alnum($property_prefix[0] ?? '') ? '.' : '') . $property_prefix;
-                    $index[self::META_PREFIX . $property_key . '.' . $provided_prefix] = $property_prefix . $this->getIndexValue($page, $property);
+                    $index[self::META_PREFIX . $property_group . '.' . $field_prefix] = $property_prefix . $this->getIndexValue($page, $property);
                 }
             }
         }

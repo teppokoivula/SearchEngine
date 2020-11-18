@@ -56,6 +56,14 @@ class Processor extends Base {
             if (!empty($url_index)) {
                 $meta_index['urls'] = $url_index;
             }
+            if (!empty($meta_index)) {
+                // Make sure that index arrays don't contain duplicate or empty values.
+                foreach ($meta_index as $key => $value) {
+                    if (is_array($value)) {
+                        $meta_index[$key] = array_values(array_unique(array_filter($value)));
+                    }
+                }
+            }
             $processed_index = str_replace('<', ' <', $processed_index);
             $processed_index = strip_tags($processed_index);
             // Note: "u" flag fixes a potential macOS PCRE UTF-8 issue, https://github.com/silverstripe/silverstripe-framework/issues/7132
