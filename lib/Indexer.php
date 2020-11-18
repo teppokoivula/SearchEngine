@@ -252,15 +252,15 @@ class Indexer extends Base {
     protected function ___getRepeatableIndexValue(\Processwire\Page $page, \ProcessWire\Field $field, array $indexed_fields = [], string $prefix = ''): array {
         $index = [];
         $index_num = 0;
+        $prefixes = $this->getOptions()['prefixes'];
         foreach ($page->get($field->name) as $child) {
-            // Note: union operator is slightly faster than array_merge() and makes sense
-            // here since we're working with associative arrays only.
             if ($child->status >= \ProcessWire\Page::statusHidden) continue;
-            $prefixes = $this->getOptions()['prefixes'];
             $args = [
                 'id_prefix' => str_replace('{field.name}', $field->name, $prefixes['id'] ?? ''),
                 'name_prefix' => str_replace('{field.name}', $field->name, $prefixes['name'] ?? ''),
             ];
+            // Note: union operator is slightly faster than array_merge() and makes sense here since we're working with
+            // associative arrays only.
             $index += $this->getPageIndex($child, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.', $args);
             ++$index_num;
         }
