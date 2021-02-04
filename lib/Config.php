@@ -17,7 +17,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.8.0
+ * @version 0.9.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -379,6 +379,20 @@ class Config extends Base {
         $compatible_fieldtypes->notes .= $this->getCompatibleFieldtypeDiff($compatible_fieldtypes->value);
         $advanced_settings->add($compatible_fieldtypes);
 
+        // module specific extra actions
+        $module_extras = $this->wire('modules')->get('InputfieldAsmSelect');
+        $module_extras->name = 'module_extras';
+        $module_extras->label = $this->_('Module specific actions');
+        $module_extras->description = $this->_('Actions specific to external modules.')
+            . " "
+            . $this->_('Note: this option is experimental and may not work as expected, please test carefully before enabling on a live site!');
+        $module_extras->notes = $this->_('- FormBuilder: renders FormBuilder forms as part of the indexed content.');
+        $module_extras->addOptions([
+            'FormBuilder' => 'FormBuilder',
+        ]);
+        $module_extras = $this->maybeUseConfig($module_extras);
+        $advanced_settings->add($module_extras);
+
         return $advanced_settings;
     }
 
@@ -473,8 +487,8 @@ class Config extends Base {
             }
         } else {
             // value defined in site config, disable inputfield
-            $field->notes = sprintf(
-                $this->_('"%s" is currently defined in site config. You cannot override config settings here.'),
+            $field->notes = ($field->notes ? $field->notes . "\n\n" : "") . sprintf(
+                $this->_('*"%s" is currently defined in site config and cannot be changed here.*'),
                 $field->label
             );
             $field->value = $this->getValue($field->name, $this->options);

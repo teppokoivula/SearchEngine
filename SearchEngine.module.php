@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.27.0
+ * @version 0.28.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -440,6 +440,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'indexed_fields',
             'find_args__sort',
             'find_args__operator',
+            'module_extras',
         ];
         foreach ($enabled_settings as $setting) {
             $setting_value = $this->get($setting);

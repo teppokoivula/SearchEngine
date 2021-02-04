@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Module specific extra actions, first one of which is rendering FormBuilder forms as part of the index.
+
 ## [0.27.0] - 2020-11-18
 
 ### Added
