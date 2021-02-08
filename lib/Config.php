@@ -379,19 +379,22 @@ class Config extends Base {
         $compatible_fieldtypes->notes .= $this->getCompatibleFieldtypeDiff($compatible_fieldtypes->value);
         $advanced_settings->add($compatible_fieldtypes);
 
-        // module specific extra actions
-        $module_extras = $this->wire('modules')->get('InputfieldAsmSelect');
-        $module_extras->name = 'module_extras';
-        $module_extras->label = $this->_('Module specific actions');
-        $module_extras->description = $this->_('Actions specific to external modules.')
+        // Indexer extra actions
+        $indexer_actions = $this->wire('modules')->get('InputfieldAsmSelect');
+        $indexer_actions->name = 'indexer_actions';
+        $indexer_actions->label = $this->_('Indexer actions');
+        $indexer_actions->description = $this->_('Optional, predefined actions triggered while Indexer is processing page content.')
             . " "
-            . $this->_('Note: this option is experimental and may not work as expected, please test carefully before enabling on a live site!');
-        $module_extras->notes = $this->_('- FormBuilder: renders FormBuilder forms as part of the indexed content.');
-        $module_extras->addOptions([
-            'FormBuilder' => 'FormBuilder',
-        ]);
-        $module_extras = $this->maybeUseConfig($module_extras);
-        $advanced_settings->add($module_extras);
+            . $this->_('Note: this option is currently experimental. Please test carefully before enabling on a live site!');
+        $actions_by_context = (new IndexerActions())->getActions();
+        foreach ($actions_by_context as $action_context) {
+            foreach ($action_context as $action_name => $action_description) {
+                $indexer_actions->notes .= sprintf('- **%s**: %s', $action_name, $action_description);
+                $indexer_actions->addOption($action_name, $action_name);
+            }
+        }
+        $indexer_actions = $this->maybeUseConfig($indexer_actions);
+        $advanced_settings->add($indexer_actions);
 
         return $advanced_settings;
     }

@@ -2,8 +2,6 @@
 
 namespace SearchEngine;
 
-use ProcessWire\HookEvent;
-
 /**
  * SearchEngine Indexer
  *
@@ -28,18 +26,11 @@ class Indexer extends Base {
     protected $processor;
 
     /**
-     * Module specific extra actions
+     * IndexerActions instance
      *
-     * @var array
+     * @var Actions
      */
-    protected $moduleExtras = [];
-
-    /**
-     * Local instance of FormBuilder module
-     *
-     * @var \ProcessWire\FormBuilder|null
-     */
-    protected $formBuilder = null;
+    protected $actions;
 
     /**
      * Constructor method
@@ -47,6 +38,7 @@ class Indexer extends Base {
     public function __construct() {
         parent::__construct();
         $this->processor = new Processor;
+        $this->actions = new IndexerActions;
     }
 
     /**
@@ -105,7 +97,7 @@ class Indexer extends Base {
             $save = false;
         }
         if ($page->id && ($return == 'index' || $index_field_exists)) {
-            $this->initModuleExtras();
+            $this->actions->prepareActions('indexPage');
             if ($this->wire('modules')->isInstalled('LanguageSupport') && $this->wire('fields')->get($index_field)->type == 'FieldtypeTextareaLanguage') {
                 foreach ($this->wire('languages') as $language) {
                     $index[$language->id] = $this->getPageIndex($page, $options['indexed_fields'], '', [
@@ -316,49 +308,6 @@ class Indexer extends Base {
             }
         }
         return $index;
-    }
-
-    /**
-     * Init module extras
-     */
-    protected function initModuleExtras() {
-        if (!isset($this->moduleExtras['FormBuilder']) && $this->wire('modules')->isInstalled('FormBuilder')) {
-            $this->moduleExtras['FormBuilder'] = in_array('FormBuilder', $this->getOptions()['module_extras'] ?? []);
-            if ($this->moduleExtras['FormBuilder']) {
-                $this->addHookAfter('FieldtypeTextarea::formatValue', $this, 'embedFormBuilder');
-            }
-        }
-    }
-
-    /**
-     * Embed FormBuilder forms
-     *
-     * This method looks for FormBuilder embed tag(s) within text content and attempts to replace them with rendered
-     * markup of said form(s) in order to make actual form content searchable.
-     *
-     * @param HookEvent $event
-     */
-    protected function embedFormBuilder(HookEvent $event) {
-        $field = $event->arguments[1];
-        if ($this->formBuilder === null) {
-            $this->formBuilder = $this->wire('modules')->get('FormBuilder');
-        }
-        if (!in_array($field->id, $this->formBuilder->embedFields) || strpos($event->return, ">" . $this->formBuilder->embedTag . "/") === false) {
-            // field cannot be used for embedding forms or no embed codes detected, bail out early
-            return;
-        }
-        if (preg_match_all('!<([^>]+)>' . $this->formBuilder->embedTag . '/([-_a-zA-z0-9]+)\s*</\\1>!', $event->return, $matches)) {
-            foreach ($matches[0] as $key => $tag) {
-                try {
-                    $this->formBuilderRender = $this->formBuilder->render($matches[2][$key]);
-                    if ($this->formBuilderRender instanceof \ProcessWire\FormBuilderRender) {
-                        $event->return = str_replace($tag, $this->formBuilderRender->render(), $event->return);
-                    }
-                } catch (\Exception $e) {
-                    // rendering the form failed, not much we can do about that now
-                }
-            }
-        }
     }
 
 }

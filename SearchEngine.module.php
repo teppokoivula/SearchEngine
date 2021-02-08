@@ -45,6 +45,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'summary',
             'body',
         ],
+        'indexer_actions' => [],
         'compatible_fieldtypes' => [
             'FieldtypeEmail',
             'FieldtypeFieldsetPage',
@@ -440,7 +441,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'indexed_fields',
             'find_args__sort',
             'find_args__operator',
-            'module_extras',
+            'indexer_actions',
         ];
         foreach ($enabled_settings as $setting) {
             $setting_value = $this->get($setting);
