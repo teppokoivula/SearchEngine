@@ -7,10 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.28.0] - 2021-02-09
+## [0.28.0] - 2021-02-10
 
 ### Added
 - Optional Indexer actions, first one of which adds support for rendering FormBuilder forms as part of the search index.
+
+## [0.27.1] - 2021-02-09
+
+### Fixed
+- Fix an issue where Debugger was displaying a notice due to missing returnAllCols argument for PageFinder::getQuery().
 
 ## [0.27.0] - 2020-11-18
 

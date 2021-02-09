@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.4.2
+ * @version 0.4.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
@@ -281,6 +281,7 @@ class Query extends Base {
             'returnVerbose' => true,
             'findOne' => false,
             // rest of the options are expected by PageFinder
+            'returnAllCols' => false,
             'returnParentIDs' => false,
             'reverseSort' => false,
             'alwaysAllowIDs' => [],
