@@ -5,7 +5,6 @@ namespace SearchEngine;
 use ProcessWire\Inputfield;
 use ProcessWire\InputfieldAsmSelect;
 use ProcessWire\InputfieldCheckbox;
-use ProcessWire\InputfieldCheckboxes;
 use ProcessWire\InputfieldFieldset;
 use ProcessWire\InputfieldMarkup;
 use ProcessWire\InputfieldPageListSelect;
@@ -17,7 +16,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.9.1
+ * @version 0.9.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */

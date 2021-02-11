@@ -177,7 +177,7 @@ class Indexer extends Base {
                     }
                 }
             }
-            // Check for Page properties, which are not included in the fields property of a Page.
+            // Check for Page properties, which are not included in the fields property of a Page
             $properties = [
                 'ids' => 'id',
                 'names' => 'name',
