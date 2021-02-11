@@ -97,7 +97,7 @@ class Indexer extends Base {
             $save = false;
         }
         if ($page->id && ($return == 'index' || $index_field_exists)) {
-            $this->actions->prepareActions('indexPage');
+            $this->actions->prepareFor('indexPage');
             if ($this->wire('modules')->isInstalled('LanguageSupport') && $this->wire('fields')->get($index_field)->type == 'FieldtypeTextareaLanguage') {
                 foreach ($this->wire('languages') as $language) {
                     $index[$language->id] = $this->getPageIndex($page, $options['indexed_fields'], '', [

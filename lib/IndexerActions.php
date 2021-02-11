@@ -14,11 +14,11 @@ use ProcessWire\HookEvent;
 class IndexerActions extends Base {
 
     /**
-     * Prepared actions runtime cache
+     * Prepared context run-time cache
      *
      * @var array
      */
-    protected $prepared_actions = [];
+    protected $prepared_for = [];
 
     /**
      * Get available actions
@@ -38,16 +38,16 @@ class IndexerActions extends Base {
      *
      * @param string $context
      */
-    public function prepareActions(string $context) {
+    public function prepareFor(string $context) {
+        if (isset($this->prepared_for[$context])) {
+            return;
+        }
+        $this->prepared_for[$context] = true;
         $enabled_actions = array_intersect(
             array_keys($this->getActions()[$context]),
             $this->getOptions()['indexer_actions']
         );
         foreach ($enabled_actions as $action) {
-            if (isset($this->prepared_actions[$action])) {
-                return;
-            }
-            $this->prepared_actions[$action] = true;
             call_user_func([$this, $action . 'Action']);
         }
     }
@@ -65,11 +65,12 @@ class IndexerActions extends Base {
         $formBuilder = $this->wire('modules')->get('FormBuilder');
         $this->addHookAfter('FieldtypeTextarea::formatValue', function(HookEvent $event) use ($formBuilder) {
             $field = $event->arguments[1];
-            if (!in_array($field->id, $formBuilder->embedFields) || strpos($event->return, ">" . $formBuilder->embedTag . "/") === false) {
+            $embed_tag = $formBuilder->embedTag;
+            if (empty($embed_tag) || !in_array($field->id, $formBuilder->embedFields) || strpos($event->return, ">" . $embed_tag . "/") === false) {
                 // field cannot be used for embedding forms or no embed codes detected, bail out early
                 return;
             }
-            if (preg_match_all('!<([^>]+)>' . $formBuilder->embedTag . '/([-_a-zA-z0-9]+)\s*</\\1>!', $event->return, $matches)) {
+            if (preg_match_all('!<([^>]+)>' . $embed_tag . '/([-_a-zA-z0-9]+)\s*</\\1>!', $event->return, $matches)) {
                 foreach ($matches[0] as $key => $tag) {
                     try {
                         $formBuilderRender = $formBuilder->render($matches[2][$key]);
