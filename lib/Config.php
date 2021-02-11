@@ -17,7 +17,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.9.0
+ * @version 0.9.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -132,12 +132,12 @@ class Config extends Base {
         $indexing_options = $this->wire('modules')->get('InputfieldFieldset');
         $indexing_options->label = $this->_('Indexing options');
         $indexing_options->icon = 'database';
-        $indexing_options->columnWidth = 50;
 
         /** @var InputfieldAsmSelect Indexed fields */
         $indexed_fields = $this->wire('modules')->get('InputfieldAsmSelect');
         $indexed_fields->name = 'indexed_fields';
         $indexed_fields->label = $this->_('Select indexed fields');
+        $indexed_fields->columnWidth = 50;
         $indexed_fields->addOptions([
             'id' => 'id',
             'name' => 'name',
@@ -163,11 +163,12 @@ class Config extends Base {
         }
         $indexing_options->add($indexed_fields);
 
-        /** @var InputfieldCheckboxes Indexed templates */
-        $indexed_templates = $this->wire('modules')->get('InputfieldCheckboxes');
+        /** @var InputfieldAsmSelect Indexed templates */
+        $indexed_templates = $this->wire('modules')->get('InputfieldAsmSelect');
         $indexed_templates->name = 'indexed_templates';
         $indexed_templates->label = $this->_('Indexed templates');
-        $indexed_templates->description = $this->_('In order for a template to be indexed, it needs to include the index field. You can use this setting to add the index field to one or more templates, or remove it from templates it has previously been added to.');
+        $indexed_templates->description = $this->_('In order for a template to be indexed, it needs to include the index field. Selecting a template here will automatically add the index field to it.');
+        $indexed_templates->columnWidth = 50;
         $index_field_templates = $this->wire('fields')->get($this->options['index_field'])->getTemplates()->get('name[]');
         foreach ($this->wire('templates')->getAll() as $template) {
             $option_attributes = null;
@@ -178,8 +179,7 @@ class Config extends Base {
             }
             $indexed_templates->addOption($template->name, null, $option_attributes);
         }
-        $indexed_templates->optionColumns = 1;
-        $indexed_templates->value = $index_field_templates;
+        $indexed_templates->value = $this->options[$indexed_templates->name];
         $indexing_options->add($indexed_templates);
 
         return $indexing_options;
@@ -196,7 +196,6 @@ class Config extends Base {
         $finder_settings = $this->wire('modules')->get('InputfieldFieldset');
         $finder_settings->label = $this->_('Finder settings');
         $finder_settings->icon = 'search';
-        $finder_settings->columnWidth = 50;
 
         /** @var InputfieldText Sort order */
         $sort = $this->wire('modules')->get('InputfieldText');

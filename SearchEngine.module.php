@@ -434,7 +434,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     protected function initOptions() {
 
-        // Module config settings.
+        // Module config settings
         $module_config = [];
         $enabled_settings = [
             'index_field',
@@ -458,7 +458,24 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        // Set runtime options.
+        // Indexed templates
+        $module_config['indexed_templates'] = [];
+        $index_field = null;
+        if ($module_config['index_field'] !== null) {
+            $index_field = $this->wire('fields')->get($module_config['index_field']);
+        }
+        if ($index_field !== null) {
+            $templates_with_index_field = $index_field->getTemplates()->get('name[]');
+            $module_config['indexed_templates'] = array_unique(array_merge(
+                array_intersect(
+                    $this->get('indexed_templates') ?? [],
+                    $templates_with_index_field
+                ),
+                $templates_with_index_field
+            ));
+        }
+
+        // Set runtime options
         $this->options = array_replace_recursive(
             static::$defaultOptions,
             $module_config,

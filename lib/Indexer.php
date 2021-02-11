@@ -57,8 +57,7 @@ class Indexer extends Base {
         $return = isset($args['return']) && $args['return'] == 'index' ? 'index' : 'status';
         $index = [];
         if (empty($selector)) {
-            $index_field = $this->wire('fields')->get($this->getOptions()['index_field']);
-            $indexed_templates = $index_field->getTemplates()->implode('|', 'name');
+            $indexed_templates = implode('|', $this->getOptions()['indexed_fields']);
             if (!empty($indexed_templates)) {
                 $selector = implode(',', [
                     'template=' . $indexed_templates,

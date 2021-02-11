@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Optional Indexer actions, first one of which adds support for rendering FormBuilder forms as part of the search index.
 
+### Changed
+- Indexed templates option in module config is now AsmSelect, which makes it possible to organize indexed templates by preferred priority.
+
 ## [0.27.1] - 2021-02-09
 
 ### Fixed

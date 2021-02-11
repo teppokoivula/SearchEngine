@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.4.0
+ * @version 0.4.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -137,7 +137,7 @@ class Debugger extends Base {
         ];
 
         // common variables
-        $indexed_templates = $this->index_field->getTemplates()->implode('|', 'name');
+        $indexed_templates = implode('|', $this->getOptions()['indexed_templates']);
         $indexed_fields = $this->getOptions()['indexed_fields'];
 
         // content being indexed
