@@ -329,7 +329,7 @@ class Config extends Base {
         /** @var InputfieldSelect Index field */
         $index_field = $this->wire('modules')->get('InputfieldSelect');
         $index_field->name = 'index_field';
-        $index_field->label = $this->_('Select index field');
+        $index_field->label = $this->_('Index field');
         foreach ($this->wire('fields')->getAll() as $field) {
             if ($field->type != 'FieldtypeTextarea' && $field->type != 'FieldtypeTextareaLanguage') {
                 continue;
