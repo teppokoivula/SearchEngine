@@ -348,6 +348,8 @@ Again, technically the only requirement is a config.php file with the ProcessWir
 
 If a theme includes style and/or script files, for each type there should be a directory (i.e. `/themes/theme-name/scripts/` and/or `/themes/theme-name/styles/`), and for each file there should be both the file named by params (such as style.css) and a minified file with ".min" in its name (such as style.min.css).
 
+**Note**: custom themes should be placed within your templates directory, modifying files within the module directory is not recommended, since they may get overwritten in an update. You can configure the path of your custom themes via "Advanced" section of SearchEngine module settings.
+
 ## Requirements
 
 - ProcessWire >= 3.0.112

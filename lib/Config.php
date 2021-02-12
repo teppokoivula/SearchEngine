@@ -377,7 +377,7 @@ class Config extends Base {
         $compatible_fieldtypes->notes .= $this->getCompatibleFieldtypeDiff($compatible_fieldtypes->value);
         $advanced_settings->add($compatible_fieldtypes);
 
-        // Indexer extra actions
+        /** @var InputfieldAsmSelect Indexer extra actions */
         $indexer_actions = $this->wire('modules')->get('InputfieldAsmSelect');
         $indexer_actions->name = 'indexer_actions';
         $indexer_actions->label = $this->_('Indexer actions');
@@ -393,6 +393,19 @@ class Config extends Base {
         }
         $indexer_actions = $this->maybeUseConfig($indexer_actions);
         $advanced_settings->add($indexer_actions);
+
+        /** @var InputfieldText Themes directory */
+        $themes_directory = $this->wire('modules')->get('InputfieldText');
+        $themes_directory->name = 'render_args__themes_directory';
+        $themes_directory->label = $this->_('Themes directory');
+        $themes_directory->pattern = '^[^.](?:(?!\.\.|\/\/).)*$';
+        $themes_directory->description = sprintf(
+            $this->_('Directory containing themes used on the front-end. Leave this field empty to use the default location (%s).'),
+            $this->wire('config')->paths->SearchEngine . 'themes/'
+        );
+        $themes_directory->notes = $this->_('For security reasons only subdirectories of the templates directory are allowed: if the value provided here is **SearchEngine/themes**, resulting lookup directory will be /site/templates/**SearchEngine/themes**/. In addition the directory specified here may *not* start with a dot ("`.`"), or contain double slashes ("`//`") or directory traversal ("`..`").');
+        $themes_directory = $this->maybeUseConfig($themes_directory);
+        $advanced_settings->add($themes_directory);
 
         return $advanced_settings;
     }

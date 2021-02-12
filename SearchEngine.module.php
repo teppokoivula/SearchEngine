@@ -104,6 +104,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         ],
         'render_args' => [
             'theme' => 'default',
+            'themes_directory' => null,
             'minified_resources' => true,
             'form_action' => './',
             'form_id' => 'se-form',
@@ -441,6 +442,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'indexed_fields',
             'find_args__sort',
             'find_args__operator',
+            'render_args__themes_directory',
             'indexer_actions',
         ];
         foreach ($enabled_settings as $setting) {
