@@ -430,12 +430,12 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     /**
      * Init runtime options for the module
      *
-     * Runtime options are a combination of module defaults, values from module config, and values
-     * defined in site config.
+     * Runtime options are constructed by combining default values, specific settings from module
+     * config, and values that might've been defined via site config.
      */
     protected function initOptions() {
 
-        // Module config settings
+        // Named module config settings that should be included in runtime options
         $module_config = [];
         $enabled_settings = [
             'index_field',
@@ -460,7 +460,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        // Indexed templates
+        // Make sure that indexed templates is defined and includes configured templates as well as those that might
+        // have had the index field manually added
         $module_config['indexed_templates'] = [];
         $index_field = null;
         if ($module_config['index_field'] !== null) {
