@@ -5,7 +5,7 @@ SearchEngine is a module that creates an index of page contents, and makes it ea
 
 ## Usage
 
-1) Install SearchEngine module.
+1) Install the SearchEngine module.
 
 The module will automatically create an index field during installation, so you should define a custom field (via site config) *before installing* if you don't want it to be called "search_index". You can change the field name later as well, but you'll have to update the "index_field" option in site config or module settings (in Admin) after renaming the field.
 
@@ -13,15 +13,15 @@ The module will automatically create an index field during installation, so you 
 
 You can add the index field to templates via template settings, field settings (the "Actions" tab), or via the "indexed templates" setting found from the config screen of the SearchEngine module. After the field has been added to a template, every time a page using that template is saved, content from indexable fields will be automatically stored into the (typically hidden) index field.
 
-3) Use selectors to query values in site search index, or add appropriate render render-calls to your template files.
+3) Use selectors to query values in site search index or add appropriate render calls to your template file(s).
 
-At this point there are essentially three ways to use SearchEngine, and which one fits your needs best depends a lot on the site in question:
+There are three ways to use SearchEngine, so you'll want to choose the one that fits your workflow best:
 
-- You can query the search_index field (or whatever you decided to name it earlier) just like any other textarea field in ProcessWire. This allows you to build custom search features with ease, while SearchEngine takes care of indexing content.
-- You can use SearchEngine to find results by calling `$modules->get('SearchEngine')->find($input->get->q)`. Obviously you can pass any search string to the find() method – we're using the "q" GET var here just as an example.
-- You can let SearchEngine handle the whole search feature by adding a render call – `$modules->get('SearchEngine')->render()` – to your search page's template file. The `render()` method is a shortcut that calls multiple methods behind the scenes, but you can also call `renderStyles()`, `renderScripts()`, `renderResults()`, and `renderForm()` separately.
+- You can query the `search_index` field (or whatever you decided to name it earlier) just like any other textarea field in ProcessWire. This allows you to build completely customized search feature on your site, while SearchEngine takes care of indexing content.
+- You can use SearchEngine to find results by calling `$modules->get('SearchEngine')->find($input->get->q)`. Obviously you can pass any search string to the find method, we're using the "q" GET param here just as an example.
+- You can let SearchEngine handle the whole search feature by adding a render call to your search page's template file: `$modules->get('SearchEngine')->render()`. The `render()` method is a shortcut for calling multiple methods behind the scenes, but you can also omit that and instead call `renderStyles()`, `renderScripts()`, `renderResults()`, and `renderForm()` separately.
 
-First approach is the simple one and only involves one method call:
+If you prefer letting SearchEngine handle all the markup for you, the simple approach only involves one method call:
 
 ```
 <?php namespace ProcessWire; ?>
@@ -30,7 +30,7 @@ First approach is the simple one and only involves one method call:
 </body>
 ```
 
-You can also pass an array to render(), rendering only specific features. Here's an example of rendering just the form and results list without styles or scripts:
+You can pass an array to `render()`, rendering only specific features. Here's an example of rendering just the form and results list while omitting styles and/or scripts:
 
 ```
 <?php namespace ProcessWire; ?>
@@ -39,7 +39,7 @@ You can also pass an array to render(), rendering only specific features. Here's
 </body>
 ```
 
-Finally, here's the "manual approach" – this involves some additional steps, but provides more control over the rendered output than other methods:
+Finally, here's how you could render all parts separately – this approach involves some additional steps, but provides more control over the rendered output than other methods:
 
 ```
 <?php namespace ProcessWire;
@@ -311,7 +311,7 @@ As of version 0.24.0, SearchEngine has the capability to automatically generate 
 
 ## Themes
 
-SearchEngine supports a concept of themes. Themes are located in the `themes` directory, under their own subdirectories (e.g. `/themes/theme-name/`), and each one needs to include (at the very least) a config.php file. Here's an example of the contents of a theme config.php file:
+SearchEngine supports the concept of themes. Themes are located in the `themes` directory, under their own subdirectories (e.g. `/themes/theme-name/`), and each of them needs to include (at the very least) a config file (`/themes/theme-name/config.php`). Here's an example of a theme config file:
 
 ```
 <?php namespace ProcessWire;
@@ -344,11 +344,9 @@ $theme_args = [
 ];
 ```
 
-Again, technically the only requirement is a config.php file with the ProcessWire namespace, in which you declare a $theme_args array. Everything else is optional.
+A theme may include style and script file(s), in which case there should also be a type-specific directory to store them in (i.e. `/themes/theme-name/scripts/` or `/themes/theme-name/styles/`). For each file there should be both the "source" file named in the `theme_styles` or `theme_scripts` array (e.g `style.css`) and a minified version with ".min" in its name (e.g. `style.min.css`).
 
-If a theme includes style and/or script files, for each type there should be a directory (i.e. `/themes/theme-name/scripts/` and/or `/themes/theme-name/styles/`), and for each file there should be both the file named by params (such as style.css) and a minified file with ".min" in its name (such as style.min.css).
-
-**Note**: custom themes should be placed within your templates directory, modifying files within the module directory is not recommended, since they may get overwritten in an update. You can configure the path of your custom themes via "Advanced" section of SearchEngine module settings.
+*Note: modifying files within the module directory is not recommended, since they may get overwritten in an update. You can configure the path for your custom themes via the "Advanced" section of the SearchEngine module config screen.*
 
 ## Requirements
 
@@ -357,7 +355,7 @@ If a theme includes style and/or script files, for each type there should be a d
 
 ## Installing
 
-This module can be installed – just like any other ProcessWire module – by downloading or cloning the SearchEngine directory into your /site/modules/ directory. Alternatively you can install SearchEngine with Composer by executing `composer require teppokoivula/search-engine` in your site directory.
+This module can be installed – just like any other ProcessWire module – by downloading or cloning the SearchEngine directory into your /site/modules/ directory. Alternatively you can install SearchEngine with Composer by running `composer require teppokoivula/search-engine`.
 
 ## License
 
