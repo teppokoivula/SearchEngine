@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.28.0] - 2021-02-13
+## [0.28.0] - 2021-02-14
 
 ### Added
 - Optional Indexer actions, first one of which adds support for rendering FormBuilder forms as part of the search index.
