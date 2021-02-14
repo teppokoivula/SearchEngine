@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.28.0] - 2021-02-14
 
 ### Added
-- Optional Indexer actions, first one of which adds support for rendering FormBuilder forms as part of the search index.
+- Support for Indexer actions, the first one of which adds support for rendering FormBuilder forms as part of the search index. This feature is currently considered experimental.
 - Option to specify custom path for front-end themes via the Advanced settings section in module config.
 - EditorConfig (.editorconfig) and ESLint (.eslintrc.json) config files for defining coding style for IDEs.
 - Support for collapsible content blocks in Debugger.

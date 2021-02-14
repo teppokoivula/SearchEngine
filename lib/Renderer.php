@@ -44,11 +44,12 @@ class Renderer extends Base {
      */
     public function __construct() {
         parent::__construct();
-        $themes_directory = $this->getOptions()['render_args']['themes_directory'] ?? null;;
+        $themes_directory = $this->getOptions()['render_args']['themes_directory'] ?? null;
         if ($themes_directory !== null) {
             $themes_directory = trim($themes_directory, '/.') . '/';
-            if ($this->wire('files')->allowPath($this->wire('config')->paths->templates . $themes_directory, $this->wire('config')->paths->templates)) {
-                $this->themePath = $this->wire('config')->paths->templates . $themes_directory;
+            $templates_directory = $this->wire('config')->paths->templates;
+            if ($this->wire('files')->allowPath($templates_directory . $themes_directory, $templates_directory)) {
+                $this->themePath = $templates_directory . $themes_directory;
                 $this->themeURL = $this->wire('config')->urls->templates . $themes_directory;
             }
         }
@@ -157,7 +158,7 @@ class Renderer extends Base {
      * @param Query|null $query Optional prepopulated Query object.
      * @return string
      *
-     * @throws WireException if query parameter is unrecognized. 
+     * @throws WireException if query parameter is unrecognized.
      */
     public function ___renderResults(array $args = [], Query $query = null): string {
 

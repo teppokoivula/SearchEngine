@@ -383,7 +383,7 @@ class Config extends Base {
         $indexer_actions->label = $this->_('Indexer actions');
         $indexer_actions->description = $this->_('Optional, predefined actions triggered while Indexer is processing page content.')
             . " "
-            . $this->_('Note: this option is currently experimental. Please test carefully before enabling on a live site!');
+            . $this->_('Note: this option is currently considered experimental. Please test carefully before enabling on a live site!');
         $actions_by_context = (new IndexerActions())->getActions();
         foreach ($actions_by_context as $action_context) {
             foreach ($action_context as $action_name => $action_description) {
@@ -558,5 +558,5 @@ class Config extends Base {
 
         return $out;
     }
-    
+
 }
