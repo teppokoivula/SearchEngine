@@ -191,7 +191,7 @@ class Debugger extends Base {
                     [
                         'label' => $this->_('Unique words'),
                         'value' => count($index_words)
-                                . '<pre class="pwse-pre" class="pwse-collapse">' . implode(', ', $index_words) . '</pre>',
+                                . '<pre class="pwse-pre pwse-collapse">' . implode(', ', $index_words) . '</pre>',
                     ],
                 ]),
             ];
@@ -303,7 +303,7 @@ class Debugger extends Base {
                     ],
                     [
                         'label' => $this->_('Index content'),
-                        'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($index_content) . '</pre>',
+                        'value' => '<pre class="pwse-pre pwse-collapse">' . $this->sanitizer->entities($index_content) . '</pre>',
                     ],
                 ]);
             }
