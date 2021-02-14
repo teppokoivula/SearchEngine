@@ -371,12 +371,12 @@ class Debugger extends Base {
             $info_content = $this->renderList([
                 [
                     'label' => $this->_('Original query'),
-                    'value' => '<pre class="pwse-pre">' . $query->original_query . '</pre>'
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->original_query) . '</pre>'
                             . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->original_query)), mb_strlen($query->original_query)) . ')</p>',
                 ],
                 [
                     'label' => $this->_('Sanitized query'),
-                    'value' => '<pre class="pwse-pre">' . $query->query . '</pre>'
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->query) . '</pre>'
                             . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->query)), mb_strlen($query->query)) . ')</p>',
                 ],
                 [
@@ -389,11 +389,11 @@ class Debugger extends Base {
                 ],
                 [
                     'label' => $this->_('Resulting selector string'),
-                    'value' => '<pre class="pwse-pre">' . $query->getSelector() . '</pre>',
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSelector()) . '</pre>',
                 ],
                 [
                     'label' => $this->_('Resulting SQL query'),
-                    'value' => '<pre class="pwse-pre">' . $query->getSQL() . '</pre>',
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
                 ],
             ]);
             if ($language !== null) {
