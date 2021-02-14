@@ -17,9 +17,9 @@ class PWSE_Tabs {
         // find tab containers
         let tabContainers = [];
         if (debugContainer) {
-            tabContainers = debugContainer.querySelectorAll('.search-engine-debug-tabs');
+            tabContainers = debugContainer.querySelectorAll('.pwse-debug-tabs');
         } else {
-            tabContainers = document.querySelectorAll('.search-engine-debug-tabs');
+            tabContainers = document.querySelectorAll('.pwse-debug-tabs');
         }
         if (!tabContainers.length) return;
 
@@ -28,7 +28,7 @@ class PWSE_Tabs {
             // get relevant elements and collections
             const tablist = tabContainer.querySelector('ul');
             const tabs = tablist.querySelectorAll('a');
-            const panels = tabContainer.querySelectorAll('[id^="search-engine-debug-tab-"]');
+            const panels = tabContainer.querySelectorAll('[id^="pwse-debug-tab-"]');
 
             // the tab switching function
             const switchTab = (oldTab, newTab) => {

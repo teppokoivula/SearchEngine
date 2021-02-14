@@ -191,7 +191,7 @@ class Debugger extends Base {
                     [
                         'label' => $this->_('Unique words'),
                         'value' => count($index_words)
-                                . '<pre style="white-space: pre-wrap">' . implode(', ', $index_words) . '</pre>',
+                                . '<pre style="white-space: pre-wrap" class="pwse-collapse">' . implode(', ', $index_words) . '</pre>',
                     ],
                 ]),
             ];
@@ -471,13 +471,15 @@ class Debugger extends Base {
         $data = array_merge([
             'debug-button-label' => $this->_('Debug'),
             'refresh-button-label' => $this->_('Refresh'),
+            'show-more-button-label' => $this->_('Show more'),
+            'show-less-button-label' => $this->_('Show less'),
             'page-id' => $this->page && $this->page->id ? $this->page->id : null,
             'query' => $this->query,
             'type' => 'page',
         ], $data);
 
         // construct and return container markup
-        return '<div class="search-engine-debug" '
+        return '<div class="pwse-debug" '
             . implode(" ", array_map(function($key, $value) {
                 return 'data-' . $key . '="' . $value . '"';
             }, array_keys($data), $data))
@@ -534,15 +536,15 @@ class Debugger extends Base {
                     $subsection['content'] = $subsection['content'][null]['content'];
                 } else {
                     // multilanguage content, render tabs
-                    $out .= '<div class="search-engine-debug-tabs" id="search-engine-debug-tabs-' . ($container_data['type'] ?? '') . '">';
+                    $out .= '<div class="pwse-debug-tabs" id="pwse-debug-tabs-' . ($container_data['type'] ?? '') . '">';
                     $out .= '<ul>';
                     foreach ($subsection['content'] as $tab) {
-                        $tab_id = 'search-engine-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
+                        $tab_id = 'pwse-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
                         $out .= '<li><a href="#' . $tab_id . '">' . $tab['heading'] . '</a></li>';
                     }
                     $out .= '</ul>';
                     foreach ($subsection['content'] as $tab) {
-                        $tab_id = 'search-engine-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
+                        $tab_id = 'pwse-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
                         $out .= '<section id="' . $tab_id . '">' . $tab['content'] . '</section>';
                     }
                     $out .= '</div>';
