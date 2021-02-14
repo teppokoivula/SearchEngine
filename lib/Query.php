@@ -116,9 +116,12 @@ class Query extends Base {
         }
         if ($this->wire('config')->dbEngine == 'InnoDB' && $this->args['operator'] == '*=') {
             // Further sanitization is required in order to avoid a MySQL bug affecting InnoDB
-            // fulltext search (seemingly related to https://bugs.mysql.com/bug.php?id=78485)
+            // fulltext search (seemingly related to https://bugs.mysql.com/bug.php?id=78485).
             $query = str_replace('@', ' ', $query);
         }
+        // For best results we escape lesser than and greater than; this will allow matches in
+        // case the index contains encoded HTML markup, but won't cause it to miss umlauts etc.
+        $query = str_replace(['<', '>'], ['&lt;', '&gt;'], $query);
         $query = $this->wire('sanitizer')->selectorValue($query);
         return $query;
     }

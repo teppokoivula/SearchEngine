@@ -17,7 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Indexed templates option in module config is now AsmSelect, which makes it possible to organize indexed templates by preferred priority.
-- All Debugger CSS classes have been refactored to follow `.pwse-` format.
+- Query class converts lesser than and greater than to HTML entities to allow matching said entities, as well as encoded HTML markup.
+- All Debugger CSS classes refactored to follow `.pwse-` format.
 
 ## [0.27.1] - 2021-02-09
 
