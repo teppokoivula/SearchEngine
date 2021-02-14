@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.4.3
+ * @version 0.4.4
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
@@ -84,6 +84,10 @@ class Query extends Base {
 
         parent::__construct();
 
+        // Store original query and original args in class properties.
+        $this->original_query = $query;
+        $this->original_args = $args;
+
         // Merge default find arguments with provided custom values.
         $this->args = array_replace_recursive($this->getOptions()['find_args'], $args);
 
@@ -97,10 +101,6 @@ class Query extends Base {
         if (empty($args['no_validate'])) {
             $this->errors = $this->validateQuery($this->query);
         }
-
-        // Store original query and original args in class properties.
-        $this->original_query = $query;
-        $this->original_args = $args;
     }
 
 
