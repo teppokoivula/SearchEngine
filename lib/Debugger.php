@@ -191,7 +191,7 @@ class Debugger extends Base {
                     [
                         'label' => $this->_('Unique words'),
                         'value' => count($index_words)
-                                . '<pre style="white-space: pre-wrap" class="pwse-collapse">' . implode(', ', $index_words) . '</pre>',
+                                . '<pre class="pwse-pre" class="pwse-collapse">' . implode(', ', $index_words) . '</pre>',
                     ],
                 ]),
             ];
@@ -295,15 +295,15 @@ class Debugger extends Base {
                     [
                         'label' => $this->_('Unique words'),
                         'value' => count($index_words)
-                                . '<pre style="white-space: pre-wrap">' . implode(', ', $index_words) . '</pre>',
+                                . '<pre class="pwse-pre">' . implode(', ', $index_words) . '</pre>',
                     ],
                     [
                         'label' => $this->_('Metadata'),
-                        'value' => '<pre style="white-space: pre-wrap">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</pre>',
+                        'value' => '<pre class="pwse-pre">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</pre>',
                     ],
                     [
                         'label' => $this->_('Index content'),
-                        'value' => '<pre style="white-space: pre-wrap">' . $index_content . '</pre>',
+                        'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($index_content) . '</pre>',
                     ],
                 ]);
             }
@@ -371,12 +371,12 @@ class Debugger extends Base {
             $info_content = $this->renderList([
                 [
                     'label' => $this->_('Original query'),
-                    'value' => '<pre style="white-space: pre-wrap">' . $query->original_query . '</pre>'
+                    'value' => '<pre class="pwse-pre">' . $query->original_query . '</pre>'
                             . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->original_query)), mb_strlen($query->original_query)) . ')</p>',
                 ],
                 [
                     'label' => $this->_('Sanitized query'),
-                    'value' => '<pre style="white-space: pre-wrap">' . $query->query . '</pre>'
+                    'value' => '<pre class="pwse-pre">' . $query->query . '</pre>'
                             . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->query)), mb_strlen($query->query)) . ')</p>',
                 ],
                 [
@@ -389,11 +389,11 @@ class Debugger extends Base {
                 ],
                 [
                     'label' => $this->_('Resulting selector string'),
-                    'value' => '<pre style="white-space: pre-wrap">' . $query->getSelector() . '</pre>',
+                    'value' => '<pre class="pwse-pre">' . $query->getSelector() . '</pre>',
                 ],
                 [
                     'label' => $this->_('Resulting SQL query'),
-                    'value' => '<pre style="white-space: pre-wrap">' . $query->getSQL() . '</pre>',
+                    'value' => '<pre class="pwse-pre">' . $query->getSQL() . '</pre>',
                 ],
             ]);
             if ($language !== null) {
@@ -420,7 +420,7 @@ class Debugger extends Base {
                 [
                     'label' => $this->_('Results'),
                     'value' => $query->resultsCount . ' / ' . $query->resultsTotal
-                            . '<pre style="white-space: pre-wrap">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
+                            . '<pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
                 ],
             ]);
             if ($language !== null) {
@@ -461,7 +461,7 @@ class Debugger extends Base {
         }
 
         // inject styles
-        foreach (['tabs'] as $styles) {
+        foreach (['tabs', 'debugger'] as $styles) {
             $this->wire('config')->styles->add(
                 $this->wire('config')->urls->get('SearchEngine') . 'css/' . $styles . '.css'
             );
