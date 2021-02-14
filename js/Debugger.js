@@ -75,33 +75,7 @@ class PWSE_Debugger {
                     this.highlight(debugContainer);
 
                     // find collapsed sections
-                    const collapsedSections = debugContainer.querySelectorAll('.pwse-collapse');
-                    if (collapsedSections.length) {
-                        collapsedSections.forEach(collapsedSection => {
-                            collapsedSection.style.maxHeight = '400px';
-                            collapsedSection.style.overflowY = 'auto';
-                            const collapseButton = this.makeButton(debugContainer.getAttribute('data-show-more-button-label'));
-                            collapseButton.button.setAttribute('class', 'ui-button ui-state-default');
-                            collapseButton.icon.setAttribute('class', 'fa fa-chevron-down');
-                            collapseButton.button.addEventListener('click', e => {
-                                e.preventDefault();
-                                if (collapsedSection.style.maxHeight) {
-                                    collapsedSection.style.maxHeight = null;
-                                    collapseButton.text.innerText = debugContainer.getAttribute('data-show-less-button-label');
-                                    collapseButton.icon.setAttribute('class', 'fa fa-chevron-up');
-                                } else {
-                                    collapsedSection.style.maxHeight = '400px';
-                                    collapseButton.text.innerText = debugContainer.getAttribute('data-show-more-button-label');
-                                    collapseButton.icon.setAttribute('class', 'fa fa-chevron-down');
-                                }
-                                collapseButton.button.removeAttribute('disabled');
-                                collapseButton.button.setAttribute('class', 'ui-button ui-state-default');
-                                this.highlight(collapsedSection);
-                            });
-                            collapseButton.button.removeAttribute('disabled');
-                            collapsedSection.parentNode.insertBefore(collapseButton.button, collapsedSection.nextSibling);
-                        });
-                    }
+                    this.findCollapsed(debugContainer);
 
                     // init tabs
                     window.SearchEngine.Tabs.init(debugContainer);
@@ -175,6 +149,7 @@ class PWSE_Debugger {
                     const queueData = debugContainer.queueData
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                    this.findCollapsed(debugContainer);
                     window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
@@ -301,6 +276,44 @@ class PWSE_Debugger {
         button.icon.setAttribute('style', 'margin-left: .5rem');
         button.button.appendChild(button.icon);
         return button;
+    }
+
+    /**
+     * Find collapsed elements and add show more/less buttons
+     *
+     * @param {object} parent Parent DOM node
+     */
+    findCollapsed(parent) {
+        const collapsedSections = parent.querySelectorAll('.pwse-collapse');
+        if (collapsedSections.length) {
+            collapsedSections.forEach(collapsedSection => {
+                collapsedSection.style.maxHeight = '400px';
+                if (collapsedSection.tagName === 'TEXTAREA') {
+                    collapsedSection.style.height = (collapsedSection.scrollHeight + 2) + 'px';
+                }
+                collapsedSection.style.overflowY = 'auto';
+                const collapseButton = this.makeButton(parent.getAttribute('data-show-more-button-label'));
+                collapseButton.button.setAttribute('class', 'ui-button ui-state-default');
+                collapseButton.icon.setAttribute('class', 'fa fa-chevron-down');
+                collapseButton.button.addEventListener('click', e => {
+                    e.preventDefault();
+                    if (collapsedSection.style.maxHeight) {
+                        collapsedSection.style.maxHeight = null;
+                        collapseButton.text.innerText = parent.getAttribute('data-show-less-button-label');
+                        collapseButton.icon.setAttribute('class', 'fa fa-chevron-up');
+                    } else {
+                        collapsedSection.style.maxHeight = '400px';
+                        collapseButton.text.innerText = parent.getAttribute('data-show-more-button-label');
+                        collapseButton.icon.setAttribute('class', 'fa fa-chevron-down');
+                    }
+                    collapseButton.button.removeAttribute('disabled');
+                    collapseButton.button.setAttribute('class', 'ui-button ui-state-default');
+                    this.highlight(collapsedSection);
+                });
+                collapseButton.button.removeAttribute('disabled');
+                collapsedSection.parentNode.insertBefore(collapseButton.button, collapsedSection.nextSibling);
+            });
+        }
     }
 
 }
