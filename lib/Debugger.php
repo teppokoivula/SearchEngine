@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.4.0
+ * @version 0.4.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -137,7 +137,7 @@ class Debugger extends Base {
         ];
 
         // common variables
-        $indexed_templates = $this->index_field->getTemplates()->implode('|', 'name');
+        $indexed_templates = implode('|', $this->getOptions()['indexed_templates']);
         $indexed_fields = $this->getOptions()['indexed_fields'];
 
         // content being indexed
@@ -191,7 +191,7 @@ class Debugger extends Base {
                     [
                         'label' => $this->_('Unique words'),
                         'value' => count($index_words)
-                                . '<pre style="white-space: pre-wrap">' . implode(', ', $index_words) . '</pre>',
+                                . '<pre class="pwse-pre pwse-collapse">' . implode(', ', $index_words) . '</pre>',
                     ],
                 ]),
             ];
@@ -295,15 +295,15 @@ class Debugger extends Base {
                     [
                         'label' => $this->_('Unique words'),
                         'value' => count($index_words)
-                                . '<pre style="white-space: pre-wrap">' . implode(', ', $index_words) . '</pre>',
+                                . '<pre class="pwse-pre">' . implode(', ', $index_words) . '</pre>',
                     ],
                     [
                         'label' => $this->_('Metadata'),
-                        'value' => '<pre style="white-space: pre-wrap">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</pre>',
+                        'value' => '<pre class="pwse-pre">' . json_encode($metadata, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . '</pre>',
                     ],
                     [
                         'label' => $this->_('Index content'),
-                        'value' => '<pre style="white-space: pre-wrap">' . $index_content . '</pre>',
+                        'value' => '<pre class="pwse-pre pwse-collapse">' . $this->sanitizer->entities($index_content) . '</pre>',
                     ],
                 ]);
             }
@@ -371,12 +371,12 @@ class Debugger extends Base {
             $info_content = $this->renderList([
                 [
                     'label' => $this->_('Original query'),
-                    'value' => '<pre style="white-space: pre-wrap">' . $query->original_query . '</pre>'
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->original_query) . '</pre>'
                             . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->original_query)), mb_strlen($query->original_query)) . ')</p>',
                 ],
                 [
                     'label' => $this->_('Sanitized query'),
-                    'value' => '<pre style="white-space: pre-wrap">' . $query->query . '</pre>'
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->query) . '</pre>'
                             . '<p>(' . sprintf($this->_n('%d character', '%d characters', mb_strlen($query->query)), mb_strlen($query->query)) . ')</p>',
                 ],
                 [
@@ -389,11 +389,11 @@ class Debugger extends Base {
                 ],
                 [
                     'label' => $this->_('Resulting selector string'),
-                    'value' => '<pre style="white-space: pre-wrap">' . $query->getSelector() . '</pre>',
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSelector()) . '</pre>',
                 ],
                 [
                     'label' => $this->_('Resulting SQL query'),
-                    'value' => '<pre style="white-space: pre-wrap">' . $query->getSQL() . '</pre>',
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
                 ],
             ]);
             if ($language !== null) {
@@ -420,7 +420,7 @@ class Debugger extends Base {
                 [
                     'label' => $this->_('Results'),
                     'value' => $query->resultsCount . ' / ' . $query->resultsTotal
-                            . '<pre style="white-space: pre-wrap">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
+                            . '<pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
                 ],
             ]);
             if ($language !== null) {
@@ -461,7 +461,7 @@ class Debugger extends Base {
         }
 
         // inject styles
-        foreach (['tabs'] as $styles) {
+        foreach (['tabs', 'debugger'] as $styles) {
             $this->wire('config')->styles->add(
                 $this->wire('config')->urls->get('SearchEngine') . 'css/' . $styles . '.css'
             );
@@ -471,13 +471,15 @@ class Debugger extends Base {
         $data = array_merge([
             'debug-button-label' => $this->_('Debug'),
             'refresh-button-label' => $this->_('Refresh'),
+            'show-more-button-label' => $this->_('Show more'),
+            'show-less-button-label' => $this->_('Show less'),
             'page-id' => $this->page && $this->page->id ? $this->page->id : null,
             'query' => $this->query,
             'type' => 'page',
         ], $data);
 
         // construct and return container markup
-        return '<div class="search-engine-debug" '
+        return '<div class="pwse-debug" '
             . implode(" ", array_map(function($key, $value) {
                 return 'data-' . $key . '="' . $value . '"';
             }, array_keys($data), $data))
@@ -534,15 +536,15 @@ class Debugger extends Base {
                     $subsection['content'] = $subsection['content'][null]['content'];
                 } else {
                     // multilanguage content, render tabs
-                    $out .= '<div class="search-engine-debug-tabs" id="search-engine-debug-tabs-' . ($container_data['type'] ?? '') . '">';
+                    $out .= '<div class="pwse-debug-tabs" id="pwse-debug-tabs-' . ($container_data['type'] ?? '') . '">';
                     $out .= '<ul>';
                     foreach ($subsection['content'] as $tab) {
-                        $tab_id = 'search-engine-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
+                        $tab_id = 'pwse-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
                         $out .= '<li><a href="#' . $tab_id . '">' . $tab['heading'] . '</a></li>';
                     }
                     $out .= '</ul>';
                     foreach ($subsection['content'] as $tab) {
-                        $tab_id = 'search-engine-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
+                        $tab_id = 'pwse-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
                         $out .= '<section id="' . $tab_id . '">' . $tab['content'] . '</section>';
                     }
                     $out .= '</div>';

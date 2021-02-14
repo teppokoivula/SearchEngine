@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.11.0
+ * @version 0.12.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -26,11 +26,19 @@ class Indexer extends Base {
     protected $processor;
 
     /**
+     * IndexerActions instance
+     *
+     * @var Actions
+     */
+    protected $actions;
+
+    /**
      * Constructor method
      */
     public function __construct() {
         parent::__construct();
         $this->processor = new Processor;
+        $this->actions = new IndexerActions;
     }
 
     /**
@@ -49,8 +57,7 @@ class Indexer extends Base {
         $return = isset($args['return']) && $args['return'] == 'index' ? 'index' : 'status';
         $index = [];
         if (empty($selector)) {
-            $index_field = $this->wire('fields')->get($this->getOptions()['index_field']);
-            $indexed_templates = $index_field->getTemplates()->implode('|', 'name');
+            $indexed_templates = implode('|', $this->getOptions()['indexed_fields']);
             if (!empty($indexed_templates)) {
                 $selector = implode(',', [
                     'template=' . $indexed_templates,
@@ -89,6 +96,7 @@ class Indexer extends Base {
             $save = false;
         }
         if ($page->id && ($return == 'index' || $index_field_exists)) {
+            $this->actions->prepareFor('indexPage');
             if ($this->wire('modules')->isInstalled('LanguageSupport') && $this->wire('fields')->get($index_field)->type == 'FieldtypeTextareaLanguage') {
                 foreach ($this->wire('languages') as $language) {
                     $index[$language->id] = $this->getPageIndex($page, $options['indexed_fields'], '', [
@@ -169,7 +177,7 @@ class Indexer extends Base {
                     }
                 }
             }
-            // Check for Page properties, which are not included in the fields property of a Page.
+            // Check for Page properties, which are not included in the fields property of a Page
             $properties = [
                 'ids' => 'id',
                 'names' => 'name',

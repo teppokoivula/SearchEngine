@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.4.0
+ * @version 0.5.0
  */
 class PWSE_Debugger {
 
@@ -11,17 +11,17 @@ class PWSE_Debugger {
     constructor() {
 
         // find debug containers
-        const debugContainers = document.querySelectorAll('.search-engine-debug');
+        const debugContainers = document.querySelectorAll('.pwse-debug');
 
         if (debugContainers.length) {
 
             // define base url for debug requests
             this.debugURL = SearchEngine.configURL + '&se-debug=1&';
 
-            debugContainers.forEach((debugContainer) => {
+            debugContainers.forEach(debugContainer => {
 
                 // add debug button
-                const debugButton = this.makeButton(debugContainer, debugContainer.getAttribute('data-debug-button-label'));
+                const debugButton = this.makeButton(debugContainer.getAttribute('data-debug-button-label'), debugContainer, true);
                 debugButton.icon.setAttribute('class', 'fa fa-bug');
 
                 switch (debugContainer.getAttribute('data-type')) {
@@ -62,13 +62,22 @@ class PWSE_Debugger {
             fetch(this.debugURL + 'se-debug-index=1')
                 .then(response => response.text())
                 .then(data => {
+
+                    // update debug button
                     debugButton.text.innerText = debugContainer.getAttribute('data-refresh-button-label');
                     debugButton.icon.setAttribute('class', 'fa fa-refresh');
                     debugButton.button.removeAttribute('disabled');
                     debugButton.button.setAttribute('class', 'ui-button ui-state-default');
+
+                    // update and highlight debug container
                     debugContainer.innerHTML = data;
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+
+                    // find collapsed sections
+                    this.findCollapsed(debugContainer);
+
+                    // init tabs
                     window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
@@ -83,7 +92,7 @@ class PWSE_Debugger {
     initPage(debugContainer, debugButton) {
 
         // add "reindex" button
-        const reindexButton = this.makeButton(debugContainer, debugContainer.getAttribute('data-reindex-button-label'));
+        const reindexButton = this.makeButton(debugContainer.getAttribute('data-reindex-button-label'), debugContainer, true);
 
         // get debug page ID
         let debugPageID = parseInt(debugContainer.getAttribute('data-page-id'));
@@ -140,6 +149,7 @@ class PWSE_Debugger {
                     const queueData = debugContainer.queueData
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
+                    this.findCollapsed(debugContainer);
                     window.SearchEngine.Tabs.init(debugContainer);
                 });
         });
@@ -241,11 +251,12 @@ class PWSE_Debugger {
     /**
      * Create new button
      *
-     * @param {object} parent Parent DOM node
      * @param {string} label Label for the button
+     * @param {object} [parent] Parent DOM node
+     * @param {boolean} [sticky] Sticky button?
      * @return {object} Button
      */
-    makeButton(parent, label) {
+    makeButton(label, parent, sticky) {
         const button = {
             button: document.createElement('button'),
             text: document.createElement('span'),
@@ -253,14 +264,59 @@ class PWSE_Debugger {
         };
         button.button.setAttribute('class', 'ui-button ui-state-disabled');
         button.button.setAttribute('disabled', 'disabled');
-        button.button.setAttribute('style', 'position: sticky; top: 1rem; z-index: 1');
-        parent.parentNode.insertBefore(button.button, parent);
+        if (typeof sticky !== 'undefined' && sticky !== false) {
+            button.button.setAttribute('style', 'position: sticky; top: 1rem; z-index: 1');
+        }
+        if (typeof parent !== 'undefined') {
+            parent.parentNode.insertBefore(button.button, parent);
+        }
         button.text.innerText = label;
         button.button.appendChild(button.text);
         button.icon.setAttribute('class', 'fa fa-refresh');
         button.icon.setAttribute('style', 'margin-left: .5rem');
         button.button.appendChild(button.icon);
         return button;
+    }
+
+    /**
+     * Find collapsed elements and add show more/less buttons
+     *
+     * @param {object} parent Parent DOM node
+     */
+    findCollapsed(parent) {
+        const maxHeight = 400;
+        const collapsedSections = parent.querySelectorAll('.pwse-collapse');
+        if (collapsedSections.length) {
+            collapsedSections.forEach(collapsedSection => {
+                collapsedSection.style.maxHeight = maxHeight + 'px';
+                if (collapsedSection.tagName === 'TEXTAREA') {
+                    collapsedSection.style.height = (collapsedSection.scrollHeight + 2) + 'px';
+                }
+                collapsedSection.style.overflowY = 'auto';
+                if ((collapsedSection.scrollHeight + 2) > maxHeight) {
+                    const collapseButton = this.makeButton(parent.getAttribute('data-show-more-button-label'));
+                    collapseButton.button.setAttribute('class', 'ui-button ui-state-default');
+                    collapseButton.icon.setAttribute('class', 'fa fa-chevron-down');
+                    collapseButton.button.addEventListener('click', e => {
+                        e.preventDefault();
+                        if (collapsedSection.style.maxHeight) {
+                            collapsedSection.style.maxHeight = null;
+                            collapseButton.text.innerText = parent.getAttribute('data-show-less-button-label');
+                            collapseButton.icon.setAttribute('class', 'fa fa-chevron-up');
+                        } else {
+                            collapsedSection.style.maxHeight = maxHeight + 'px';
+                            collapseButton.text.innerText = parent.getAttribute('data-show-more-button-label');
+                            collapseButton.icon.setAttribute('class', 'fa fa-chevron-down');
+                        }
+                        collapseButton.button.removeAttribute('disabled');
+                        collapseButton.button.setAttribute('class', 'ui-button ui-state-default');
+                        this.highlight(collapsedSection);
+                    });
+                    collapseButton.button.removeAttribute('disabled');
+                    collapsedSection.parentNode.insertBefore(collapseButton.button, collapsedSection.nextSibling);
+                }
+            });
+        }
     }
 
 }

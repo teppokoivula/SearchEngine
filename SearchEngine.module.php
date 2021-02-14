@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.27.1
+ * @version 0.28.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -45,6 +45,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'summary',
             'body',
         ],
+        'indexer_actions' => [],
         'compatible_fieldtypes' => [
             'FieldtypeEmail',
             'FieldtypeFieldsetPage',
@@ -103,6 +104,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         ],
         'render_args' => [
             'theme' => 'default',
+            'themes_directory' => null,
             'minified_resources' => true,
             'form_action' => './',
             'form_id' => 'se-form',
@@ -225,10 +227,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function init() {
 
-        // Trigger manual indexing when module config is saved.
+        // Trigger manual indexing when module config is saved
         $this->addHookBefore('Modules::saveModuleConfigData', $this, 'saveConfigData');
 
-        // Update search index when a page is saved.
+        // Update search index when a page is saved
         $this->addHookBefore('Pages::savedPageOrField', $this, 'savePageIndex');
     }
 
@@ -254,21 +256,21 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     protected function saveConfigData(HookEvent $event) {
 
-        // Bail out early if saving another module's config.
+        // Bail out early if saving another module's config
         if ($event->arguments[0] !== $this->className) {
             return;
         }
 
-        // Make sure that the module has been initialized.
+        // Make sure that the module has been initialized
         $this->initOnce();
 
-        // The config data being saved.
+        // The config data being saved
         $data = $event->arguments[1];
 
         // Index field name.
         $index_field = $this->wire('sanitizer')->text($data['index_field'] ?? '');
 
-        // Add/remove the index field to/from templates.
+        // Add/remove the index field to/from templates
         if (!empty($index_field)) {
             $indexed_templates = $data['indexed_templates'];
             foreach ($this->wire('templates') as $template) {
@@ -294,7 +296,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        // Build an index and make sure that the index_pages_now setting doesn't get saved.
+        // Build an index and make sure that the index_pages_now setting doesn't get saved
         if (!empty($data['index_pages_now'])) {
             $indexing_selector = $data['index_pages_now_selector'] ?? null;
             $indexing_started = new \DateTime();
@@ -365,25 +367,25 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             return false;
         }
 
-        // Init runtime options.
+        // Init runtime options
         $this->initOptions();
 
-        // Init class autoloader.
+        // Init class autoloader
         $this->wire('classLoader')->addNamespace(
             'SearchEngine',
             $this->wire('config')->paths->SearchEngine . 'lib/'
         );
 
-        // Init SearchEngine Indexer.
+        // Init SearchEngine Indexer
         $this->indexer = $this->wire(new \SearchEngine\Indexer());
 
-        // Init SearchEngine Finder.
+        // Init SearchEngine Finder
         $this->finder = $this->wire(new \SearchEngine\Finder());
 
-        // Init SearchEngine Renderer.
+        // Init SearchEngine Renderer
         $this->renderer = $this->wire(new \SearchEngine\Renderer());
 
-        // Remember that the module has been initialized.
+        // Remember that the module has been initialized
         $this->initialized = true;
 
         // return true on first run
@@ -428,18 +430,20 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     /**
      * Init runtime options for the module
      *
-     * Runtime options are a combination of module defaults, values from module config, and values
-     * defined in site config.
+     * Runtime options are constructed by combining default values, specific settings from module
+     * config, and values that might've been defined via site config.
      */
     protected function initOptions() {
 
-        // Module config settings.
+        // Named module config settings that should be included in runtime options
         $module_config = [];
         $enabled_settings = [
             'index_field',
             'indexed_fields',
             'find_args__sort',
             'find_args__operator',
+            'render_args__themes_directory',
+            'indexer_actions',
         ];
         foreach ($enabled_settings as $setting) {
             $setting_value = $this->get($setting);
@@ -456,7 +460,25 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             }
         }
 
-        // Set runtime options.
+        // Make sure that indexed templates is defined and includes configured templates as well as those that might
+        // have had the index field manually added
+        $module_config['indexed_templates'] = [];
+        $index_field = null;
+        if ($module_config['index_field'] !== null) {
+            $index_field = $this->wire('fields')->get($module_config['index_field']);
+        }
+        if ($index_field !== null) {
+            $templates_with_index_field = $index_field->getTemplates()->get('name[]');
+            $module_config['indexed_templates'] = array_unique(array_merge(
+                array_intersect(
+                    $this->get('indexed_templates') ?? [],
+                    $templates_with_index_field
+                ),
+                $templates_with_index_field
+            ));
+        }
+
+        // Set runtime options
         $this->options = array_replace_recursive(
             static::$defaultOptions,
             $module_config,
@@ -473,10 +495,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function install() {
 
-        // Init runtime options.
+        // Init runtime options
         $this->initOptions();
 
-        // Create search index field (unless it already exists).
+        // Create search index field (unless it already exists)
         $this->createIndexField($this->options['index_field']);
     }
 
@@ -491,7 +513,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         $index_field = $this->getIndexfield($index_field_name);
         if ($index_field) {
             if ($index_field->_is_valid_index_field) {
-                // Use existing index field.
+                // Use existing index field
                 $this->message(sprintf(
                     $this->_('Index field "%s" already exists and is of expected type (%s). Using existing field.'),
                     $index_field->name,
@@ -505,7 +527,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 $index_field = null;
             }
         } else {
-            // Create new index field.
+            // Create new index field
             $index_field = $this->wire(new Field());
             $index_field->type = 'FieldtypeTextarea';
             $index_field->name = $this->options['index_field'];
@@ -530,21 +552,21 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function getIndexField(string $index_field_name = null): ?Field {
 
-        // If index field name is null, get default value from options.
+        // If index field name is null, get default value from options
         if (is_null($index_field_name)) {
             $index_field_name = $this->options['index_field'];
         }
 
-        // Bail out early if index field name is empty.
+        // Bail out early if index field name is empty
         if (empty($index_field_name)) return null;
 
         $index_field = $this->wire('fields')->get($index_field_name);
         if ($index_field) {
             if ($index_field->type == 'FieldtypeTextarea' || $index_field->type == 'FieldtypeTextareaLanguage') {
-                // Compatible index field found.
+                // Compatible index field found
                 $index_field->_is_valid_index_field = true;
             } else {
-                // Incompatible field found, display an error.
+                // Incompatible field found, display an error
                 $index_field->_is_valid_index_field = false;
             }
         }
@@ -557,10 +579,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public function uninstall() {
 
-        // Init runtime options.
+        // Init runtime options
         $this->initOptions();
 
-        // Remove search index field (if it exists and unless it's still in use).
+        // Remove search index field (if it exists and unless it's still in use)
         $index_field = $this->getIndexField($this->options['index_field']);
         if ($index_field && $index_field->_is_valid_index_field) {
             $used_by_templates = $index_field->getTemplates();

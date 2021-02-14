@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.28.0] - 2021-02-14
+
+### Added
+- Support for Indexer actions, the first one of which adds support for rendering FormBuilder forms as part of the search index. This feature is currently considered experimental.
+- Option to specify custom path for front-end themes via the Advanced settings section in module config.
+- EditorConfig (.editorconfig) and ESLint (.eslintrc.json) config files for defining coding style for IDEs.
+- Support for collapsible content blocks in Debugger.
+
+### Changed
+- Indexed templates option in module config is now AsmSelect, which makes it possible to organize indexed templates by preferred priority.
+- Query class converts lesser than and greater than to HTML entities to allow matching said entities, as well as encoded HTML markup.
+- All Debugger CSS classes refactored to follow `.pwse-` format.
+
 ## [0.27.1] - 2021-02-09
 
 ### Fixed

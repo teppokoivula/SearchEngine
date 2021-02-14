@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.6.0
+ * @version 0.7.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -44,8 +44,19 @@ class Renderer extends Base {
      */
     public function __construct() {
         parent::__construct();
-        $this->themePath = $this->wire('config')->paths->get('SearchEngine') . 'themes/';
-        $this->themeURL = $this->wire('config')->urls->get('SearchEngine') . 'themes/';
+        $themes_directory = $this->getOptions()['render_args']['themes_directory'] ?? null;
+        if ($themes_directory !== null) {
+            $themes_directory = trim($themes_directory, '/.') . '/';
+            $templates_directory = $this->wire('config')->paths->templates;
+            if ($this->wire('files')->allowPath($templates_directory . $themes_directory, $templates_directory)) {
+                $this->themePath = $templates_directory . $themes_directory;
+                $this->themeURL = $this->wire('config')->urls->templates . $themes_directory;
+            }
+        }
+        if ($this->themePath === null) {
+            $this->themePath = $this->wire('config')->paths->get('SearchEngine') . 'themes/';
+            $this->themeURL = $this->wire('config')->urls->get('SearchEngine') . 'themes/';
+        }
     }
 
     /**
@@ -147,7 +158,7 @@ class Renderer extends Base {
      * @param Query|null $query Optional prepopulated Query object.
      * @return string
      *
-     * @throws WireException if query parameter is unrecognized. 
+     * @throws WireException if query parameter is unrecognized.
      */
     public function ___renderResults(array $args = [], Query $query = null): string {
 

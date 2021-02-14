@@ -5,7 +5,6 @@ namespace SearchEngine;
 use ProcessWire\Inputfield;
 use ProcessWire\InputfieldAsmSelect;
 use ProcessWire\InputfieldCheckbox;
-use ProcessWire\InputfieldCheckboxes;
 use ProcessWire\InputfieldFieldset;
 use ProcessWire\InputfieldMarkup;
 use ProcessWire\InputfieldPageListSelect;
@@ -17,7 +16,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.8.0
+ * @version 0.9.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -132,12 +131,12 @@ class Config extends Base {
         $indexing_options = $this->wire('modules')->get('InputfieldFieldset');
         $indexing_options->label = $this->_('Indexing options');
         $indexing_options->icon = 'database';
-        $indexing_options->columnWidth = 50;
 
         /** @var InputfieldAsmSelect Indexed fields */
         $indexed_fields = $this->wire('modules')->get('InputfieldAsmSelect');
         $indexed_fields->name = 'indexed_fields';
         $indexed_fields->label = $this->_('Select indexed fields');
+        $indexed_fields->columnWidth = 50;
         $indexed_fields->addOptions([
             'id' => 'id',
             'name' => 'name',
@@ -163,11 +162,12 @@ class Config extends Base {
         }
         $indexing_options->add($indexed_fields);
 
-        /** @var InputfieldCheckboxes Indexed templates */
-        $indexed_templates = $this->wire('modules')->get('InputfieldCheckboxes');
+        /** @var InputfieldAsmSelect Indexed templates */
+        $indexed_templates = $this->wire('modules')->get('InputfieldAsmSelect');
         $indexed_templates->name = 'indexed_templates';
         $indexed_templates->label = $this->_('Indexed templates');
-        $indexed_templates->description = $this->_('In order for a template to be indexed, it needs to include the index field. You can use this setting to add the index field to one or more templates, or remove it from templates it has previously been added to.');
+        $indexed_templates->description = $this->_('In order for a template to be indexed, it needs to include the index field. Selecting a template here will automatically add the index field to it.');
+        $indexed_templates->columnWidth = 50;
         $index_field_templates = $this->wire('fields')->get($this->options['index_field'])->getTemplates()->get('name[]');
         foreach ($this->wire('templates')->getAll() as $template) {
             $option_attributes = null;
@@ -178,8 +178,7 @@ class Config extends Base {
             }
             $indexed_templates->addOption($template->name, null, $option_attributes);
         }
-        $indexed_templates->optionColumns = 1;
-        $indexed_templates->value = $index_field_templates;
+        $indexed_templates->value = $this->options[$indexed_templates->name];
         $indexing_options->add($indexed_templates);
 
         return $indexing_options;
@@ -196,7 +195,6 @@ class Config extends Base {
         $finder_settings = $this->wire('modules')->get('InputfieldFieldset');
         $finder_settings->label = $this->_('Finder settings');
         $finder_settings->icon = 'search';
-        $finder_settings->columnWidth = 50;
 
         /** @var InputfieldText Sort order */
         $sort = $this->wire('modules')->get('InputfieldText');
@@ -331,7 +329,7 @@ class Config extends Base {
         /** @var InputfieldSelect Index field */
         $index_field = $this->wire('modules')->get('InputfieldSelect');
         $index_field->name = 'index_field';
-        $index_field->label = $this->_('Select index field');
+        $index_field->label = $this->_('Index field');
         foreach ($this->wire('fields')->getAll() as $field) {
             if ($field->type != 'FieldtypeTextarea' && $field->type != 'FieldtypeTextareaLanguage') {
                 continue;
@@ -378,6 +376,36 @@ class Config extends Base {
         }
         $compatible_fieldtypes->notes .= $this->getCompatibleFieldtypeDiff($compatible_fieldtypes->value);
         $advanced_settings->add($compatible_fieldtypes);
+
+        /** @var InputfieldAsmSelect Indexer extra actions */
+        $indexer_actions = $this->wire('modules')->get('InputfieldAsmSelect');
+        $indexer_actions->name = 'indexer_actions';
+        $indexer_actions->label = $this->_('Indexer actions');
+        $indexer_actions->description = $this->_('Optional, predefined actions triggered while Indexer is processing page content.')
+            . " "
+            . $this->_('Note: this option is currently considered experimental. Please test carefully before enabling on a live site!');
+        $actions_by_context = (new IndexerActions())->getActions();
+        foreach ($actions_by_context as $action_context) {
+            foreach ($action_context as $action_name => $action_description) {
+                $indexer_actions->notes .= sprintf('- **%s**: %s', $action_name, $action_description);
+                $indexer_actions->addOption($action_name, $action_name);
+            }
+        }
+        $indexer_actions = $this->maybeUseConfig($indexer_actions);
+        $advanced_settings->add($indexer_actions);
+
+        /** @var InputfieldText Themes directory */
+        $themes_directory = $this->wire('modules')->get('InputfieldText');
+        $themes_directory->name = 'render_args__themes_directory';
+        $themes_directory->label = $this->_('Themes directory');
+        $themes_directory->pattern = '^[^.](?:(?!\.\.|\/\/).)*$';
+        $themes_directory->description = sprintf(
+            $this->_('Directory containing themes used on the front-end. Leave this field empty to use the default location (%s).'),
+            $this->wire('config')->paths->SearchEngine . 'themes/'
+        );
+        $themes_directory->notes = $this->_('For security reasons only subdirectories of the templates directory are allowed: if the value provided here is **SearchEngine/themes**, resulting lookup directory will be /site/templates/**SearchEngine/themes**/. In addition the directory specified here may *not* start with a dot ("`.`"), or contain double slashes ("`//`") or directory traversal ("`..`").');
+        $themes_directory = $this->maybeUseConfig($themes_directory);
+        $advanced_settings->add($themes_directory);
 
         return $advanced_settings;
     }
@@ -473,8 +501,8 @@ class Config extends Base {
             }
         } else {
             // value defined in site config, disable inputfield
-            $field->notes = sprintf(
-                $this->_('"%s" is currently defined in site config. You cannot override config settings here.'),
+            $field->notes = ($field->notes ? $field->notes . "\n\n" : "") . sprintf(
+                $this->_('*"%s" is currently defined in site config and cannot be changed here.*'),
                 $field->label
             );
             $field->value = $this->getValue($field->name, $this->options);
@@ -530,5 +558,5 @@ class Config extends Base {
 
         return $out;
     }
-    
+
 }

@@ -20,21 +20,21 @@ class Finder extends Base {
      */
     public function find($query = null, array $args = []): Query {
 
-        // Resulting Query object.
+        // Resulting Query object
         $query = $this->wire(new Query($query, $args));
 
-        // Bail out early if query is empty.
+        // Bail out early if query is empty
         if (empty($query->query)) {
             return $query;
         }
 
-        // Merge arguments with defaults.
+        // Merge arguments with defaults
         $query->args = array_replace_recursive(
             $this->getOptions()['find_args'],
             $query->args
         );
 
-        // Find results.
+        // Find results
         $query->results = $this->wire('pages')->find($query->getSelector());
 
         return $query;
