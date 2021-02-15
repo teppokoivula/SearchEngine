@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.28.1] - 2021-02-15
+
+### Fixed
+- Fixed an issue where recreating entire index wasn't working due to wrong variable name in Indexer::indexPages() method.
+
 ## [0.28.0] - 2021-02-14
 
 ### Added
@@ -23,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.27.1] - 2021-02-09
 
 ### Fixed
-- Fix an issue where Debugger was displaying a notice due to missing returnAllCols argument for PageFinder::getQuery().
+- Fixed an issue where Debugger was displaying a notice due to missing returnAllCols argument for PageFinder::getQuery().
 
 ## [0.27.0] - 2020-11-18
 

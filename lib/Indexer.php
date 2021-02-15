@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.12.0
+ * @version 0.12.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -57,7 +57,7 @@ class Indexer extends Base {
         $return = isset($args['return']) && $args['return'] == 'index' ? 'index' : 'status';
         $index = [];
         if (empty($selector)) {
-            $indexed_templates = implode('|', $this->getOptions()['indexed_fields']);
+            $indexed_templates = implode('|', $this->getOptions()['indexed_templates']);
             if (!empty($indexed_templates)) {
                 $selector = implode(',', [
                     'template=' . $indexed_templates,
