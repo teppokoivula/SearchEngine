@@ -48,7 +48,7 @@ class Query extends Base {
     protected $original_args = [];
 
     /**
-     * Result returned by performing the query.
+     * Result returned by performing the query
      *
      * @var null|WireArray|PageArray
      */
@@ -71,7 +71,7 @@ class Query extends Base {
     /**
      * Constructor method
      *
-     * @param string|null $query The query.
+     * @param string|null $query The query
      * @param array $args Additional arguments:
      *  - limit (int, limit value, defaults to `50`)
      *  - operator (string, index field comparison operator, defaults to `*=`)
@@ -84,20 +84,20 @@ class Query extends Base {
 
         parent::__construct();
 
-        // Store original query and original args in class properties.
+        // Store original query and original args in class properties
         $this->original_query = $query;
         $this->original_args = $args;
 
         // Merge default find arguments with provided custom values.
         $this->args = array_replace_recursive($this->getOptions()['find_args'], $args);
 
-        // Sanitize query string and whitelist query param (if possible).
+        // Sanitize query string and whitelist query param (if possible)
         $this->query = $this->sanitizeQuery($query);
         if (!empty($this->query) && !empty($this->args['query_param'])) {
             $this->wire('input')->whitelist($this->args['query_param'], $this->query);
         }
 
-        // Validate query.
+        // Validate query
         if (empty($args['no_validate'])) {
             $this->errors = $this->validateQuery($this->query);
         }
@@ -107,20 +107,23 @@ class Query extends Base {
     /**
      * Sanitize provided query string.
      *
-     * @param string|null $query Query string.
-     * @return string Sanitized query string.
+     * @param string|null $query Query string
+     * @return string Sanitized query string
      */
     protected function sanitizeQuery(?string $query = ''): string {
+
         if (empty($query)) {
             return '';
         }
+
+        // Further sanitization is required in order to avoid a MySQL bug affecting InnoDB fulltext search (seemingly
+        // related to https://bugs.mysql.com/bug.php?id=78485).
         if ($this->wire('config')->dbEngine == 'InnoDB' && $this->args['operator'] == '*=') {
-            // Further sanitization is required in order to avoid a MySQL bug affecting InnoDB
-            // fulltext search (seemingly related to https://bugs.mysql.com/bug.php?id=78485).
             $query = str_replace('@', ' ', $query);
         }
-        // For best results we escape lesser than and greater than; this will allow matches in
-        // case the index contains encoded HTML markup, but won't cause it to miss umlauts etc.
+
+        // For best results we escape lesser than and greater than; this will allow matches in case the index contains
+        // encoded HTML markup, but won't cause it to miss umlauts etc.
         $query = str_replace(['<', '>'], ['&lt;', '&gt;'], $query);
         $query = $this->wire('sanitizer')->selectorValue($query);
         return $query;
@@ -129,15 +132,15 @@ class Query extends Base {
     /**
      * Validate provided query string.
      *
-     * @param string $query Query string.
-     * @return array $errors Errors array.
+     * @param string $query Query string
+     * @return array $errors Errors array
      */
     public function validateQuery(string $query = ''): array {
 
-        // Get the strings array.
+        // Get the strings array
         $strings = $this->getStrings();
 
-        // Validate query.
+        // Validate query
         $errors = [];
         if (empty($query) || $query == '""') {
             $errors[] = $strings['error_query_missing'];
@@ -197,8 +200,8 @@ class Query extends Base {
      *
      * This method is added so that we can modify some values on storage (sanitize query etc.)
      *
-     * @param string $name Property name.
-     * @param mixed $value Property value.
+     * @param string $name Property name
+     * @param mixed $value Property value
      */
     public function __set(string $name, $value) {
         if ($name === "query") {
@@ -213,8 +216,8 @@ class Query extends Base {
     /**
      * Magic isset method
      *
-     * @param string $name Property name.
-     * @return bool True if set, false if not set.
+     * @param string $name Property name
+     * @return bool
      */
     public function __isset(string $name): bool {
         return !empty($this->$name);
@@ -223,8 +226,8 @@ class Query extends Base {
     /**
      * Returns a run-time, stringified version of an argument
      *
-     * @param string $name Argument name.
-     * @return string Stringified argument value.
+     * @param string $name Argument name
+     * @return string Stringified argument value
      */
     protected function getStringArgument(string $name): string {
         if (empty($this->args[$name])) {
@@ -245,7 +248,7 @@ class Query extends Base {
 
         $options = $this->wire('modules')->get('SearchEngine')->options;
 
-        // define sort order
+        // Define sort order
         $sort = [];
         if (!empty($this->args['sort'])) {
             $sort = [];
@@ -258,7 +261,7 @@ class Query extends Base {
             }
         }
 
-        // construct and return selector string
+        // Construct and return selector string
         return implode(', ', array_filter([
             empty($this->args['limit']) ? '' : 'limit=' . $this->args['limit'],
             empty($sort) ? '' : implode(', ', $sort),
@@ -274,22 +277,22 @@ class Query extends Base {
      */
     public function getSQL(): string {
 
-        // get selector string
+        // Get selector string
         $selector = $this->getSelector();
 
-        // convert selector string into SQL
+        // Convert selector string into SQL
         $selectors = new \ProcessWire\Selectors($selector);
         $pageFinder = new \ProcessWire\PageFinder();
         $options = [
             'returnVerbose' => true,
             'findOne' => false,
-            // rest of the options are expected by PageFinder
+            // Rest of the options are expected by PageFinder
             'returnAllCols' => false,
             'returnParentIDs' => false,
             'reverseSort' => false,
             'alwaysAllowIDs' => [],
         ];
-        // we're not using the result of this operation but PageFinder needs it to populate options
+        // We're not using the result of this operation but PageFinder needs it to populate options
         $pageFinder->find($selectors, $options);
         $query = $pageFinder->getQuery($selectors, $options);
         if (method_exists($query, 'getDebugQuery')) {
