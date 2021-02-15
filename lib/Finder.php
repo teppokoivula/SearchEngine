@@ -35,7 +35,31 @@ class Finder extends Base {
         );
 
         // Find results
-        $query->results = $this->wire('pages')->find($query->getSelector());
+        if (isset($args['sort']) && $args['sort'] === '_indexed_templates') {
+            $this->addHookBefore('PageFinder::getQuery', function(\ProcessWire\HookEvent $event) {
+                if (empty($event->arguments[1]['PWSE_Query'])) return;
+                $event->replace = true;
+                $event->return = $event->arguments[1]['PWSE_Query'];
+            });
+            $pwse_query = $query->getQuery()
+                ->select(
+                    'field(pwse_t.name, "'
+                    . implode('", "', $this->getOptions()['indexed_templates'])
+                    . '") as pwse_score'
+                )
+                ->leftjoin('templates AS pwse_t ON pwse_t.id=pages.templates_id')
+                ->orderby('pwse_score ASC', true);
+            $query->results = $this->wire('pages')->find($pwse_query->selectors, [
+                'PWSE_Query' => $pwse_query,
+            ]);
+            if ($query->results !== null) {
+                list($start, $limit) = explode(',', $pwse_query->limit[0] ?? ',');
+                $query->results->setStart($start ?? 0);
+                $query->results->setLimit($limit ?? $query->args['limit'] ?? 20);
+            }
+        } else {
+            $query->results = $this->wire('pages')->find($query->getSelector());
+        }
 
         return $query;
     }

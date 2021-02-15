@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Query class
  *
- * @version 0.4.4
+ * @version 0.5.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
@@ -187,7 +187,7 @@ class Query extends Base {
             case 'pager':
             case 'resultsPager':
                 if (empty($this->pager) && !empty($this->results) && $this->results instanceof \ProcessWire\PaginatedArray) {
-                    $this->pager = $this->results->renderPager($this->getOptions()['pager_args']);
+                    $this->pager = $this->results->renderPager($this->getOptions()['pager_args']) ?? '';
                 }
                 return $this->pager;
                 break;
@@ -271,30 +271,41 @@ class Query extends Base {
     }
 
     /**
-     * Returns SQL query based on all provided arguments
+     * Returns database query object
      *
-     * @return string
+     * @return \ProcessWire\DatabaseQuerySelect
      */
-    public function getSQL(): string {
+    public function getQuery(): \ProcessWire\DatabaseQuerySelect {
 
         // Get selector string
         $selector = $this->getSelector();
 
-        // Convert selector string into SQL
+        // Convert selector string into Selectors object
         $selectors = new \ProcessWire\Selectors($selector);
+
+        // Use PageFinder to process our query and return resulting database query object
         $pageFinder = new \ProcessWire\PageFinder();
-        $options = [
+        $query = $pageFinder->find($selectors, [
             'returnVerbose' => true,
             'findOne' => false,
             // Rest of the options are expected by PageFinder
             'returnAllCols' => false,
             'returnParentIDs' => false,
+            'returnQuery' => true,
             'reverseSort' => false,
             'alwaysAllowIDs' => [],
-        ];
-        // We're not using the result of this operation but PageFinder needs it to populate options
-        $pageFinder->find($selectors, $options);
-        $query = $pageFinder->getQuery($selectors, $options);
+        ]);
+        $query->set('selectors', $pageFinder->getSelectors());
+        return $query;
+    }
+
+    /**
+     * Returns SQL query based on all provided arguments
+     *
+     * @return string
+     */
+    public function getSQL(): string {
+        $query = $this->getQuery();
         if (method_exists($query, 'getDebugQuery')) {
             // ProcessWire 3.0.158+
             return $query->getDebugQuery();
