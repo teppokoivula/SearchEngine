@@ -16,7 +16,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.9.0
+ * @version 0.9.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
