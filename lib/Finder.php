@@ -64,6 +64,15 @@ class Finder extends Base {
      */
     protected function findByTemplates(Query $query, array $templates): PageArray {
 
+        // Sanitize templates array
+        if (!empty($templates)) {
+            $templates = array_filter($templates, function($template) {
+                return is_string($template) && $this->sanitizer->templateName($template) === $template
+                    || is_int($template)
+                    || $template instanceof \ProcessWire\Template;
+            });
+        }
+
         // Bail out early if templates array is empty
         if (empty($templates)) {
             return $this->wire(new PageArray);
