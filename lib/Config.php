@@ -201,7 +201,11 @@ class Config extends Base {
         $sort->name = 'find_args__sort';
         $sort->label = $this->_('Sort order');
         $sort->description = $this->_('Sort order used when finding content. See [documentation for sorting results](https://processwire.com/docs/selectors/#sort) for more details.');
-        $sort->notes = $this->_('Note: you may use multiple sort fields by separating each field with a comma (sort,title,-date_from).');
+        $sort->notes = $this->_('You can use multiple sort fields by separating each field with a comma (sort,title,-date_from).')
+            . ' '
+            . $this->_('Custom values specific to SearchEngine:')
+            . "\n\n"
+            . $this->_('- **_indexed_templates**: Sort results by the order of indexed templates');
         $sort = $this->maybeUseConfig($sort);
         $finder_settings->add($sort);
 

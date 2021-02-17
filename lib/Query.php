@@ -34,6 +34,13 @@ class Query extends Base {
     protected $original_query = '';
 
     /**
+     * Database query object
+     *
+     * @var DatabaseQuerySelect|null
+     */
+    protected $database_query = null;
+
+    /**
      * Additional arguments provided for the find operation
      *
      * @var array
@@ -273,9 +280,16 @@ class Query extends Base {
     /**
      * Returns database query object
      *
+     * @internal
+     *
      * @return \ProcessWire\DatabaseQuerySelect
      */
     public function getQuery(): \ProcessWire\DatabaseQuerySelect {
+
+        // If we already have a database query, return it
+        if ($this->database_query !== null) {
+            return $this->database_query;
+        }
 
         // Get selector string
         $selector = $this->getSelector();
@@ -297,6 +311,19 @@ class Query extends Base {
         ]);
         $query->set('selectors', $pageFinder->getSelectors());
         return $query;
+    }
+
+    /**
+     * Set database query object
+     *
+     * @internal
+     *
+     * @param \ProcessWire\DatabaseQuerySelect|null
+     * @return Query Self-reference
+     */
+    public function setQuery(?\ProcessWire\DatabaseQuerySelect $database_query): Query {
+        $this->database_query = $database_query;
+        return $this;
     }
 
     /**

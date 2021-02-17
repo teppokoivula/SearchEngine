@@ -361,6 +361,9 @@ class Debugger extends Base {
         // display debug for each language
         foreach ($languages as $language) {
 
+            // set up timer
+            $timer = \ProcessWire\Debug::timer();
+
             // perform query
             if ($language !== null) {
                 $this->wire('user')->language = $language;
@@ -394,6 +397,10 @@ class Debugger extends Base {
                 [
                     'label' => $this->_('Resulting SQL query'),
                     'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
+                ],
+                [
+                    'label' => $this->_('Time spent finding results'),
+                    'value' => '<pre class="pwse-pre">' . sprintf($this->_('%s seconds'), \ProcessWire\Debug::timer($timer)) . '</pre>',
                 ],
             ]);
             if ($language !== null) {

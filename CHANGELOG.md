@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Support for ordering search results by the indexed templates settings. Sort setting needs to be `_indexed_templates` in order for this feature to kick in.
+- Support for ordering search results by the indexed templates settings. Sort setting needs to include `_indexed_templates` in order for this feature to kick in.
 
 ## [0.28.1] - 2021-02-15
 
