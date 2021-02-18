@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.4.2
+ * @version 0.5.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -31,6 +31,13 @@ class Debugger extends Base {
      * @var string
      */
     protected $query = '';
+
+    /**
+     * Search query args
+     *
+     * @var array
+     */
+    protected $query_args = [];
 
     /**
      * Index field
@@ -78,6 +85,22 @@ class Debugger extends Base {
      */
     public function setQuery(string $query): Debugger {
         $this->query = $query;
+        return $this;
+    }
+
+    /**
+     * Set query args
+     *
+     * @param array|string $args Search query args
+     * @return Debugger Self-reference
+     */
+    public function setQueryArgs($args = []): Debugger {
+        if (is_string($args)) {
+            $args = json_decode($args, true, 3, JSON_OBJECT_AS_ARRAY);
+        }
+        if (is_array($args)) {
+            $this->query_args = $args;
+        }
         return $this;
     }
 
@@ -368,7 +391,7 @@ class Debugger extends Base {
             if ($language !== null) {
                 $this->wire('user')->language = $language;
             }
-            $query = $se->find($this->query);
+            $query = $se->find($this->query, $this->query_args);
 
             // query info
             $info_content = $this->renderList([
@@ -389,6 +412,10 @@ class Debugger extends Base {
                         ? $this->_('No') . ' <i class="fa fa-check" style="color: green" aria-hidden="true"></i>'
                         : $this->_('Yes')  . ' <i class="fa fa-exclamation-triangle" style="color: red" aria-hidden="true"></i>'
                     ),
+                ],
+                [
+                    'label' => $this->_('Query args'),
+                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities(json_encode($query->args, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) . '</pre>',
                 ],
                 [
                     'label' => $this->_('Resulting selector string'),
@@ -645,6 +672,8 @@ class Debugger extends Base {
 
             // debug query
             $this->setQuery($this->wire('input')->get('se-debug-query'));
+            $this->setQueryArgs($this->wire('input')->get('se-debug-query-args'));
+
             exit($this->debugQuery(false));
 
         } else if ($this->wire('input')->get('se-debug-index')) {

@@ -187,6 +187,9 @@ class PWSE_Debugger {
             debugButton.button.setAttribute('class', 'ui-button ui-state-default');
         }
 
+        // get debug query args
+        const debugQueryArgs = document.getElementById('Inputfield_debugger_query_args');
+
         // listen to keyup event
         document.getElementById('Inputfield_debugger_query').addEventListener("keyup", function(e) {
             if (e.key == 'Enter') {
@@ -216,7 +219,11 @@ class PWSE_Debugger {
             debugButton.button.setAttribute('disabled', 'disabled');
             debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
             debugButton.icon.classList.add('fa-spin');
-            fetch(this.debugURL + 'se-debug-query=' + encodeURIComponent(debugQuery))
+            fetch(
+                this.debugURL
+                + 'se-debug-query=' + encodeURIComponent(debugQuery)
+                + '&se-debug-query-args=' + encodeURIComponent(JSON.stringify(JSON.parse(debugQueryArgs.value)))
+            )
                 .then(response => response.text())
                 .then(data => {
                     prevQuery = debugQuery;

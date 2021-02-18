@@ -11,12 +11,13 @@ use ProcessWire\InputfieldPageListSelect;
 use ProcessWire\InputfieldSelect;
 use ProcessWire\InputfieldSelector;
 use ProcessWire\InputfieldText;
+use ProcessWire\InputfieldTextarea;
 use ProcessWire\InputfieldWrapper;
 
 /**
  * SearchEngine Config
  *
- * @version 0.9.1
+ * @version 0.10.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -429,6 +430,9 @@ class Config extends Base {
         if (!empty($this->data['debugger_query'])) {
             $debugger->setQuery($this->data['debugger_query']);
         }
+        if (!empty($this->data['debugger_query_args'])) {
+            $debugger->setQueryArgs($this->data['debugger_query_args']);
+        }
 
         /** @var InputfieldFieldset Fieldset for Debugger */
         $debugger_settings = $this->wire('modules')->get('InputfieldFieldset');
@@ -469,6 +473,15 @@ class Config extends Base {
         $debugger_query->description = $this->_('Type in the search to debug.');
         $debugger_query->value = $this->data[$debugger_query->name] ?? '';
         $debugger_settings->add($debugger_query);
+
+        /** @var InputfieldTextarea Additional arguments for query */
+        $debugger_query_args = $this->wire('modules')->get('InputfieldTextarea');
+        $debugger_query_args->name = 'debugger_query_args';
+        $debugger_query_args->label = $this->_('Additional arguments');
+        $debugger_query_args->description = $this->_('Additional arguments passed to the Finder.');
+        $debugger_query_args->notes = $this->_('Note: provided value needs to be valid JSON.');
+        $debugger_query_args->value = $this->data[$debugger_query_args->name] ?? '{}';
+        $debugger_settings->add($debugger_query_args);
 
         /** @var InputfieldMarkup Query debug output */
         $debugger_query_markup = $this->wire('modules')->get('InputfieldMarkup');

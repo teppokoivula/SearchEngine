@@ -25,7 +25,8 @@ class Finder extends Base {
      * Find content matching provided query string
      *
      * @param string|null $query The query
-     * @param array $args Additional arguments, see Query::__construct() for details
+     * @param array $args Additional arguments, see Query::__construct() for details. Values specific to Finder:
+     *  - pinned_templates (array, each item should be a template name)
      * @return Query Resulting Query object
      */
     public function find($query = null, array $args = []): Query {
@@ -45,9 +46,13 @@ class Finder extends Base {
         );
 
         // Check if finding results should be delegated to findByTemplates
-        $sort = empty($query->args['sort']) ? null : array_filter(explode(',', preg_replace('/\s+/', '', $query->args['sort'])));
-        if ($sort !== null && in_array('_indexed_templates', $sort)) {
-            $query->results = $this->findByTemplates($query, $this->getOptions()['indexed_templates']);
+        $templates = is_array($args['pinned_templates']) ? $args['pinned_templates'] : [];
+        $args_sort = empty($query->args['sort']) ? null : array_filter(explode(',', preg_replace('/\s+/', '', $query->args['sort'])));
+        if ($args_sort !== null && in_array('_indexed_templates', $args_sort)) {
+            $templates = array_merge($templates, $this->getOptions()['indexed_templates']);
+        }
+        if (!empty($templates)) {
+            $query->results = $this->findByTemplates($query, $templates);
             return $query;
         }
 
@@ -61,23 +66,21 @@ class Finder extends Base {
      * Find content sorted by provided array of templates
      *
      * @param Query $query
-     * @param array $templates Array of Template objects, template names, or template IDs
+     * @param array $templates Array of template names
      * @return PageArray
      */
     protected function findByTemplates(Query $query, array $templates): PageArray {
 
         // Sanitize templates array
         if (!empty($templates)) {
-            $templates = array_filter($templates, function($template) {
-                return is_string($template) && $this->sanitizer->templateName($template) === $template
-                    || is_int($template)
-                    || $template instanceof \ProcessWire\Template;
-            });
+            $templates = array_unique(array_filter($templates, function($template) {
+                return is_string($template) && $this->sanitizer->templateName($template) === $template;
+            }));
         }
 
-        // Bail out early if templates array is empty
+        // If templates is empty, fall back to regular Pages::find
         if (empty($templates)) {
-            return $this->wire(new PageArray);
+            return $this->wire('pages')->find($query->getSelector());
         }
 
         // Hook into PageFinder::getQuery to conditionally override the default query object
