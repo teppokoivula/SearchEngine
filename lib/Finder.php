@@ -22,15 +22,15 @@ class Finder extends Base {
     protected static $query_hook_id = null;
 
     /**
-     * Find content matching provided query string.
+     * Find content matching provided query string
      *
-     * @param mixed $query The query.
-     * @param array $args Additional arguments, see Query::__construct() for details.
-     * @return Query Resulting Query object.
+     * @param string|null $query The query
+     * @param array $args Additional arguments, see Query::__construct() for details
+     * @return Query Resulting Query object
      */
     public function find($query = null, array $args = []): Query {
 
-        // Resulting Query object
+        // Prepare a Query object
         $query = $this->wire(new Query($query, $args));
 
         // Bail out early if query is empty
@@ -44,13 +44,15 @@ class Finder extends Base {
             $query->args
         );
 
-        // Find results
+        // Check if finding results should be delegated to findByTemplates
         $sort = empty($query->args['sort']) ? null : array_filter(explode(',', preg_replace('/\s+/', '', $query->args['sort'])));
         if ($sort !== null && in_array('_indexed_templates', $sort)) {
             $query->results = $this->findByTemplates($query, $this->getOptions()['indexed_templates']);
-        } else {
-            $query->results = $this->wire('pages')->find($query->getSelector());
+            return $query;
         }
+
+        // Find results
+        $query->results = $this->wire('pages')->find($query->getSelector());
 
         return $query;
     }
