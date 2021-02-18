@@ -93,9 +93,9 @@ class Finder extends Base {
 
         // Get query object, modify it, and replace original query with the modified version
         $pwse_query = $query->getQuery()
-            ->select('field(pwse_t.name, "' . implode('", "', $templates) . '") as pwse_score')
+            ->select('field(pwse_t.name, "' . implode('", "', array_reverse($templates)) . '") as pwse_score')
             ->leftjoin('templates AS pwse_t ON pwse_t.id=pages.templates_id')
-            ->orderby('pwse_score ASC', true);
+            ->orderby('pwse_score DESC', true);
         $query->setQuery($pwse_query);
 
         // Find results
