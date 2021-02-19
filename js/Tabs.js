@@ -23,12 +23,21 @@ class PWSE_Tabs {
         }
         if (!tabContainers.length) return;
 
-        tabContainers.forEach((tabContainer) => {
+        tabContainers.forEach(tabContainer => {
 
             // get relevant elements and collections
             const tablist = tabContainer.querySelector('ul');
             const tabs = tablist.querySelectorAll('a');
             const panels = tabContainer.querySelectorAll('[id^="pwse-debug-tab-"]');
+
+            // get tab stash from localStorage
+            let tabStash = localStorage.getItem('pwse-tabs');
+            tabStash = tabStash ? JSON.parse(tabStash) : {};
+            let currentTabNum = 0;
+            let currentTabID = null;
+            if (tabStash.hasOwnProperty(tabContainer.getAttribute('id'))) {
+                currentTabID = tabStash[tabContainer.getAttribute('id')];
+            }
 
             // the tab switching function
             const switchTab = (oldTab, newTab) => {
@@ -41,11 +50,14 @@ class PWSE_Tabs {
                 oldTab.setAttribute('tabindex', '-1');
                 // Get the indices of the new and old tabs to find the correct
                 // tab panels to show and hide
-                console.log(tabs, panels, newTab, oldTab);
                 let index = Array.prototype.indexOf.call(tabs, newTab);
                 let oldIndex = Array.prototype.indexOf.call(tabs, oldTab);
                 panels[oldIndex].hidden = true;
                 panels[index].hidden = false;
+                let tabStash = localStorage.getItem('pwse-tabs');
+                tabStash = tabStash ? JSON.parse(tabStash) : {};
+                tabStash[newTab.closest('.pwse-debug-tabs').getAttribute('id')] = newTab.getAttribute('id');
+                localStorage.setItem('pwse-tabs', JSON.stringify(tabStash));
             }
 
             // add the tablist role to the first <ul> in the tab container
@@ -53,11 +65,15 @@ class PWSE_Tabs {
 
             // add semantics are remove user focusability for each tab
             Array.prototype.forEach.call(tabs, (tab, i) => {
-                console.log(tabContainer);
                 tab.setAttribute('role', 'tab');
                 tab.setAttribute('id', tabContainer.getAttribute('id') + '-' + (i + 1));
                 tab.setAttribute('tabindex', '-1');
                 tab.parentNode.setAttribute('role', 'presentation');
+
+                // check if this tab should be activated by default
+                if (currentTabID === tab.getAttribute('id')) {
+                    currentTabNum = i;
+                }
 
                 // handle clicking of tabs for mouse users
                 tab.addEventListener('click', e => {
@@ -93,10 +109,10 @@ class PWSE_Tabs {
                 panel.hidden = true;
             });
 
-            // initially activate the first tab and reveal the first tab panel
-            tabs[0].removeAttribute('tabindex');
-            tabs[0].setAttribute('aria-selected', 'true');
-            panels[0].hidden = false;
+            // activate current tab and reveal related tab panel
+            tabs[currentTabNum].removeAttribute('tabindex');
+            tabs[currentTabNum].setAttribute('aria-selected', 'true');
+            panels[currentTabNum].hidden = false;
         })
     }
 
