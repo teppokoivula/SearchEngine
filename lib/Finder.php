@@ -46,7 +46,7 @@ class Finder extends Base {
         );
 
         // Check if finding results should be delegated to findByTemplates
-        $templates = is_array($args['pinned_templates']) ? $args['pinned_templates'] : [];
+        $templates = !empty($args['pinned_templates']) && is_array($args['pinned_templates']) ? $args['pinned_templates'] : [];
         $args_sort = empty($query->args['sort']) ? null : array_filter(explode(',', preg_replace('/\s+/', '', $query->args['sort'])));
         if ($args_sort !== null && in_array('_indexed_templates', $args_sort)) {
             $templates = array_merge($templates, $this->getOptions()['indexed_templates']);
