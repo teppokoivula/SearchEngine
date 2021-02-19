@@ -5,6 +5,10 @@
     padding: 0;
 }
 
+.pwse-debug-tabs [role="tablist"].pwse-debug-tablist--alt {
+    margin: 20px 0 -1px;
+}
+
 .pwse-debug-tabs [role="tablist"] li {
     display: inline-block;
     margin-bottom: -1px;
@@ -23,4 +27,8 @@
     border: 1px solid rgba(0, 0, 0, .15);
     border-bottom: 1px solid transparent;
     color: currentColor;
+}
+
+.pwse-debug-tabs [role="tabpanel"].pwse-debug-tabpanel--alt {
+    padding-top: 20px;
 }

@@ -454,7 +454,14 @@ class Debugger extends Base {
                 [
                     'label' => $this->_('Results'),
                     'value' => $query->resultsCount . ' / ' . $query->resultsTotal
-                            . '<pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
+                            . '<div class="pwse-debug-tabs" id="pwse-debug-tabs-query-results">'
+                            . '<ul class="pwse-debug-tablist--alt">'
+                            . '<li><a href="#pwse-debug-tabs-results-json">JSON</a></li>'
+                            . '<li><a href="#pwse-debug-tabs-results-html">HTML</a></li>'
+                            . '</ul>'
+                            . '<section id="pwse-debug-tab-query-results-json"><pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre></section>'
+                            . '<section id="pwse-debug-tab-query-results-html" class="pwse-debug-tabpanel--alt">' . $se->renderStyles() . $se->renderResults(['pager_args' => $se::$defaultOptions['pager_args']], $query) . '</section>'
+                            . '</div>',
                 ],
             ]);
             if ($language !== null) {
