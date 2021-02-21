@@ -11,11 +11,12 @@ namespace SearchEngine;
  *
  * @property-read string $selector Final selector string.
  * @property-read string $sql Final SQL query.
- * @property-read string $resultsString Results rendered as a list (PageArray).
+ * @property-read string $resultsString Results rendered as a list.
  * @property-read int $resultsCount Number of visible results.
  * @property-read int $resultsTotal Number of total results.
  * @property-read string $pager Rendered pager or empty string if not supported.
  * @property-read string $resultsPager Rendered pager or empty string if not supported.
+ * @property null|WireArray|PageArray $results Results as an array type object or null if none found.
  */
 class Query extends Base {
 

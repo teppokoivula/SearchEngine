@@ -113,6 +113,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_id' => 'se-results',
             'result_summary_field' => 'summary',
             'results_highlight_query' => true,
+            // Supported values for grouping: null (no grouping) or 'template'.
+            'results_grouped_by' => null,
             'results_json_fields' => [
                 'title' => 'title',
                 'desc' => 'summary',

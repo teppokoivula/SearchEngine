@@ -5,6 +5,8 @@ namespace SearchEngine;
 use ProcessWire\Inputfield;
 use ProcessWire\Page;
 use ProcessWire\WireException;
+use ProcessWire\WireArray;
+use ProcessWire\PageArray;
 
 /**
  * SearchEngine Renderer
@@ -202,22 +204,6 @@ class Renderer extends Base {
             ])
         );
 
-        // Results list.
-        $results_list = '';
-        if ($results_summary_type !== 'none') {
-            $results_list_items = '';
-            foreach ($query->results as $result) {
-                $results_list_items .= sprintf(
-                    $args['templates']['results_list_item'],
-                    $this->renderResult($result, $data, $query)
-                );
-            }
-            $results_list = sprintf(
-                $args['templates']['results_list'],
-                $results_list_items
-            );
-        }
-
         // Results pager.
         $results_pager = '';
         if ($results_summary_type !== 'none' && $args['pager']) {
@@ -230,13 +216,46 @@ class Renderer extends Base {
                 $args['templates']['results'],
                 $results_heading
               . $results_summary
-              . $results_list
+              . $this->renderResultsList($query->results, $data, $query)
               . $results_pager
             ),
             $data
         );
 
         return $results;
+    }
+
+    /**
+     * Render list of search results
+     *
+     * @param null|WireArray|PageArray $results
+     * @param Query $query
+     * @param Data $data
+     * @return string
+     */
+    public function ___renderResultsList(?WireArray $results, Data $data, Query $query): string {
+
+        // Bail out early if there are no results.
+        if (empty($results)) {
+            return '';
+        }
+
+        // Render individual list items
+        $results_list_items = '';
+        foreach ($results as $result) {
+            $results_list_items .= sprintf(
+                $data['templates']['results_list_item'],
+                $this->renderResult($result, $data, $query)
+            );
+        }
+
+        // Render results list
+        $results_list = sprintf(
+            $data['templates']['results_list'],
+            $results_list_items
+        );
+
+        return $results_list;
     }
 
     /**
