@@ -354,10 +354,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      *
      * @param mixed $query The query.
      * @param array $args Additional arguments, see Query::__construct() for details.
-     * @return \SearchEngine\Query|array Resulting Query object, or an array of Query objects in case of a grouped
-     * result set is requested
+     * @return \SearchEngine\Query|\SearchEngine\QuerySet Resulting Query, or QuerySet in case of a grouped result set
      */
-    public function find($query = null, array $args = []) {
+    public function find($query = null, array $args = []): \SearchEngine\QueryBase {
         $this->initOnce();
         return $this->finder->find($query, $args);
     }
