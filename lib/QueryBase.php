@@ -5,8 +5,6 @@ namespace SearchEngine;
 /**
  * Base class for Query type objects (Query, QuerySet)
  *
- * @property \ProcessWire\Module|null $renderer Renderer object.
- *
  * @version 0.1.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
