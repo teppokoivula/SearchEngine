@@ -391,7 +391,10 @@ class Debugger extends Base {
             if ($language !== null) {
                 $this->wire('user')->language = $language;
             }
+
+            // query response may be a Query object, or an array of Query objects if grouped result set was requested
             $query = $se->find($this->query, $this->query_args);
+            $query_timer = sprintf($this->_('%s seconds'), \ProcessWire\Debug::timer($timer));
 
             // query info
             $info_content = $this->renderList([
@@ -423,17 +426,22 @@ class Debugger extends Base {
                 ],
                 [
                     'label' => $this->_('Resulting SQL query'),
-                    'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
+                    'value' => $query instanceof QuerySet ? $this->renderTabs('query-sql-query', array_map(function($query) {
+                        return [
+                            'label' => $query->label ?: 'Query',
+                            'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
+                        ];
+                    }, $query->items)) : '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
                 ],
                 [
                     'label' => $this->_('Time spent finding results'),
-                    'value' => '<pre class="pwse-pre">' . sprintf($this->_('%s seconds'), \ProcessWire\Debug::timer($timer)) . '</pre>',
+                    'value' => '<pre class="pwse-pre">' . $query_timer . '</pre>',
                 ],
             ]);
             if ($language !== null) {
                 $debug['info']['content'][$language->name] = [
-                    'heading' => $language->name,
-                    'content' => $info_content,
+                    'label' => $language->name,
+                    'value' => $info_content,
                 ];
             } else {
                 $debug['info']['content'] = $info_content;
@@ -454,20 +462,23 @@ class Debugger extends Base {
                 [
                     'label' => $this->_('Results'),
                     'value' => $query->resultsCount . ' / ' . $query->resultsTotal
-                            . '<div class="pwse-debug-tabs" id="pwse-debug-tabs-query-results">'
-                            . '<ul class="pwse-debug-tablist--alt">'
-                            . '<li><a href="#pwse-debug-tabs-results-json">JSON</a></li>'
-                            . '<li><a href="#pwse-debug-tabs-results-html">HTML</a></li>'
-                            . '</ul>'
-                            . '<section id="pwse-debug-tab-query-results-json"><pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre></section>'
-                            . '<section id="pwse-debug-tab-query-results-html" class="pwse-debug-tabpanel--alt">' . $se->renderStyles() . $se->renderResults(['pager_args' => $se::$defaultOptions['pager_args']], $query) . '</section>'
-                            . '</div>',
+                        . $this->renderTabs('query-results', [
+                            'json' => [
+                                'label' => 'JSON',
+                                'value' => '<pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
+                            ],
+                            'html' => [
+                                'label' => 'HTML',
+                                'value' => $se->renderStyles() . $se->renderResults(['pager_args' => $se::$defaultOptions['pager_args']], $query),
+                                'class_modifier' => 'alt',
+                            ],
+                        ]),
                 ],
             ]);
             if ($language !== null) {
                 $debug['results']['content'][$language->name] = [
-                    'heading' => $language->name,
-                    'content' => $results_content,
+                    'label' => $language->name,
+                    'value' => $results_content,
                 ];
             } else {
                 $debug['results']['content'] = $results_content;
@@ -567,9 +578,9 @@ class Debugger extends Base {
      * @param array $container_data
      * @return string
      */
-    protected function renderSection(array $data, bool $include_container = true, array $container_data = []) {
+    protected function renderSection(array $data, bool $include_container = true, array $container_data = []): string {
         $out = '';
-        foreach ($data as $subsection) {
+        foreach ($data as $key => $subsection) {
             $out .= '<h2>' . $subsection['heading'] . '</h2>';
             if (is_array($subsection['content'])) {
                 if (isset($subsection['content'][null])) {
@@ -577,24 +588,36 @@ class Debugger extends Base {
                     $subsection['content'] = $subsection['content'][null]['content'];
                 } else {
                     // multilanguage content, render tabs
-                    $out .= '<div class="pwse-debug-tabs" id="pwse-debug-tabs-' . ($container_data['type'] ?? '') . '">';
-                    $out .= '<ul>';
-                    foreach ($subsection['content'] as $tab) {
-                        $tab_id = 'pwse-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
-                        $out .= '<li><a href="#' . $tab_id . '">' . $tab['heading'] . '</a></li>';
-                    }
-                    $out .= '</ul>';
-                    foreach ($subsection['content'] as $tab) {
-                        $tab_id = 'pwse-debug-tab-' . ($container_data['type'] ?? '') . '-' . $this->wire('sanitizer')->pageName($tab['heading']);
-                        $out .= '<section id="' . $tab_id . '">' . $tab['content'] . '</section>';
-                    }
-                    $out .= '</div>';
+                    $out .= $this->renderTabs($container_data['type'] ?? $key, $subsection['content']);
                     continue;
                 }
             }
             $out .= $subsection['content'];
         }
         return $include_container ? $this->renderDebugContainer($out, $container_data) : $out;
+    }
+
+    /**
+     * Render tabs
+     *
+     * @param string $key
+     * @param array $tabs
+     * @return string
+     */
+    protected function renderTabs(string $key, array $tabs): string {
+        $tab_labels = [];
+        foreach ($tabs as $tab_name => $tab) {
+            $tab_labels[] = '<li><a href="#pwse-debug-tab-' . $key . '-' . $tab_name . '">' . $tab['label'] . '</a></li>';
+        }
+        $tab_values = [];
+        foreach ($tabs as $tab_name => $tab) {
+            $class = !empty($tab['class_modifier']) ? ' class="pwse-debug-tabpanel--' . $tab['class_modifier'] . '"' : '';
+            $tab_values[] = '<section id="pwse-debug-tab-' . $key . '-' . $tab_name . '"' . $class . '>'. $tab['value'] . '</section>';
+        }
+        return '<div class="pwse-debug-tabs" id="pwse-debug-tabs-' . $key . '">'
+            . '<ul class="pwse-debug-tablist--alt">' . implode($tab_labels) . '</ul>'
+            . implode($tab_values)
+            . '</div>';
     }
 
     /**

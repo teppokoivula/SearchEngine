@@ -28,7 +28,7 @@ class PWSE_Tabs {
             // get relevant elements and collections
             const tablist = tabContainer.querySelector('ul');
             const tabs = tablist.querySelectorAll('a');
-            const panels = tabContainer.querySelectorAll('[id^="pwse-debug-tab-"]');
+            const panels = tabContainer.querySelectorAll(':scope > [id^="pwse-debug-tab-' + tabContainer.getAttribute('id').replace(/^pwse-debug-tabs-/, '') + '"]');
 
             // get tab stash from localStorage
             let tabStash = localStorage.getItem('pwse-tabs');

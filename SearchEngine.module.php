@@ -82,7 +82,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'sort' => 'sort',
             'operator' => '*=',
             'query_param' => 'q',
+            'group_param' => 't', // @todo
             'selector_extra' => '',
+            'results_grouped_by' => 'template',
         ],
         'pager_args' => [
             // These arguments are passed to MarkupPagerNav. You can find more details from the
@@ -113,7 +115,6 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_id' => 'se-results',
             'result_summary_field' => 'summary',
             'results_highlight_query' => true,
-            // Supported values for grouping: null (no grouping) or 'template'.
             'results_grouped_by' => null,
             'results_json_fields' => [
                 'title' => 'title',
@@ -139,7 +140,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'results_heading' => '&__heading',
                 'results_summary' => '&__summary',
                 'results_list' => '&__list',
+                'results_list_tab' => '&__tab',
+                'results_list_tab_heading' => '&__tab-heading',
                 'results_list_item' => '&__list-item',
+                'results_list_group_heading' => '&__group-heading',
                 'result' => 'search-result',
                 'result_link' => '&__link',
                 'result_path' => '&__path',
@@ -155,6 +159,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'error_query_missing' => null,
                 'error_query_too_short' => null,
                 'results_heading' => null,
+                'results_tab_label_all' => null,
                 'results_summary_one' => null,
                 'results_summary_many' => null,
                 'results_summary_none' => null,
@@ -172,7 +177,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'results_heading' => '<h2 class="{classes.results_heading}">%s</h2>',
                 'results_summary' => '<p class="{classes.results_summary}" id="{results_summary_id}">%s</p>',
                 'results_list' => '<ul class="{classes.results_list}" aria-labelled-by="{results_summary_id}">%s</ul>',
+                'results_list_tab' => '<section class="{classes.result_list_tab}">%s</section>',
+                'results_list_tab_heading' => '<h3 class="{classes.results_list_tab_heading}">%s</h3>',
                 'results_list_item' => '<li class="{classes.results_list_item}">%s</li>',
+                'results_list_group_heading' => '<h3 class="{classes.results_list_group_heading}">%s</h3>',
                 'result' => '<div class="{classes.result}">%s</div>',
                 'result_link' => '<a class="{classes.result_link}" href="{item.url}">{item.title}</a>',
                 'result_path' => '<div class="{classes.result_path}">{item.url}</div>',
@@ -346,9 +354,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      *
      * @param mixed $query The query.
      * @param array $args Additional arguments, see Query::__construct() for details.
-     * @return \SearchEngine\Query Resulting Query object.
+     * @return \SearchEngine\Query|array Resulting Query object, or an array of Query objects in case of a grouped
+     * result set is requested
      */
-    public function find($query = null, array $args = []): \SearchEngine\Query {
+    public function find($query = null, array $args = []) {
         $this->initOnce();
         return $this->finder->find($query, $args);
     }
@@ -405,6 +414,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'form_input_placeholder' => $this->_('Search the site...'),
             'form_submit' => $this->_x('Search', 'submit button text'),
             'results_heading' => $this->_('Search results'),
+            'results_tab_label_all' => $this->_x('All', 'Results list tab label'),
             'results_summary_one' => $this->_('One result for "%s":'),
             'results_summary_many' => $this->_('%2$d results for "%1$s":'),
             'results_summary_none' => $this->_('No results for "%s".'),

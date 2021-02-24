@@ -5,8 +5,6 @@ namespace SearchEngine;
 use ProcessWire\Inputfield;
 use ProcessWire\Page;
 use ProcessWire\WireException;
-use ProcessWire\WireArray;
-use ProcessWire\PageArray;
 
 /**
  * SearchEngine Renderer
@@ -154,15 +152,15 @@ class Renderer extends Base {
     }
 
     /**
-     * Render a list of search results
+     * Render markup for search results
      *
      * @param array $args Optional arguments.
-     * @param Query|null $query Optional prepopulated Query object.
+     * @param Query|QuerySet $query Optional prepopulated Query object or QuerySet containing one or more Query objects
      * @return string
      *
      * @throws WireException if query parameter is unrecognized.
      */
-    public function ___renderResults(array $args = [], Query $query = null): string {
+    public function ___renderResults(array $args = [], QueryBase $query = null): string {
 
         // Prepare args and get Data object.
         $args = $this->prepareArgs($args);
@@ -170,7 +168,7 @@ class Renderer extends Base {
         $data = $this->getData($args);
 
         // If query is null, fetch results automatically.
-        if (is_null($query)) {
+        if ($query === null) {
             $query_term = $this->wire('input')->get($options['find_args']['query_param']);
             if (!empty($query_term)) {
                 $query = $this->wire('modules')->get('SearchEngine')->find($query_term, $options['find_args']);
@@ -178,7 +176,7 @@ class Renderer extends Base {
         }
 
         // Bail out early if not provided with – and unable to fetch automatically – results.
-        if (!$query instanceof Query) {
+        if (!$query instanceof QueryBase) {
             return '';
         }
 
@@ -187,27 +185,24 @@ class Renderer extends Base {
             return $this->renderErrors($args, $query);
         }
 
-        // Header for results.
+        // Header for results list.
         $results_heading = sprintf(
             $args['templates']['results_heading'],
             $args['strings']['results_heading']
         );
 
-        // Summary for results.
-        $results_summary_type = empty($query->results) ? 'none' : (count($query->results) > 1 ? 'many' : 'one');
-        $results_summary_text = $args['strings']['results_summary_' . $results_summary_type];
-        $results_summary = sprintf(
-            $args['templates']['results_summary'],
-            vsprintf($results_summary_text, [
-                trim($query->query, '\"'),
-                $query->resultsTotal,
-            ])
-        );
-
-        // Results pager.
-        $results_pager = '';
-        if ($results_summary_type !== 'none' && $args['pager']) {
-            $results_pager = $this->renderPager($args, $query);
+        // Results list.
+        $results_list = '';
+        if ($query instanceof QuerySet) {
+            foreach ($query as $subquery) {
+                $results_list .= sprintf(
+                    $args['templates']['results_list_tab'],
+                    sprintf($args['templates']['results_list_tab_heading'], $subquery->label)
+                  . $this->renderResultsList($subquery, $data, $args) // @todo lazy load
+                );
+            }
+        } else {
+            $results_list = $this->renderResultsList($query, $data, $args);
         }
 
         // Final markup for results.
@@ -215,9 +210,7 @@ class Renderer extends Base {
             sprintf(
                 $args['templates']['results'],
                 $results_heading
-              . $results_summary
-              . $this->renderResultsList($query->results, $data, $query)
-              . $results_pager
+              . $results_list
             ),
             $data
         );
@@ -226,46 +219,98 @@ class Renderer extends Base {
     }
 
     /**
-     * Render list of search results
+     * Render markup for a list of search results
      *
-     * @param null|WireArray|PageArray $results
      * @param Query $query
      * @param Data $data
+     * @param array $args
      * @return string
      */
-    public function ___renderResultsList(?WireArray $results, Data $data, Query $query): string {
+    protected function renderResultsList(Query $query, Data $data, array $args): string {
 
-        // Bail out early if there are no results.
-        if (empty($results)) {
-            return '';
+        $results_list = '';
+
+        // Bail out early if we don't have any results.
+        if ($query->resultsCount === 0) {
+            return $this->renderResultsListSummary('none', $query, $args);
         }
 
-        // Render individual list items
-        $results_list_items = '';
-        foreach ($results as $result) {
-            $results_list_items .= sprintf(
+        // Render summary for results.
+        $results_list .= $this->renderResultsListSummary($query->resultsTotal === 1 ? 'one' : 'many', $query, $args);
+
+        // Prepare for grouping results.
+        $groups = [];
+        $group_by = $data['results_grouped_by'] ?? null;
+
+        // Render individual list items.
+        foreach ($query->results as $result) {
+            $group_name = $group_by === null ? '_none' : ((string) $result->get($group_by) ?: '_none');
+            if (!isset($groups[$group_name])) {
+                $groups[$group_name] = [
+                    'label' => $group_name,
+                    'items' => [],
+                ];
+            }
+            $groups[$group_name]['items'][] = sprintf(
                 $data['templates']['results_list_item'],
                 $this->renderResult($result, $data, $query)
             );
         }
 
-        // Render results list
-        $results_list = sprintf(
+        // Render combined results list(s).
+        $results_list_items = '';
+        $results_list_group = '';
+        foreach ($groups as $group_name => $group) {
+            if ($group_by !== null && $group_name != $results_list_group) {
+                $results_list_group = $group_name;
+                $results_list_items .= sprintf(
+                    $data['templates']['results_list_group_heading'],
+                    $group['label']
+                );
+            }
+            $results_list_items .= implode($group['items']);
+        }
+
+        // Render wrapper for the results list.
+        $results_list .= sprintf(
             $data['templates']['results_list'],
             $results_list_items
         );
 
+        // Render pager.
+        if (!empty($args['pager'])) {
+            $results_list .= $this->renderPager($args, $query);
+        }
+
         return $results_list;
+    }
+
+    /**
+     * Render markup for a results list summary
+     *
+     * @param string $type Type of summary (none, one, many)
+     * @param Query $query
+     * @param array $args
+     * @return string
+     */
+    protected function renderResultsListSummary(string $type, Query $query, array $args): string {
+        return sprintf(
+            $args['templates']['results_summary'],
+            vsprintf($args['strings']['results_summary_' . $type] ?? '', [
+                trim($query->query, '\"'),
+                $query->resultsTotal,
+            ])
+        );
     }
 
     /**
      * Render search results as JSON
      *
      * @param array $args Optional arguments.
-     * @param Query|null $query Optional prepopulated Query object.
+     * @param QueryBase|null $query Optional prepopulated Query object, a QuerySet containing one or more Query objects, or null.
      * @return string Results as JSON
      */
-    public function ___renderResultsJSON(array $args = [], Query $query = null): string {
+    public function ___renderResultsJSON(array $args = [], QueryBase $query = null): string {
 
         // Prepare args, options, and return value placeholder.
         $args = $this->prepareArgs($args);
@@ -278,6 +323,32 @@ class Renderer extends Base {
             if (!empty($results['query'])) {
                 $query = $this->wire('modules')->get('SearchEngine')->find($results['query'], $options['find_args']);
             }
+        }
+
+        // If provided a QuerySet instead of a single Query, render nested structure.
+        if ($query instanceof QuerySet) {
+            $results['items'] = [];
+            foreach ($query as $key => $subquery) {
+                if (!empty($subquery->results)) {
+                    $results['items'][$key] = [
+                        'results' => [],
+                        'count' => $subquery->resultsCount,
+                        'total' => $subquery->resultsTotal,
+                        'label' => $subquery->label,
+                    ];
+                    foreach ($subquery->results as $result) {
+                        $results['items'][$key]['results'][] = array_map(function($field) use ($result, $options, $subquery) {
+                            return $this->getResultValue($result, $field, $subquery, $options['index_field']);
+                        }, $args['results_json_fields']);
+                    }
+                }
+            }
+            $results += [
+                'count' => $query->resultsCount,
+                'total' => $query->resultsTotal,
+                'results_grouped_by' => $query->resultsGroupedBy,
+            ];
+            return json_encode($results, $args['results_json_options']);
         }
 
         // Populate results data.
@@ -424,6 +495,11 @@ class Renderer extends Base {
      */
     public function renderPager(array $args = [], Query $query): string {
 
+        // Return empty string if Query has no results.
+        if ($query->results === null) {
+            return '';
+        }
+
         // If pager_args *haven't* been overridden in the args array, we can fetch the pager from
         // the Query object, where it could already be cached.
         return !empty($args['pager_args']) ? $query->results->renderPager($args['pager_args']) : $query->pager;
@@ -433,10 +509,10 @@ class Renderer extends Base {
      * Render error messages
      *
      * @param array $args Array of prepared arguments.
-     * @param array $errors Array of error messages.
+     * @param QueryBase Query object.
      * @return string Error messages, or empty string if none found.
      */
-    protected function ___renderErrors(array $args, Query $query): string {
+    protected function ___renderErrors(array $args, QueryBase $query): string {
         $errors = '';
         if (!empty($query->errors)) {
             $options = $this->getOptions();

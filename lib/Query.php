@@ -2,6 +2,10 @@
 
 namespace SearchEngine;
 
+use ProcessWire\WireArray;
+use ProcessWire\PageArray;
+use ProcessWire\HookEvent;
+
 /**
  * SearchEngine Query class
  *
@@ -16,23 +20,17 @@ namespace SearchEngine;
  * @property-read int $resultsTotal Number of total results.
  * @property-read string $pager Rendered pager or empty string if not supported.
  * @property-read string $resultsPager Rendered pager or empty string if not supported.
+ * @property-read string $label Query object label, or empty string if label not found.
  * @property null|WireArray|PageArray $results Results as an array type object or null if none found.
  */
-class Query extends Base {
+class Query extends QueryBase {
 
     /**
-     * The query provided for the find operation
+     * PageFinder::getQuery hook ID
      *
-     * @var mixed
+     * @var string|null
      */
-    protected $query = '';
-
-    /**
-     * The original, unmodified query provided for the find operation
-     *
-     * @var mixed
-     */
-    protected $original_query = '';
+    protected static $query_hook_id = null;
 
     /**
      * Database query object
@@ -40,20 +38,6 @@ class Query extends Base {
      * @var DatabaseQuerySelect|null
      */
     protected $database_query = null;
-
-    /**
-     * Additional arguments provided for the find operation
-     *
-     * @var array
-     */
-    public $args = [];
-
-    /**
-     * Original, unmodified additional arguments provided for the find operation
-     *
-     * @var array
-     */
-    protected $original_args = [];
 
     /**
      * Result returned by performing the query
@@ -70,99 +54,23 @@ class Query extends Base {
     protected $pager = '';
 
     /**
-     * Errors array
+     * Label
      *
-     * @var array
+     * A Query may have label applied in case it is, for an example, the result of a grouped find operation. In such a
+     * caes the label can be used to identify individual Query objects returned as a part of a larger result set.
+     *
+     * @var string
      */
-    public $errors = [];
+    protected $label = '';
 
     /**
      * Constructor method
      *
      * @param string|null $query The query
-     * @param array $args Additional arguments:
-     *  - limit (int, limit value, defaults to `50`)
-     *  - operator (string, index field comparison operator, defaults to `*=`)
-     *  - query_param (string, used for whitelisting the query param, defaults to no query param)
-     *  - selector_extra (string|array, additional selector or array of selectors, defaults to blank string)
-     *  - sort (string, sort value, may contain multiple comma-separated values, defaults to no defined sort)
-     *  - no_validate (bool, set to `true` in order to skip the query validation step)
+     * @param array $args Additional arguments, see QueryBase class for details
      */
     public function __construct(?string $query = '', array $args = []) {
-
-        parent::__construct();
-
-        // Store original query and original args in class properties
-        $this->original_query = $query;
-        $this->original_args = $args;
-
-        // Merge default find arguments with provided custom values.
-        $this->args = array_replace_recursive($this->getOptions()['find_args'], $args);
-
-        // Sanitize query string and whitelist query param (if possible)
-        $this->query = $this->sanitizeQuery($query);
-        if (!empty($this->query) && !empty($this->args['query_param'])) {
-            $this->wire('input')->whitelist($this->args['query_param'], $this->query);
-        }
-
-        // Validate query
-        if (empty($args['no_validate'])) {
-            $this->errors = $this->validateQuery($this->query);
-        }
-    }
-
-
-    /**
-     * Sanitize provided query string.
-     *
-     * @param string|null $query Query string
-     * @return string Sanitized query string
-     */
-    protected function sanitizeQuery(?string $query = ''): string {
-
-        if (empty($query)) {
-            return '';
-        }
-
-        // Further sanitization is required in order to avoid a MySQL bug affecting InnoDB fulltext search (seemingly
-        // related to https://bugs.mysql.com/bug.php?id=78485).
-        if ($this->wire('config')->dbEngine == 'InnoDB' && $this->args['operator'] == '*=') {
-            $query = str_replace('@', ' ', $query);
-        }
-
-        // For best results we escape lesser than and greater than; this will allow matches in case the index contains
-        // encoded HTML markup, but won't cause it to miss umlauts etc.
-        $query = str_replace(['<', '>'], ['&lt;', '&gt;'], $query);
-        $query = $this->wire('sanitizer')->selectorValue($query);
-        return $query;
-    }
-
-    /**
-     * Validate provided query string.
-     *
-     * @param string $query Query string
-     * @return array $errors Errors array
-     */
-    public function validateQuery(string $query = ''): array {
-
-        // Get the strings array
-        $strings = $this->getStrings();
-
-        // Validate query
-        $errors = [];
-        if (empty($query) || $query == '""') {
-            $errors[] = $strings['error_query_missing'];
-        } else {
-            $requirements = $this->getOptions()['requirements'];
-            if (!empty($requirements['query_min_length']) && mb_strlen($query) < $requirements['query_min_length']) {
-                $errors['error_query_too_short'] = sprintf(
-                    $strings['error_query_too_short'],
-                    $requirements['query_min_length']
-                );
-            }
-        }
-
-        return $errors;
+        parent::__construct($query, $args);
     }
 
     /**
@@ -184,20 +92,27 @@ class Query extends Base {
                 return $this->getSQL();
                 break;
             case 'resultsString':
-                return !empty($this->results) && method_exists($this->results, '___getMarkup') ? $this->results->render() : '';
+                $results = $this->getResults();
+                return !empty($results) && method_exists($results, '___getMarkup') ? $results->render() : '';
                 break;
             case 'resultsCount':
-                return !empty($this->results) ? $this->results->count() : 0;
+                $results = $this->getResults();
+                return !empty($results) ? $results->count() : 0;
                 break;
             case 'resultsTotal':
-                return !empty($this->results) ? $this->results->getTotal() : 0;
+                $results = $this->getResults();
+                return !empty($results) ? $results->getTotal() : 0;
                 break;
             case 'pager':
             case 'resultsPager':
-                if (empty($this->pager) && !empty($this->results) && $this->results instanceof \ProcessWire\PaginatedArray) {
-                    $this->pager = $this->results->renderPager($this->getOptions()['pager_args']) ?? '';
+                $results = $this->getResults();
+                if (empty($this->pager) && !empty($results) && $results instanceof \ProcessWire\PaginatedArray) {
+                    $this->pager = $results->renderPager($this->getOptions()['pager_args']) ?? '';
                 }
                 return $this->pager;
+                break;
+            case 'label':
+                return $this->getLabel();
                 break;
         }
         return $this->$name;
@@ -213,11 +128,20 @@ class Query extends Base {
      */
     public function __set(string $name, $value) {
         if ($name === "query") {
-            $this->query = $this->sanitizeQuery($value);
-        } else if ($name === "results") {
-            if (!empty($value) && $value instanceof \ProcessWire\WireArray) {
-                $this->$name = count($value) ? $value : null;
+            $query = $this->sanitizeQuery($value);
+            if ($query !== $this->query) {
+                $this->query = $query;
+                $this->results = null;
+                $this->pager = null;
+                $this->database_query = null;
             }
+        } else if ($name === "label") {
+            if (is_string($value) || is_int($value) || is_object($value) && method_exists($value, '__toString')) {
+                $this->label = (string) $value;
+            }
+        } else if ($name === "results") {
+            $this->$name = $value instanceof \ProcessWire\WireArray && count($value) ? $value : null;
+            $this->pager = null;
         }
     }
 
@@ -229,53 +153,6 @@ class Query extends Base {
      */
     public function __isset(string $name): bool {
         return !empty($this->$name);
-    }
-
-    /**
-     * Returns a run-time, stringified version of an argument
-     *
-     * @param string $name Argument name
-     * @return string Stringified argument value
-     */
-    protected function getStringArgument(string $name): string {
-        if (empty($this->args[$name])) {
-            return '';
-        }
-        if (is_array($this->args[$name])) {
-            return implode(',', $this->args[$name]);
-        }
-        return (string) $this->args[$name];
-    }
-
-    /**
-     * Returns a selector string based on all provided arguments
-     *
-     * @return string
-     */
-    public function getSelector(): string {
-
-        $options = $this->wire('modules')->get('SearchEngine')->options;
-
-        // Define sort order
-        $sort = [];
-        if (!empty($this->args['sort'])) {
-            $sort = [];
-            $sort_values = explode(',', $this->args['sort']);
-            foreach ($sort_values as $sort_value) {
-                $sort_value = trim($sort_value, " \t\n\r\0\x0B\"");
-                if (!empty($sort_value)) {
-                    $sort[] = 'sort=' . $this->wire('sanitizer')->selectorValue($sort_value);
-                }
-            }
-        }
-
-        // Construct and return selector string
-        return implode(', ', array_filter([
-            empty($this->args['limit']) ? '' : 'limit=' . $this->args['limit'],
-            empty($sort) ? '' : implode(', ', $sort),
-            implode([$options['index_field'], $this->args['operator'], $this->query]),
-            $this->getStringArgument('selector_extra'),
-        ]));
     }
 
     /**
@@ -324,6 +201,8 @@ class Query extends Base {
      */
     public function setQuery(?\ProcessWire\DatabaseQuerySelect $database_query): Query {
         $this->database_query = $database_query;
+        $this->results = null;
+        $this->pager = null;
         return $this;
     }
 
@@ -339,6 +218,62 @@ class Query extends Base {
             return $query->getDebugQuery();
         }
         return $query->getQuery();
+    }
+
+    /**
+     * Returns label for this Query object, or empty string if label not defined
+     *
+     * @return string
+     */
+    public function getLabel(): string {
+        return $this->label === '' ? $this->label : $this->wire('sanitizer')->entities($this->label);
+    }
+
+    /**
+     * Returns results for this Query object
+     *
+     * This method is used for "lazy loading" results: if results are already defined and cached locally it'll return
+     * existing results object, otherwise a new results object gets fetched, cached locally, and returned.
+     *
+     * @return null|WireArray|PageArray
+     */
+    public function getResults(): ?WireArray {
+
+        // Bail out early if we already have a results object, or query string is empty
+        if ($this->results !== null || empty($this->query)) {
+            return $this->results;
+        }
+
+        if ($this->database_query && is_array($this->database_query->_pwse)) {
+
+            // Hook into PageFinder::getQuery to conditionally override the default query object
+            if (static::$query_hook_id === null) {
+                static::$query_hook_id = $this->addHookBefore('PageFinder::getQuery', function(HookEvent $event) {
+                    if (empty($event->arguments[1]['PWSE_Query'])) {
+                        return;
+                    }
+                    $event->replace = true;
+                    $event->return = $event->arguments[1]['PWSE_Query'];
+                });
+            }
+
+            // Find results using customized PWSE query; see Finder::findByTemplates() for more details
+            $this->results = $this->wire('pages')->find($this->database_query->selectors, [
+                'PWSE_Query' => $this->database_query,
+                'cache' => $this->database_query->_pwse['cache'] ?? true,
+                'lazy' => $this->database_query->_pwse['lazy'] ?? false,
+            ]);
+
+            // Override start and limit values
+            list($start, $limit) = explode(',', $this->database_query->limit[0] ?? ',');
+            $this->results->setStart($start ?? 0);
+            $this->results->setLimit($limit ?? $this->args['limit'] ?? 20);
+            return $this->results;
+        }
+
+        // Regular Pages find operation
+        $this->results = $this->wire('pages')->find($this->getSelector());
+        return $this->results;
     }
 
 }
