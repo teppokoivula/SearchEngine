@@ -196,10 +196,10 @@ class Renderer extends Base {
         if ($query instanceof QuerySet) {
             $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args) {
                 return [
-                    'label' => $query->label ?: $this->_('Label'),
+                    'label' => $this->renderTabLabel($query, $data, $args),
                     'content' => $this->renderResultsList($query, $data, $args), // @todo lazy load
                 ];
-            }, $query->items), $args, $data);
+            }, $query->items), $data, $args);
         } else {
             $results_list = $this->renderResultsList($query, $data, $args);
         }
@@ -307,11 +307,11 @@ class Renderer extends Base {
      *
      * @param string $name
      * @param array $tabs
-     * @param array|null $args
      * @param Data|null $data
+     * @param array|null $args
      * @return string
      */
-    public function renderTabs(string $name, array $tabs, ?array $args = null, ?Data $data = null): string {
+    public function renderTabs(string $name, array $tabs, ?Data $data = null, ?array $args = null): string {
         $args = $args ?? $this->prepareArgs();
         $data = $data ?? $this->getData($args);
         $tab_list = [];
@@ -346,6 +346,18 @@ class Renderer extends Base {
             ),
             $data
         );
+    }
+
+    /**
+     * Render tab label
+     *
+     * @param Query $query
+     * @param Data $data
+     * @param array $args
+     * @return string
+     */
+    protected function ___renderTabLabel($query, Data $data, array $args): string {
+        return $query->label ?: $this->_('Label');
     }
 
     /**
