@@ -356,7 +356,7 @@ class Renderer extends Base {
      * @param array $args
      * @return string
      */
-    protected function ___renderTabLabel($query, Data $data, array $args): string {
+    protected function ___renderTabLabel(Query $query, Data $data, array $args): string {
         return $query->label ?: $this->_('Label');
     }
 
