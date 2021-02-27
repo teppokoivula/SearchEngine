@@ -33,6 +33,13 @@ class Debugger extends Base {
     protected $query = '';
 
     /**
+     * Renderer instance
+     *
+     * @var Renderer
+     */
+    protected $renderer;
+
+    /**
      * Search query args
      *
      * @var array
@@ -56,6 +63,7 @@ class Debugger extends Base {
         if (!$this->index_field || !$this->index_field->id) {
             throw new WireException('Index field not found');
         }
+        $this->renderer = new Renderer;
     }
 
     /**
@@ -426,10 +434,10 @@ class Debugger extends Base {
                 ],
                 [
                     'label' => $this->_('Resulting SQL query'),
-                    'value' => $query instanceof QuerySet ? $this->renderTabs('query-sql-query', array_map(function($query) {
+                    'value' => $query instanceof QuerySet ? $this->renderer->renderTabs('query-sql-query', array_map(function($query) {
                         return [
                             'label' => $query->label ?: 'Query',
-                            'value' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
+                            'content' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
                         ];
                     }, $query->items)) : '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
                 ],
@@ -462,14 +470,14 @@ class Debugger extends Base {
                 [
                     'label' => $this->_('Results'),
                     'value' => $query->resultsCount . ' / ' . $query->resultsTotal
-                        . $this->renderTabs('query-results', [
+                        . $this->renderer->renderTabs('query-results', [
                             'json' => [
                                 'label' => 'JSON',
-                                'value' => '<pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
+                                'content' => '<pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
                             ],
                             'html' => [
                                 'label' => 'HTML',
-                                'value' => $se->renderStyles() . $se->renderResults(['pager_args' => $se::$defaultOptions['pager_args']], $query),
+                                'content' => $se->renderStyles() . $se->renderResults(['pager_args' => $se::$defaultOptions['pager_args']], $query),
                                 'class_modifier' => 'alt',
                             ],
                         ]),
@@ -588,36 +596,13 @@ class Debugger extends Base {
                     $subsection['content'] = $subsection['content'][null]['content'];
                 } else {
                     // multilanguage content, render tabs
-                    $out .= $this->renderTabs($container_data['type'] ?? $key, $subsection['content']);
+                    $out .= $this->renderer->renderTabs($container_data['type'] ?? $key, $subsection['content']);
                     continue;
                 }
             }
             $out .= $subsection['content'];
         }
         return $include_container ? $this->renderDebugContainer($out, $container_data) : $out;
-    }
-
-    /**
-     * Render tabs
-     *
-     * @param string $key
-     * @param array $tabs
-     * @return string
-     */
-    protected function renderTabs(string $key, array $tabs): string {
-        $tab_labels = [];
-        foreach ($tabs as $tab_name => $tab) {
-            $tab_labels[] = '<li><a href="#pwse-debug-tab-' . $key . '-' . $tab_name . '">' . $tab['label'] . '</a></li>';
-        }
-        $tab_values = [];
-        foreach ($tabs as $tab_name => $tab) {
-            $class = !empty($tab['class_modifier']) ? ' class="pwse-debug-tabpanel--' . $tab['class_modifier'] . '"' : '';
-            $tab_values[] = '<section id="pwse-debug-tab-' . $key . '-' . $tab_name . '"' . $class . '>'. $tab['value'] . '</section>';
-        }
-        return '<div class="pwse-debug-tabs" id="pwse-debug-tabs-' . $key . '">'
-            . '<ul class="pwse-debug-tablist--alt">' . implode($tab_labels) . '</ul>'
-            . implode($tab_values)
-            . '</div>';
     }
 
     /**

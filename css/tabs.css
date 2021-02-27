@@ -1,34 +1,30 @@
-.pwse-debug-tabs [role="tablist"] {
-    border-bottom: 1px solid rgba(0, 0, 0, .15);
+.pwse-tabs {
+    margin: 1rem 0;
+}
+
+.pwse-tabs__tablist {
+    border-bottom: .0625rem solid rgba(0, 0, 0, .15);
     display: block;
     list-style-type: none;
     padding: 0;
 }
 
-.pwse-debug-tabs [role="tablist"].pwse-debug-tablist--alt {
-    margin: 20px 0 -1px;
-}
-
-.pwse-debug-tabs [role="tablist"] li {
+.pwse-tabs__tablist-item {
     display: inline-block;
-    margin-bottom: -1px;
+    margin-bottom: -.0625rem;
     position: relative;
 }
 
-.pwse-debug-tabs [role="tablist"] li a {
-    border: 1px solid transparent;
+.pwse-tabs__tab {
+    border: .0625rem solid transparent;
     border-radius: .25rem .25rem 0 0;
     display: inline-block;
     padding: .5rem 1rem;
 }
 
-.pwse-debug-tabs [role="tablist"] li a[aria-selected="true"] {
+.pwse-tabs__tab[aria-selected="true"] {
     background: #fff;
-    border: 1px solid rgba(0, 0, 0, .15);
-    border-bottom: 1px solid transparent;
+    border: .0625rem solid rgba(0, 0, 0, .15);
+    border-bottom: .0625rem solid transparent;
     color: currentColor;
-}
-
-.pwse-debug-tabs [role="tabpanel"].pwse-debug-tabpanel--alt {
-    padding-top: 20px;
 }

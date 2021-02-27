@@ -1,16 +1,14 @@
 /**
  * SearchEngine JS Core
  *
- * @version 0.1.0
+ * @version 0.1.1
  */
 class PWSE_Core {
 
     /**
      * Constructor
      */
-    constructor() {
-        this.configURL = ProcessWire.config.urls.admin + 'module/edit?name=SearchEngine';
-    }
+    constructor() {}
 
 }
 

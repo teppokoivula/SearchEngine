@@ -3,40 +3,40 @@
  *
  * Based on https://inclusive-components.design/tabbed-interfaces/.
  *
- * @version 0.1.0
+ * @version 0.1.1
  */
 class PWSE_Tabs {
 
     /**
      * Init method
      *
-     * @param {?object} debugContainer Optional debug container.
+     * @param {?Object} tabsParent Optional parent node for tabs.
+     * @param {Boolean} rememberActiveTab Remember active tab?
      */
-    init(debugContainer = null) {
+    init(tabsParent = null, rememberActiveTab = true) {
 
         // find tab containers
         let tabContainers = [];
-        if (debugContainer) {
-            tabContainers = debugContainer.querySelectorAll('.pwse-debug-tabs');
-        } else {
-            tabContainers = document.querySelectorAll('.pwse-debug-tabs');
-        }
+        tabsParent = typeof tabsParent === 'Object' ? tabsParent : document;
+        tabContainers = tabsParent.querySelectorAll('.pwse-tabs');
         if (!tabContainers.length) return;
 
         tabContainers.forEach(tabContainer => {
 
             // get relevant elements and collections
-            const tablist = tabContainer.querySelector('ul');
-            const tabs = tablist.querySelectorAll('a');
-            const panels = tabContainer.querySelectorAll(':scope > [id^="pwse-debug-tab-' + tabContainer.getAttribute('id').replace(/^pwse-debug-tabs-/, '') + '"]');
+            const tablist = tabContainer.querySelector('[role="tablist"]');
+            const tabs = tablist.querySelectorAll('[role="tab"]');
+            const panels = tabContainer.querySelectorAll(':scope > [role="tabpanel"]');
 
             // get tab stash from localStorage
-            let tabStash = localStorage.getItem('pwse-tabs');
-            tabStash = tabStash ? JSON.parse(tabStash) : {};
             let currentTabNum = 0;
             let currentTabID = null;
-            if (tabStash.hasOwnProperty(tabContainer.getAttribute('id'))) {
-                currentTabID = tabStash[tabContainer.getAttribute('id')];
+            if (rememberActiveTab) {
+                let tabStash = localStorage.getItem('pwse-tabs');
+                tabStash = tabStash ? JSON.parse(tabStash) : {};
+                if (tabStash.hasOwnProperty(tabContainer.getAttribute('id'))) {
+                    currentTabID = tabStash[tabContainer.getAttribute('id')];
+                }
             }
 
             // the tab switching function
@@ -54,10 +54,12 @@ class PWSE_Tabs {
                 let oldIndex = Array.prototype.indexOf.call(tabs, oldTab);
                 panels[oldIndex].hidden = true;
                 panels[index].hidden = false;
-                let tabStash = localStorage.getItem('pwse-tabs');
-                tabStash = tabStash ? JSON.parse(tabStash) : {};
-                tabStash[newTab.closest('.pwse-debug-tabs').getAttribute('id')] = newTab.getAttribute('id');
-                localStorage.setItem('pwse-tabs', JSON.stringify(tabStash));
+                if (rememberActiveTab) {
+                    let tabStash = localStorage.getItem('pwse-tabs');
+                    tabStash = tabStash ? JSON.parse(tabStash) : {};
+                    tabStash[newTab.closest('.pwse-tabs').getAttribute('id')] = newTab.getAttribute('id');
+                    localStorage.setItem('pwse-tabs', JSON.stringify(tabStash));
+                }
             }
 
             // add the tablist role to the first <ul> in the tab container
@@ -71,7 +73,7 @@ class PWSE_Tabs {
                 tab.parentNode.setAttribute('role', 'presentation');
 
                 // check if this tab should be activated by default
-                if (currentTabID === tab.getAttribute('id')) {
+                if (rememberActiveTab && currentTabID === tab.getAttribute('id')) {
                     currentTabNum = i;
                 }
 
@@ -104,7 +106,6 @@ class PWSE_Tabs {
             Array.prototype.forEach.call(panels, (panel, i) => {
                 panel.setAttribute('role', 'tabpanel');
                 panel.setAttribute('tabindex', '-1');
-                let id = panel.getAttribute('id');
                 panel.setAttribute('aria-labelledby', tabs[i].id);
                 panel.hidden = true;
             });

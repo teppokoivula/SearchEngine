@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.5.0
+ * @version 0.5.1
  */
 class PWSE_Debugger {
 
@@ -16,7 +16,8 @@ class PWSE_Debugger {
         if (debugContainers.length) {
 
             // define base url for debug requests
-            this.debugURL = SearchEngine.configURL + '&se-debug=1&';
+            this.configURL = ProcessWire.config.urls.admin + 'module/edit?name=SearchEngine';
+            this.debugURL = this.configURL + '&se-debug=1&';
 
             debugContainers.forEach(debugContainer => {
 

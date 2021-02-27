@@ -131,7 +131,7 @@ class Finder extends Base {
         $queries = $this->wire(new QuerySet($query->query, $query->args));
 
         // "All results" Query
-        $query->label = $this->getStrings()['results_tab_label_all'];
+        $query->label = $this->getStrings()['tab_label_all'];
         $queries->add($query);
 
         // Find matching templates and perform separate query for each

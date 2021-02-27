@@ -194,13 +194,12 @@ class Renderer extends Base {
         // Results list.
         $results_list = '';
         if ($query instanceof QuerySet) {
-            foreach ($query as $subquery) {
-                $results_list .= sprintf(
-                    $args['templates']['results_list_tab'],
-                    sprintf($args['templates']['results_list_tab_heading'], $subquery->label)
-                  . $this->renderResultsList($subquery, $data, $args) // @todo lazy load
-                );
-            }
+            $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args) {
+                return [
+                    'label' => $query->label ?: $this->_('Label'),
+                    'content' => $this->renderResultsList($query, $data, $args), // @todo lazy load
+                ];
+            }, $query->items), $args, $data);
         } else {
             $results_list = $this->renderResultsList($query, $data, $args);
         }
@@ -300,6 +299,52 @@ class Renderer extends Base {
                 trim($query->query, '\"'),
                 $query->resultsTotal,
             ])
+        );
+    }
+
+    /**
+     * Render tabs
+     *
+     * @param string $name
+     * @param array $tabs
+     * @param array|null $args
+     * @param Data|null $data
+     * @return string
+     */
+    public function renderTabs(string $name, array $tabs, ?array $args = null, ?Data $data = null): string {
+        $args = $args ?? $this->prepareArgs();
+        $data = $data ?? $this->getData($args);
+        $tab_list = [];
+        foreach ($tabs as $key => $tab) {
+            $tab_list[] = sprintf(
+                $args['templates']['tabs_tablist-item'],
+                sprintf(
+                    $args['templates']['tabs_tab'],
+                    '#pwse-tabpanel-' . $key . '-' . $key,
+                    'pwse-tab-' . $key . '-' . $key,
+                    $tab['label']
+                )
+            );
+        }
+        $tab_panels = [];
+        foreach ($tabs as $key => $tab) {
+            $tab_panels[] = sprintf(
+                $args['templates']['tabs_tabpanel'],
+                'pwse-tabpanel-' . $key . '-' . $key,
+                $tab['content']
+            );
+        }
+        return \ProcessWire\wirePopulateStringTags(
+            sprintf(
+                $args['templates']['tabs'],
+                'pwse-tabs-' . $name,
+                sprintf(
+                    $args['templates']['tabs_tablist'],
+                    implode($tab_list)
+                )
+                . implode($tab_panels)
+            ),
+            $data
         );
     }
 
@@ -807,7 +852,7 @@ class Renderer extends Base {
 
         // Convert subarrays to Data objects.
         foreach (['strings', 'find_args', 'requirements', 'classes'] as $key) {
-            $args[$key] = $this->wire(new Data($args[$key]));
+            $args[$key] = $this->wire(new Data($args[$key] ?? []));
         }
 
         // Additional sanitization for strings.
