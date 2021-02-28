@@ -359,10 +359,11 @@ This module can be installed – just like any other ProcessWire module – by d
 
 ## Development
 
-SearchEngine core JS files are bundled with parcel.js. Parcel requires very little configuration and everything is handled via the "build" script defined in package.json.
+SearchEngine core JS files are bundled with parcel.js and theme styles are minified with clean-css. Both of these require minimal configuration, which is why all that is needed is the "build" script defined in package.json. To build production assets for SearchEngine:
 
-- Install Parcel (globally): `npm install -g parcel-bundler`
-- Run build script in the SearchEngine directory: `npm run build`
+- Install Parcel globally: `npm install -g parcel-bundler`
+- Install clean-css and clean-css-cli globally: `npm install -g clean-css && npm install -g clean-css-cli`
+- Run build script in the SearchEngine module directory: `npm run build`
 
 ## License
 

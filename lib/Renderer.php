@@ -659,21 +659,27 @@ class Renderer extends Base {
         $args = $this->prepareArgs($args);
         $theme = $args['theme'];
 
-        // Bail out early if theme isn't defined.
-        if (empty($theme)) {
-            return [];
+        // Placeholder for returned resources.
+        $resources = [];
+
+        // If this is a JavaScript resource request, check if the core library should be loaded.
+        if ($type === 'scripts' && !empty($args['find_args']['results_grouped_by'])) {
+            $resources[] = $this->wire('config')->urls->get('SearchEngine') . 'js/dist/main.js';
         }
 
-        // Get and return resources.
-        $resources = $args['theme_' . $type] ?? [];
-        if (empty($resources)) {
-            return [];
+        // Bail out early if theme isn't defined or theme doesn't contain specified resources.
+        if (empty($theme) || empty($args['theme_' . $type])) {
+            return $resources;
         }
-        $minified = $args['minified_resources'];
-        return array_map(function($resource) use ($theme, $minified) {
-            $file = $resource['name'] . ($minified ? '.min' : '') . '.' . $resource['ext'];
+
+        // Append theme specific resources.
+        $minified_resources = $args['minified_resources'];
+        $resources = array_merge($resources, array_map(function($resource) use ($theme, $minified_resources) {
+            $file = $resource['name'] . ($minified_resources ? '.min' : '') . '.' . $resource['ext'];
             return $this->themeURL . $theme . '/' . basename($file);
-        }, $resources);
+        }, $args['theme_' . $type]));
+
+        return $resources;
     }
 
     /**

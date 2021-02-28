@@ -329,6 +329,6 @@ class PWSE_Debugger {
 
 }
 
-document.addEventListener("SearchEngineConstructed", function() {
-    window.SearchEngine.Debugger = new PWSE_Debugger();
+document.addEventListener("pwse_init", function() {
+    window.pwse.debugger = new PWSE_Debugger();
 });

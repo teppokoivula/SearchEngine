@@ -3,9 +3,16 @@
  *
  * Based on https://inclusive-components.design/tabbed-interfaces/.
  *
- * @version 0.1.1
+ * @version 0.2.0
  */
 class PWSE_Tabs {
+
+    /**
+     * Constructor method
+     */
+    constructor() {
+        this.init();
+    }
 
     /**
      * Init method
@@ -119,6 +126,6 @@ class PWSE_Tabs {
 
 }
 
-document.addEventListener("SearchEngineConstructed", function() {
-    window.SearchEngine.Tabs = new PWSE_Tabs();
+document.addEventListener("pwse_init", function() {
+    window.pwse.tabs = new PWSE_Tabs();
 });

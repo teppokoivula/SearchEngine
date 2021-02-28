@@ -2,9 +2,8 @@
     "name": "SearchEngine",
     "version": "0.29.0",
     "description": "SearchEngine ProcessWire module",
-    "main": "index.js",
     "scripts": {
-        "build": "parcel build ./js/*.js -d ./js/dist/"
+        "build": "parcel build ./js/*.js -d ./js/dist/ && cleancss ./themes/default/style.css -o themes/default/style.min.css"
     },
     "browserslist": [
         "defaults"

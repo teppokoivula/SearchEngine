@@ -13,6 +13,6 @@ class PWSE_Core {
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-    window.SearchEngine = new PWSE_Core();
-    document.dispatchEvent(new CustomEvent('SearchEngineConstructed'));
+    window.pwse = new PWSE_Core();
+    document.dispatchEvent(new CustomEvent('pwse_init'));
 });

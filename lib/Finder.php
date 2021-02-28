@@ -38,6 +38,7 @@ class Finder extends Base {
         );
 
         // Check if finding results should be delegated to findByTemplatesGrouped
+        // @todo provide a way to specify templates used in front-end grouping
         if ($query->args['results_grouped_by'] === 'template') {
             $templates = array_merge($args['pinned_templates'] ?? [], $this->getOptions()['indexed_templates']);
             return $this->findByTemplatesGrouped($query, $templates);

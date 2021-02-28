@@ -84,6 +84,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'query_param' => 'q',
             'group_param' => 't', // @todo
             'selector_extra' => '',
+            // supported values for results_grouped_by: null (default), "template".
             'results_grouped_by' => 'template',
         ],
         'pager_args' => [
