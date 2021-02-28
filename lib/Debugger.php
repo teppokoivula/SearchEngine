@@ -514,11 +514,9 @@ class Debugger extends Base {
     public function renderDebugContainer(string $content = '', array $data = []): string {
 
         // inject scripts
-        foreach (['Core', 'Tabs', 'Debugger'] as $script) {
-            $this->wire('config')->scripts->add(
-                $this->wire('config')->urls->get('SearchEngine') . 'js/' . $script . '.js'
-            );
-        }
+        $this->wire('config')->scripts->add(
+            $this->wire('config')->urls->get('SearchEngine') . 'js/dist/admin.js'
+        );
 
         // inject styles
         foreach (['tabs', 'debugger'] as $styles) {

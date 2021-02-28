@@ -95,11 +95,9 @@ class Config extends Base {
         (new Debugger)->initAJAXAPI();
 
         // inject scripts
-        foreach (['Core', 'Config'] as $script) {
-            $this->wire('config')->scripts->add(
-                $this->wire('config')->urls->get('SearchEngine') . 'js/' . $script . '.js'
-            );
-        }
+        $this->wire('config')->scripts->add(
+            $this->wire('config')->urls->get('SearchEngine') . 'js/dist/admin.js'
+        );
 
         // inject styles
         foreach (['config'] as $styles) {

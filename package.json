@@ -1,0 +1,20 @@
+{
+    "name": "SearchEngine",
+    "version": "0.29.0",
+    "description": "SearchEngine ProcessWire module",
+    "main": "index.js",
+    "scripts": {
+        "build": "parcel build ./js/*.js -d ./js/dist/"
+    },
+    "browserslist": [
+        "defaults"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/teppokoivula/SearchEngine.git"
+    },
+    "bugs": {
+        "url": "https://github.com/teppokoivula/SearchEngine/issues"
+    },
+    "homepage": "https://github.com/teppokoivula/SearchEngine#readme"
+}
