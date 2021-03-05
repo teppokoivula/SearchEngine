@@ -125,9 +125,10 @@ class Finder extends Base {
      *
      * @param Query $query
      * @param array $templates Array of template names
+     * @param bool $matching_only Include templates with matches only?
      * @return QuerySet
      */
-    protected function findByTemplatesGrouped(Query $query, array $templates): QuerySet {
+    protected function findByTemplatesGrouped(Query $query, array $templates, bool $matching_only = true): QuerySet {
 
         // Placeholder for results
         $queries = $this->wire(new QuerySet($query->query, $query->args));
@@ -136,9 +137,23 @@ class Finder extends Base {
         $query->label = $this->getStrings()['tab_label_all'];
         $queries->add($query);
 
-        // Find matching templates and perform separate query for each
-        $matching_templates = $this->getMatchingTemplates($query, $templates);
-        foreach ($matching_templates as $id => $name) {
+        if ($matching_only) {
+            // Optionally include matching templates only
+            $templates = $this->getMatchingTemplates($query, $templates);
+        } else {
+            // Make sure that we have a valid ID for each template
+            $templates_with_ids = [];
+            foreach ($templates as $template_name) {
+                $template = $this->templates->get('name=' . $this->wire('sanitizer')->templateName($template_name));
+                if ($template && $template->id) {
+                    $templates_with_ids[$template->id] = $template->name;
+                }
+            }
+            $templates = $templates_with_ids;
+        }
+
+        // Construct separate query for each template
+        foreach ($templates as $id => $name) {
             $new_query = clone $query;
             $new_query->label = $this->templates->get($id)->getLabel();
             $new_query->group = $this->templates->get($id)->name;
