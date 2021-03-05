@@ -64,6 +64,16 @@ class Query extends QueryBase {
     protected $label = '';
 
     /**
+     * Group
+     *
+     * The group in a grouped set of queries that this particular Query object represents. May be, for an exaqmple, a
+     * template name.
+     *
+     * @var string
+     */
+    protected $group = '';
+
+    /**
      * Constructor method
      *
      * @param string|null $query The query
@@ -115,7 +125,7 @@ class Query extends QueryBase {
                 return $this->getLabel();
                 break;
         }
-        return $this->$name;
+        return $this->$name ?? parent::get($name);
     }
 
     /**
@@ -135,9 +145,9 @@ class Query extends QueryBase {
                 $this->pager = null;
                 $this->database_query = null;
             }
-        } else if ($name === "label") {
+        } else if ($name === "label" || $name === "group") {
             if (is_string($value) || is_int($value) || is_object($value) && method_exists($value, '__toString')) {
-                $this->label = (string) $value;
+                $this->$name = (string) $value;
             }
         } else if ($name === "results") {
             $this->$name = $value instanceof \ProcessWire\WireArray && count($value) ? $value : null;

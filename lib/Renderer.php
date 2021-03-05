@@ -194,10 +194,18 @@ class Renderer extends Base {
         // Results list.
         $results_list = '';
         if ($query instanceof QuerySet) {
-            $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args) {
+            // Get current group from query string.
+            $group = !empty($args['find_args']['group_param']) ? $this->wire('input')->get($args['find_args']['group_param']) : null;
+            if ($group !== null) {
+                $group = $this->wire('sanitizer')->text($group);
+                $this->wire('input')->whitelist($args['find_args']['group_param'], $group);
+            }
+            $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group) {
                 return [
                     'label' => $this->renderTabLabel($query, $data, $args),
-                    'content' => $this->renderResultsList($query, $data, $args), // @todo lazy load
+                    'link' => $this->getTabLink($query, $args),
+                    'active' => $group !== null && $group === $query->group,
+                    'content' => $group === null || $group === $query->group ? $this->renderResultsList($query, $data, $args) : null,
                 ];
             }, $query->items), $data, $args);
         } else {
@@ -215,6 +223,34 @@ class Renderer extends Base {
         );
 
         return $results;
+    }
+
+    /**
+     * Get tab link
+     *
+     * @param Query $query
+     * @param array $args
+     * @return string|null
+     */
+    protected function getTabLink(Query $query, $args): ?string {
+
+        // get whitelisted params
+        $params = $this->wire('input')->whitelist->getArray();
+
+        // merge Query group with whitelited params
+        if (!empty($args['find_args']['group_param'])) {
+            unset($params[$args['find_args']['group_param']]);
+            if ($query->group !== '') {
+               $params = array_merge($params, [
+                    $args['find_args']['group_param'] => $this->wire('sanitizer')->text($query->group),
+                ]);
+            }
+        }
+
+        // construct and return tab link
+        return $this->wire('page')->url . $this->wire('input')->urlSegmentStr() . '?' . implode('&', array_map(function($key, $value) {
+            return $key . '=' . urlencode($value);
+        }, array_keys($params), $params));
     }
 
     /**
@@ -320,8 +356,9 @@ class Renderer extends Base {
                 $args['templates']['tabs_tablist-item'],
                 sprintf(
                     $args['templates']['tabs_tab'],
-                    '#pwse-tabpanel-' . $key . '-' . $key,
+                    $tab['link'] ?? '#pwse-tabpanel-' . $key . '-' . $key,
                     'pwse-tab-' . $key . '-' . $key,
+                    empty($tab['active']) ? '' : ' aria-selected="true"',
                     $tab['label']
                 )
             );

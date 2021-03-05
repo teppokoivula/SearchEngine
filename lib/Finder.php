@@ -2,8 +2,6 @@
 
 namespace SearchEngine;
 
-use ProcessWire\PageArray;
-
 /**
  * SearchEngine Finder
  *
@@ -140,6 +138,7 @@ class Finder extends Base {
         foreach ($matching_templates as $id => $name) {
             $new_query = clone $query;
             $new_query->label = $this->templates->get($id)->getLabel();
+            $new_query->group = $this->templates->get($id)->name;
             $new_query = $this->findByTemplates($new_query, [$name], [
                 'named_only' => true,
                 'lazy' => true,

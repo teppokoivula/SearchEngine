@@ -74,12 +74,25 @@ class PWSE_Tabs {
 
             // add semantics are remove user focusability for each tab
             Array.prototype.forEach.call(tabs, (tab, i) => {
+
+                // check if this tab is currently active
+                if (tab.getAttribute('aria-selected') === 'true') {
+                    currentTabID = tab.getAttribute('id');
+                    currentTabNum = i;
+                }
+
+                // bail out early if link target is not to a hash
+                if (tab.getAttribute('href').match('#') === null) {
+                    return;
+                }
+
+                // set attributes
                 tab.setAttribute('role', 'tab');
                 tab.setAttribute('id', tabContainer.getAttribute('id') + '-' + (i + 1));
                 tab.setAttribute('tabindex', '-1');
                 tab.parentNode.setAttribute('role', 'presentation');
 
-                // check if this tab should be activated by default
+                // check if this tab should be activated
                 if (rememberActiveTab && currentTabID === tab.getAttribute('id')) {
                     currentTabNum = i;
                 }

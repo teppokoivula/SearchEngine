@@ -82,7 +82,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'sort' => 'sort',
             'operator' => '*=',
             'query_param' => 'q',
-            'group_param' => 't', // @todo
+            'group_param' => 't',
             'selector_extra' => '',
             // supported values for results_grouped_by: null (default), "template".
             'results_grouped_by' => 'template',
@@ -191,7 +191,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'tabs' => '<div class="{classes.tabs}" id="%s">%s</div>',
                 'tabs_tablist' => '<ul class="{classes.tabs_tablist}" role="tablist">%s</ul>',
                 'tabs_tablist-item' => '<li class="{classes.tabs_tablist-item}">%s</li>',
-                'tabs_tab' => '<a href="%s" role="tab" id="%s" class="{classes.tabs_tab}">%s</a>',
+                'tabs_tab' => '<a href="%s" role="tab" id="%s"%s class="{classes.tabs_tab}">%s</a>',
                 'tabs_tabpanel' => '<div id="%s" class="{classes.tabs_tabpanel}" role="tabpanel" tabindex="-1">%s</div>',
                 'styles' => '<link rel="stylesheet" type="text/css" href="%s">',
                 'scripts' => '<script async="true" src="%s"></script>',
