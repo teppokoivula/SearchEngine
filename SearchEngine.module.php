@@ -86,6 +86,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'selector_extra' => '',
             // supported values for results_grouped_by: null (default), "template".
             'results_grouped_by' => 'template',
+            'group_by_templates' => [],
         ],
         'pager_args' => [
             // These arguments are passed to MarkupPagerNav. You can find more details from the
