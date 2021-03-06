@@ -195,7 +195,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'tabs_tab' => '<a href="%s" role="tab" id="%s"%s class="{classes.tabs_tab}">%s</a>',
                 'tabs_tabpanel' => '<div id="%s" class="{classes.tabs_tabpanel}" role="tabpanel" tabindex="-1">%s</div>',
                 'styles' => '<link rel="stylesheet" type="text/css" href="%s">',
-                'scripts' => '<script async="true" src="%s"></script>',
+                'scripts' => '<script src="%s"></script>',
             ],
         ],
         'requirements' => [
