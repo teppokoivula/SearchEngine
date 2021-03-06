@@ -596,7 +596,7 @@ class Renderer extends Base {
 
         // If pager_args *haven't* been overridden in the args array, we can fetch the pager from
         // the Query object, where it could already be cached.
-        return !empty($args['pager_args']) ? $query->results->renderPager($args['pager_args']) : $query->pager;
+        return empty($args['pager_args']) ? $query->pager : $query->results->renderPager($args['pager_args']);
     }
 
     /**
