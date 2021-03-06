@@ -201,11 +201,16 @@ class Renderer extends Base {
                 $this->wire('input')->whitelist($args['find_args']['group_param'], $group);
             }
             $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group) {
+                // Content should only be rendered if a) this is an active tab or b) autoload_result_groups is enabled.
+                $content = null;
+                if (!empty($args['autoload_result_groups']) || $group === null || $group === $query->group) {
+                    $content = $this->renderResultsList($query, $data, $args);
+                }
                 return [
                     'label' => $this->renderTabLabel($query, $data, $args),
                     'link' => $this->getTabLink($query, $args),
                     'active' => $group !== null && $group === $query->group,
-                    'content' => $group === null || $group === $query->group ? $this->renderResultsList($query, $data, $args) : null,
+                    'content' => $content,
                 ];
             }, $query->items), $data, $args);
         } else {
@@ -233,6 +238,11 @@ class Renderer extends Base {
      * @return string|null
      */
     protected function getTabLink(Query $query, $args): ?string {
+
+        // if autoload_result_groups is enabled, link is not needed
+        if (!empty($args['autoload_result_groups'])) {
+            return null;
+        }
 
         // get whitelisted params
         $params = $this->wire('input')->whitelist->getArray();

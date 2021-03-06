@@ -123,6 +123,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'desc' => 'summary',
                 'url' => 'url',
             ],
+            // Autoloading applies to tabbed interface: if enabled, all results will be loaded as
+            // soon as possible. This is more resource intensive than loading them one by one.
+            'autoload_result_groups' => false,
             'results_json_options' => 0,
             'pager' => true,
             'classes' => [

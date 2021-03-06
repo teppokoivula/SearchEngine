@@ -477,7 +477,10 @@ class Debugger extends Base {
                             ],
                             'html' => [
                                 'label' => 'HTML',
-                                'content' => $se->renderStyles() . $se->renderResults(['pager_args' => $se::$defaultOptions['pager_args']], $query),
+                                'content' => $se->renderStyles() . $se->renderResults([
+                                    'pager_args' => $se::$defaultOptions['pager_args'],
+                                    'autoload_result_groups' => true,
+                                ], $query),
                                 'class_modifier' => 'alt',
                             ],
                         ]),
