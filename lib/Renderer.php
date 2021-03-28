@@ -237,7 +237,7 @@ class Renderer extends Base {
      * @param array $args
      * @return string|null
      */
-    protected function getTabLink(Query $query, $args): ?string {
+    protected function getTabLink(Query $query, array $args): ?string {
 
         // if autoload_result_groups is enabled, link is not needed
         if (!empty($args['autoload_result_groups'])) {
