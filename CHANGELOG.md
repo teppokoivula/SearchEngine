@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Support for ordering search results by the indexed templates setting. Sort setting needs to include `_indexed_templates` in order for this feature to kick in.
 - Support for pinning specific templates at the top of results list by specifying "pinned_templates" (array) as part of the $args argument for Finder::find($query, $args) or SearchEngine::find($query, $args).
-- Support for grouping search results by template(s). By default all templates with matches for provided query will be included, but you can specifically provide your own array of templates via the `group_by_templates` setting in `find_args`.
+- Support for grouping search results by template. By default all templates with matches will be used for grouping, but you can provide your own array of templates via the `group_by_templates` setting in `find_args`.
 - New QuerySet object for representing queries with multiple sets of database query objects and/or results, such as those resulting from a find operation where results are grouped by templates.
 - New QueryBase base class for Query/QuerySet.
 - Tab support for front-end result rendering.
