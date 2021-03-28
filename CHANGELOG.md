@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.0] - 2021-03-28
+
 ### Added
 - Support for ordering search results by the indexed templates setting. Sort setting needs to include `_indexed_templates` in order for this feature to kick in.
 - Support for pinning specific templates at the top of results list by specifying "pinned_templates" (array) as part of the $args argument for Finder::find($query, $args) or SearchEngine::find($query, $args).
