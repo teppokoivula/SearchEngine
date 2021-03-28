@@ -16,6 +16,8 @@ namespace SearchEngine;
  * @property-read \ProcessWire\PageArray|null $results Combined results from all Query objects.
  * @property-read int $resultsCount Number of combined visible results in all Query objects.
  * @property-read int $resultsTotal Number of combined total results in all Query objects.
+ * @property-read string $resultsGroupedBy Identifier that Query results are grouped by. Same as groupedBy.
+ * @property-read string $groupedBy Identifier that Query results are grouped by. Same as resultsGroupedBy.
  * @property-read string $pager Rendered pager or empty string if not supported.
  * @property-read string $resultsPager Rendered pager or empty string if not supported.
  */
