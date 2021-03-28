@@ -88,7 +88,7 @@ class Finder extends Base {
         // Get query object, modify it, and replace original query with the modified version
         $pwse_query = $query->getQuery();
         $pwse_query->set('_pwse', [
-            'cache' => !isset($args['no_cache']) || !empty($args['no_cache']),
+            'cache' => !isset($args['cache']) || !empty($args['cache']),
             'lazy' => !empty($args['lazy']),
         ]);
         if (!empty($args['named_only'])) {
