@@ -69,9 +69,6 @@ class PWSE_Tabs {
                 }
             }
 
-            // add the tablist role to the first <ul> in the tab container
-            tablist.setAttribute('role', 'tablist');
-
             // add semantics are remove user focusability for each tab
             Array.prototype.forEach.call(tabs, (tab, i) => {
 
@@ -122,7 +119,14 @@ class PWSE_Tabs {
                 });
             });
 
-            // add tab panel semantics and hide them all
+            // activate current tab
+            tabs[currentTabNum].removeAttribute('tabindex');
+            tabs[currentTabNum].setAttribute('aria-selected', 'true');
+
+            // add the tablist role to the first <ul> in the tab container
+            tablist.setAttribute('role', 'tablist');
+
+            // add tab panel semantics and hide all tab panels by default
             Array.prototype.forEach.call(panels, (panel, i) => {
                 panel.setAttribute('role', 'tabpanel');
                 panel.setAttribute('tabindex', '-1');
@@ -130,9 +134,7 @@ class PWSE_Tabs {
                 panel.hidden = true;
             });
 
-            // activate current tab and reveal related tab panel
-            tabs[currentTabNum].removeAttribute('tabindex');
-            tabs[currentTabNum].setAttribute('aria-selected', 'true');
+            // reveal current tab panel
             panels[currentTabNum].hidden = false;
         })
     }
