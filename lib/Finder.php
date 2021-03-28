@@ -36,11 +36,15 @@ class Finder extends Base {
         );
 
         // Check if finding results should be delegated to findByTemplatesGrouped
-        if ($query->args['results_grouped_by'] === 'template') {
+        if ($query->args['group_by'] === 'template') {
             $templates = array_merge($args['pinned_templates'] ?? [], $this->getOptions()['indexed_templates']);
-            if (!empty($args['group_by_templates'])) {
-                // if find args includes an array of groupable templates, enable grouping by said templates only
-                $templates = array_intersect($templates, $args['group_by_templates']);
+            if (!empty($query->args['group_by_allow'])) {
+                // if find args include an array of allowed group values, group by said values only
+                $templates = array_intersect($templates, $query->args['group_by_allow']);
+            }
+            if (!empty($query->args['group_by_disallow'])) {
+                // if find args include an array of disallowed group values, remove those
+                $templates = array_diff($templates, $query->args['group_by_disallow']);
             }
             return $this->findByTemplatesGrouped($query, $templates);
         }

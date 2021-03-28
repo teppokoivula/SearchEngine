@@ -81,13 +81,15 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'limit' => 20,
             'sort' => 'sort',
             'operator' => '*=',
+            'selector_extra' => '',
             'query_param' => 'q',
             'group_param' => 't',
-            'selector_extra' => '',
-            // supported values for results_grouped_by: null (default), "template".
-            'results_grouped_by' => null,
-            // optional: define templates that should get their own tabs, the rest will be grouped under the "all" tab.
-            'group_by_templates' => [],
+            // Supported values for group_by: null (default) and "template".
+            'group_by' => 'template',
+            // Optional: values allowed for grouping.
+            'group_by_allow' => [],
+            // Optional: values not allowed for grouping.
+            'group_by_disallow' => [],
         ],
         'pager_args' => [
             // These arguments are passed to MarkupPagerNav. You can find more details from the

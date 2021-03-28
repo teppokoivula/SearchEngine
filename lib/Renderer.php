@@ -289,7 +289,12 @@ class Renderer extends Base {
 
         // Render individual list items.
         foreach ($query->results as $result) {
-            $group_name = $group_by === null ? '_none' : ((string) $result->get($group_by) ?: '_none');
+            $group_name = null;
+            if ($group_by !== null && strpos($group_by, '.')) {
+                $group_name = (string) $result->getDot($group_by);
+            } else if ($group_by !== null) {
+                $group_name = (string) $result->get($group_by);
+            }
             if (!isset($groups[$group_name])) {
                 $groups[$group_name] = [
                     'label' => $group_name,
@@ -361,7 +366,17 @@ class Renderer extends Base {
         $args = $args ?? $this->prepareArgs();
         $data = $data ?? $this->getData($args);
         $tab_list = [];
+        $has_active_tab = false;
+        foreach ($tabs as $tab) {
+            if (!$tab['active']) continue;
+            $has_active_tab = true;
+            break;
+        }
         foreach ($tabs as $key => $tab) {
+            if ($has_active_tab === false) {
+                $tab['active'] = true;
+                $has_active_tab = true;
+            }
             $tab_list[] = sprintf(
                 $args['templates']['tabs_tablist-item'],
                 sprintf(
@@ -710,7 +725,7 @@ class Renderer extends Base {
         $resources = [];
 
         // If this is a JavaScript resource request, check if the core library should be loaded.
-        if ($type === 'scripts' && !empty($args['find_args']['results_grouped_by'])) {
+        if ($type === 'scripts' && !empty($args['find_args']['group_by'])) {
             $resources[] = $this->wire('config')->urls->get('SearchEngine') . 'js/dist/main.js';
         }
 
