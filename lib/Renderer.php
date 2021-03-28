@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.7.0
+ * @version 0.8.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -152,15 +152,15 @@ class Renderer extends Base {
     }
 
     /**
-     * Render a list of search results
+     * Render markup for search results
      *
      * @param array $args Optional arguments.
-     * @param Query|null $query Optional prepopulated Query object.
+     * @param Query|QuerySet $query Optional prepopulated Query object or QuerySet containing one or more Query objects.
      * @return string
      *
      * @throws WireException if query parameter is unrecognized.
      */
-    public function ___renderResults(array $args = [], Query $query = null): string {
+    public function ___renderResults(array $args = [], QueryBase $query = null): string {
 
         // Prepare args and get Data object.
         $args = $this->prepareArgs($args);
@@ -168,7 +168,7 @@ class Renderer extends Base {
         $data = $this->getData($args);
 
         // If query is null, fetch results automatically.
-        if (is_null($query)) {
+        if ($query === null) {
             $query_term = $this->wire('input')->get($options['find_args']['query_param']);
             if (!empty($query_term)) {
                 $query = $this->wire('modules')->get('SearchEngine')->find($query_term, $options['find_args']);
@@ -176,7 +176,7 @@ class Renderer extends Base {
         }
 
         // Bail out early if not provided with – and unable to fetch automatically – results.
-        if (!$query instanceof Query) {
+        if (!$query instanceof QueryBase) {
             return '';
         }
 
@@ -185,43 +185,36 @@ class Renderer extends Base {
             return $this->renderErrors($args, $query);
         }
 
-        // Header for results.
+        // Header for results list.
         $results_heading = sprintf(
             $args['templates']['results_heading'],
             $args['strings']['results_heading']
         );
 
-        // Summary for results.
-        $results_summary_type = empty($query->results) ? 'none' : (count($query->results) > 1 ? 'many' : 'one');
-        $results_summary_text = $args['strings']['results_summary_' . $results_summary_type];
-        $results_summary = sprintf(
-            $args['templates']['results_summary'],
-            vsprintf($results_summary_text, [
-                trim($query->query, '\"'),
-                $query->resultsTotal,
-            ])
-        );
-
         // Results list.
         $results_list = '';
-        if ($results_summary_type !== 'none') {
-            $results_list_items = '';
-            foreach ($query->results as $result) {
-                $results_list_items .= sprintf(
-                    $args['templates']['results_list_item'],
-                    $this->renderResult($result, $data, $query)
-                );
+        if ($query instanceof QuerySet) {
+            // Get current group from query string.
+            $group = !empty($args['find_args']['group_param']) ? $this->wire('input')->get($args['find_args']['group_param']) : null;
+            if ($group !== null) {
+                $group = $this->wire('sanitizer')->text($group);
+                $this->wire('input')->whitelist($args['find_args']['group_param'], $group);
             }
-            $results_list = sprintf(
-                $args['templates']['results_list'],
-                $results_list_items
-            );
-        }
-
-        // Results pager.
-        $results_pager = '';
-        if ($results_summary_type !== 'none' && $args['pager']) {
-            $results_pager = $this->renderPager($args, $query);
+            $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group) {
+                // Content should only be rendered if a) this is an active tab or b) autoload_result_groups is enabled.
+                $content = null;
+                if (!empty($args['autoload_result_groups']) || $group === null || $group === $query->group) {
+                    $content = $this->renderResultsList($query, $data, $args);
+                }
+                return [
+                    'label' => $this->renderTabLabel($query, $data, $args),
+                    'link' => $this->getTabLink($query, $args),
+                    'active' => $group !== null && $group === $query->group,
+                    'content' => $content,
+                ];
+            }, $query->items), $data, $args);
+        } else {
+            $results_list = $this->renderResultsList($query, $data, $args);
         }
 
         // Final markup for results.
@@ -229,9 +222,7 @@ class Renderer extends Base {
             sprintf(
                 $args['templates']['results'],
                 $results_heading
-              . $results_summary
               . $results_list
-              . $results_pager
             ),
             $data
         );
@@ -240,13 +231,205 @@ class Renderer extends Base {
     }
 
     /**
+     * Get tab link
+     *
+     * @param Query $query
+     * @param array $args
+     * @return string|null
+     */
+    protected function getTabLink(Query $query, array $args): ?string {
+
+        // if autoload_result_groups is enabled, link is not needed
+        if (!empty($args['autoload_result_groups'])) {
+            return null;
+        }
+
+        // get whitelisted params
+        $params = $this->wire('input')->whitelist->getArray();
+
+        // merge Query group with whitelited params
+        if (!empty($args['find_args']['group_param'])) {
+            unset($params[$args['find_args']['group_param']]);
+            if ($query->group !== '') {
+               $params = array_merge($params, [
+                    $args['find_args']['group_param'] => $this->wire('sanitizer')->text($query->group),
+                ]);
+            }
+        }
+
+        // construct and return tab link
+        return $this->wire('page')->url . $this->wire('input')->urlSegmentStr() . '?' . implode('&', array_map(function($key, $value) {
+            return $key . '=' . urlencode($value);
+        }, array_keys($params), $params));
+    }
+
+    /**
+     * Render markup for a list of search results
+     *
+     * @param Query $query
+     * @param Data $data
+     * @param array $args
+     * @return string
+     */
+    protected function renderResultsList(Query $query, Data $data, array $args): string {
+
+        $results_list = '';
+
+        // Bail out early if we don't have any results.
+        if ($query->resultsCount === 0) {
+            return $this->renderResultsListSummary('none', $query, $args);
+        }
+
+        // Render summary for results.
+        $results_list .= $this->renderResultsListSummary($query->resultsTotal === 1 ? 'one' : 'many', $query, $args);
+
+        // Prepare for grouping results.
+        $groups = [];
+        $group_by = $data['results_grouped_by'] ?? null;
+
+        // Render individual list items.
+        foreach ($query->results as $result) {
+            $group_name = null;
+            if ($group_by !== null && strpos($group_by, '.')) {
+                $group_name = (string) $result->getDot($group_by);
+            } else if ($group_by !== null) {
+                $group_name = (string) $result->get($group_by);
+            }
+            if (!isset($groups[$group_name])) {
+                $groups[$group_name] = [
+                    'label' => $group_name,
+                    'items' => [],
+                ];
+            }
+            $groups[$group_name]['items'][] = sprintf(
+                $data['templates']['results_list_item'],
+                $this->renderResult($result, $data, $query)
+            );
+        }
+
+        // Render combined results list(s).
+        $results_list_items = '';
+        $results_list_group = '';
+        foreach ($groups as $group_name => $group) {
+            if ($group_by !== null && $group_name != $results_list_group) {
+                $results_list_group = $group_name;
+                $results_list_items .= sprintf(
+                    $data['templates']['results_list_group_heading'],
+                    $group['label']
+                );
+            }
+            $results_list_items .= implode($group['items']);
+        }
+
+        // Render wrapper for the results list.
+        $results_list .= sprintf(
+            $data['templates']['results_list'],
+            $results_list_items
+        );
+
+        // Render pager.
+        if (!empty($args['pager'])) {
+            $results_list .= $this->renderPager($args, $query);
+        }
+
+        return $results_list;
+    }
+
+    /**
+     * Render markup for a results list summary
+     *
+     * @param string $type Type of summary (none, one, many).
+     * @param Query $query
+     * @param array $args
+     * @return string
+     */
+    protected function renderResultsListSummary(string $type, Query $query, array $args): string {
+        return sprintf(
+            $args['templates']['results_summary'],
+            vsprintf($args['strings']['results_summary_' . $type] ?? '', [
+                trim($query->query, '\"'),
+                $query->resultsTotal,
+            ])
+        );
+    }
+
+    /**
+     * Render tabs
+     *
+     * @param string $name
+     * @param array $tabs
+     * @param Data|null $data
+     * @param array|null $args
+     * @return string
+     */
+    public function renderTabs(string $name, array $tabs, ?Data $data = null, ?array $args = null): string {
+        $args = $args ?? $this->prepareArgs();
+        $data = $data ?? $this->getData($args);
+        $tab_list = [];
+        $has_active_tab = false;
+        foreach ($tabs as $tab) {
+            if (!$tab['active']) continue;
+            $has_active_tab = true;
+            break;
+        }
+        foreach ($tabs as $key => $tab) {
+            if ($has_active_tab === false) {
+                $tab['active'] = true;
+                $has_active_tab = true;
+            }
+            $tab_list[] = sprintf(
+                $args['templates']['tabs_tablist-item'],
+                sprintf(
+                    $args['templates']['tabs_tab'],
+                    $tab['link'] ?? '#pwse-tabpanel-' . $key . '-' . $key,
+                    'pwse-tab-' . $key . '-' . $key,
+                    empty($tab['active']) ? '' : ' aria-selected="true"',
+                    $tab['label']
+                )
+            );
+        }
+        $tab_panels = [];
+        foreach ($tabs as $key => $tab) {
+            $tab_panels[] = sprintf(
+                $args['templates']['tabs_tabpanel'],
+                'pwse-tabpanel-' . $key . '-' . $key,
+                $tab['content']
+            );
+        }
+        return \ProcessWire\wirePopulateStringTags(
+            sprintf(
+                $args['templates']['tabs'],
+                'pwse-tabs-' . $name,
+                sprintf(
+                    $args['templates']['tabs_tablist'],
+                    implode($tab_list)
+                )
+                . implode($tab_panels)
+            ),
+            $data
+        );
+    }
+
+    /**
+     * Render tab label
+     *
+     * @param Query $query
+     * @param Data $data
+     * @param array $args
+     * @return string
+     */
+    protected function ___renderTabLabel(Query $query, Data $data, array $args): string {
+        return $query->label ?: $this->_('Label');
+    }
+
+    /**
      * Render search results as JSON
      *
      * @param array $args Optional arguments.
-     * @param Query|null $query Optional prepopulated Query object.
+     * @param QueryBase|null $query Optional prepopulated Query object, a QuerySet containing one or more Query objects, or null.
      * @return string Results as JSON
      */
-    public function ___renderResultsJSON(array $args = [], Query $query = null): string {
+    public function ___renderResultsJSON(array $args = [], QueryBase $query = null): string {
 
         // Prepare args, options, and return value placeholder.
         $args = $this->prepareArgs($args);
@@ -259,6 +442,32 @@ class Renderer extends Base {
             if (!empty($results['query'])) {
                 $query = $this->wire('modules')->get('SearchEngine')->find($results['query'], $options['find_args']);
             }
+        }
+
+        // If provided a QuerySet instead of a single Query, render nested structure.
+        if ($query instanceof QuerySet) {
+            $results['items'] = [];
+            foreach ($query as $key => $subquery) {
+                if (!empty($subquery->results)) {
+                    $results['items'][$key] = [
+                        'results' => [],
+                        'count' => $subquery->resultsCount,
+                        'total' => $subquery->resultsTotal,
+                        'label' => $subquery->label,
+                    ];
+                    foreach ($subquery->results as $result) {
+                        $results['items'][$key]['results'][] = array_map(function($field) use ($result, $options, $subquery) {
+                            return $this->getResultValue($result, $field, $subquery, $options['index_field']);
+                        }, $args['results_json_fields']);
+                    }
+                }
+            }
+            $results += [
+                'count' => $query->resultsCount,
+                'total' => $query->resultsTotal,
+                'results_grouped_by' => $query->resultsGroupedBy,
+            ];
+            return json_encode($results, $args['results_json_options']);
         }
 
         // Populate results data.
@@ -405,19 +614,24 @@ class Renderer extends Base {
      */
     public function renderPager(array $args = [], Query $query): string {
 
+        // Return empty string if Query has no results.
+        if ($query->results === null) {
+            return '';
+        }
+
         // If pager_args *haven't* been overridden in the args array, we can fetch the pager from
         // the Query object, where it could already be cached.
-        return !empty($args['pager_args']) ? $query->results->renderPager($args['pager_args']) : $query->pager;
+        return empty($args['pager_args']) ? $query->pager : $query->results->renderPager($args['pager_args']);
     }
 
     /**
      * Render error messages
      *
      * @param array $args Array of prepared arguments.
-     * @param array $errors Array of error messages.
+     * @param QueryBase Query object.
      * @return string Error messages, or empty string if none found.
      */
-    protected function ___renderErrors(array $args, Query $query): string {
+    protected function ___renderErrors(array $args, QueryBase $query): string {
         $errors = '';
         if (!empty($query->errors)) {
             $options = $this->getOptions();
@@ -507,21 +721,27 @@ class Renderer extends Base {
         $args = $this->prepareArgs($args);
         $theme = $args['theme'];
 
-        // Bail out early if theme isn't defined.
-        if (empty($theme)) {
-            return [];
+        // Placeholder for returned resources.
+        $resources = [];
+
+        // If this is a JavaScript resource request, check if the core library should be loaded.
+        if ($type === 'scripts' && !empty($args['find_args']['group_by'])) {
+            $resources[] = $this->wire('config')->urls->get('SearchEngine') . 'js/dist/main.js';
         }
 
-        // Get and return resources.
-        $resources = $args['theme_' . $type] ?? [];
-        if (empty($resources)) {
-            return [];
+        // Bail out early if theme isn't defined or theme doesn't contain specified resources.
+        if (empty($theme) || empty($args['theme_' . $type])) {
+            return $resources;
         }
-        $minified = $args['minified_resources'];
-        return array_map(function($resource) use ($theme, $minified) {
-            $file = $resource['name'] . ($minified ? '.min' : '') . '.' . $resource['ext'];
+
+        // Append theme specific resources.
+        $minified_resources = $args['minified_resources'];
+        $resources = array_merge($resources, array_map(function($resource) use ($theme, $minified_resources) {
+            $file = $resource['name'] . ($minified_resources ? '.min' : '') . '.' . $resource['ext'];
             return $this->themeURL . $theme . '/' . basename($file);
-        }, $resources);
+        }, $args['theme_' . $type]));
+
+        return $resources;
     }
 
     /**
@@ -712,7 +932,7 @@ class Renderer extends Base {
 
         // Convert subarrays to Data objects.
         foreach (['strings', 'find_args', 'requirements', 'classes'] as $key) {
-            $args[$key] = $this->wire(new Data($args[$key]));
+            $args[$key] = $this->wire(new Data($args[$key] ?? []));
         }
 
         // Additional sanitization for strings.

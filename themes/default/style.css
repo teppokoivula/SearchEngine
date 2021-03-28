@@ -158,3 +158,51 @@
     background: #d9d9d9;
     padding: 0 .5rem;
 }
+
+/* Tabs */
+
+.pwse-tabs {
+    margin: 1rem 0;
+}
+
+.pwse-tabs__tablist {
+    display: block;
+    list-style-type: none;
+    margin: 0 -.35rem 2rem;
+    padding: 0;
+}
+
+.pwse-tabs__tablist-item {
+    display: inline-block;
+    margin-bottom: -.0625rem;
+    padding: .35rem;
+    position: relative;
+}
+
+.pwse-tabs__tab {
+    background: #fff;
+    border: .0625rem solid rgba(0, 0, 0, .15);
+    border-radius: .25rem;
+    display: inline-block;
+    text-decoration: none;
+    padding: .75rem 1.5rem .65rem;
+    transition: all .25s;
+}
+
+.pwse-tabs__tab:hover,
+.pwse-tabs__tab:focus,
+.pwse-tabs__tab[aria-selected="true"] {
+    border: .0625rem solid rgba(0, 0, 0, .5);
+    background: #fff;
+    color: currentColor;
+}
+
+.pwse-tabs__tab[aria-selected="true"] {
+    background: #333;
+    color: #fff;
+}
+
+.pwse-tabs__tab[aria-selected="true"]:hover,
+.pwse-tabs__tab[aria-selected="true"]:focus {
+    background: #000;
+}

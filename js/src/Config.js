@@ -83,6 +83,6 @@ class PWSE_Config {
     }
 }
 
-document.addEventListener("SearchEngineConstructed", function() {
-    window.SearchEngine.Config = new PWSE_Config();
+document.addEventListener("pwse_init", function() {
+    window.pwse.config = new PWSE_Config();
 });

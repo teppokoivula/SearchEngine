@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.28.1
+ * @version 0.29.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -81,8 +81,15 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'limit' => 20,
             'sort' => 'sort',
             'operator' => '*=',
-            'query_param' => 'q',
             'selector_extra' => '',
+            'query_param' => 'q',
+            'group_param' => 't',
+            // Supported values for group_by: null (default) and "template".
+            'group_by' => 'template',
+            // Optional: values allowed for grouping.
+            'group_by_allow' => [],
+            // Optional: values not allowed for grouping.
+            'group_by_disallow' => [],
         ],
         'pager_args' => [
             // These arguments are passed to MarkupPagerNav. You can find more details from the
@@ -113,11 +120,15 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_id' => 'se-results',
             'result_summary_field' => 'summary',
             'results_highlight_query' => true,
+            'results_grouped_by' => null,
             'results_json_fields' => [
                 'title' => 'title',
                 'desc' => 'summary',
                 'url' => 'url',
             ],
+            // Autoloading applies to tabbed interface: if enabled, all results will be loaded as
+            // soon as possible. This is more resource intensive than loading them one by one.
+            'autoload_result_groups' => false,
             'results_json_options' => 0,
             'pager' => true,
             'classes' => [
@@ -138,11 +149,17 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'results_summary' => '&__summary',
                 'results_list' => '&__list',
                 'results_list_item' => '&__list-item',
+                'results_list_group_heading' => '&__group-heading',
                 'result' => 'search-result',
                 'result_link' => '&__link',
                 'result_path' => '&__path',
                 'result_desc' => '&__desc',
                 'result_highlight' => '&__highlight',
+                'tabs' => 'pwse-tabs',
+                'tabs_tablist' => '&__tablist',
+                'tabs_tablist-item' => '&__tablist-item',
+                'tabs_tab' => '&__tab',
+                'tabs_tabpanel' => '&__tabpanel',
             ],
             'strings' => [
                 'form_label' => null,
@@ -156,6 +173,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'results_summary_one' => null,
                 'results_summary_many' => null,
                 'results_summary_none' => null,
+                'tab_label_all' => null,
             ],
             'templates' => [
                 'form' => '<form id="{form_id}" class="{classes.form}" action="{form_action}" role="search">%s</form>',
@@ -171,13 +189,19 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'results_summary' => '<p class="{classes.results_summary}" id="{results_summary_id}">%s</p>',
                 'results_list' => '<ul class="{classes.results_list}" aria-labelled-by="{results_summary_id}">%s</ul>',
                 'results_list_item' => '<li class="{classes.results_list_item}">%s</li>',
+                'results_list_group_heading' => '<h3 class="{classes.results_list_group_heading}">%s</h3>',
                 'result' => '<div class="{classes.result}">%s</div>',
                 'result_link' => '<a class="{classes.result_link}" href="{item.url}">{item.title}</a>',
                 'result_path' => '<div class="{classes.result_path}">{item.url}</div>',
                 'result_desc' => '<div class="{classes.result_desc}">%s</div>',
                 'result_highlight' => '<strong class="{classes.result_highlight}">%s</strong>',
+                'tabs' => '<div class="{classes.tabs}" id="%s">%s</div>',
+                'tabs_tablist' => '<ul class="{classes.tabs_tablist}" role="tablist">%s</ul>',
+                'tabs_tablist-item' => '<li class="{classes.tabs_tablist-item}">%s</li>',
+                'tabs_tab' => '<a href="%s" role="tab" id="%s"%s class="{classes.tabs_tab}">%s</a>',
+                'tabs_tabpanel' => '<div id="%s" class="{classes.tabs_tabpanel}" role="tabpanel" tabindex="-1">%s</div>',
                 'styles' => '<link rel="stylesheet" type="text/css" href="%s">',
-                'scripts' => '<script async="true" src="%s"></script>',
+                'scripts' => '<script src="%s"></script>',
             ],
         ],
         'requirements' => [
@@ -344,9 +368,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      *
      * @param mixed $query The query.
      * @param array $args Additional arguments, see Query::__construct() for details.
-     * @return \SearchEngine\Query Resulting Query object.
+     * @return \SearchEngine\Query|\SearchEngine\QuerySet Resulting Query, or QuerySet in case of a grouped result set
      */
-    public function find($query = null, array $args = []): \SearchEngine\Query {
+    public function find($query = null, array $args = []): \SearchEngine\QueryBase {
         $this->initOnce();
         return $this->finder->find($query, $args);
     }
@@ -406,6 +430,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'results_summary_one' => $this->_('One result for "%s":'),
             'results_summary_many' => $this->_('%2$d results for "%1$s":'),
             'results_summary_none' => $this->_('No results for "%s".'),
+            'tab_label_all' => $this->_x('All', 'Tab label'),
             'errors_heading' => $this->_('Sorry, we were unable to process your query'),
             'error_query_missing' => $this->_('Your query was empty. Please provide a proper query.'),
             'error_query_too_short' => $this->_('Your query was too short. Please use at least %d characters.'),

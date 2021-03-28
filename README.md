@@ -357,6 +357,14 @@ A theme may include style and script file(s), in which case there should also be
 
 This module can be installed – just like any other ProcessWire module – by downloading or cloning the SearchEngine directory into your /site/modules/ directory. Alternatively you can install SearchEngine with Composer by running `composer require teppokoivula/search-engine`.
 
+## Development
+
+SearchEngine core JS files are bundled with parcel.js and theme styles are minified with clean-css. Both of these require minimal configuration, which is why all that is needed is the "build" script defined in package.json. To build production assets for SearchEngine:
+
+- Install Parcel globally: `npm install -g parcel-bundler`
+- Install clean-css and clean-css-cli globally: `npm install -g clean-css && npm install -g clean-css-cli`
+- Run build script in the SearchEngine module directory: `npm run build`
+
 ## License
 
 This project is licensed under the Mozilla Public License Version 2.0.

@@ -11,12 +11,13 @@ use ProcessWire\InputfieldPageListSelect;
 use ProcessWire\InputfieldSelect;
 use ProcessWire\InputfieldSelector;
 use ProcessWire\InputfieldText;
+use ProcessWire\InputfieldTextarea;
 use ProcessWire\InputfieldWrapper;
 
 /**
  * SearchEngine Config
  *
- * @version 0.9.0
+ * @version 0.10.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -94,11 +95,9 @@ class Config extends Base {
         (new Debugger)->initAJAXAPI();
 
         // inject scripts
-        foreach (['Core', 'Config'] as $script) {
-            $this->wire('config')->scripts->add(
-                $this->wire('config')->urls->get('SearchEngine') . 'js/' . $script . '.js'
-            );
-        }
+        $this->wire('config')->scripts->add(
+            $this->wire('config')->urls->get('SearchEngine') . 'js/dist/admin.js'
+        );
 
         // inject styles
         foreach (['config'] as $styles) {
@@ -201,7 +200,11 @@ class Config extends Base {
         $sort->name = 'find_args__sort';
         $sort->label = $this->_('Sort order');
         $sort->description = $this->_('Sort order used when finding content. See [documentation for sorting results](https://processwire.com/docs/selectors/#sort) for more details.');
-        $sort->notes = $this->_('Note: you may use multiple sort fields by separating each field with a comma (sort,title,-date_from).');
+        $sort->notes = $this->_('You can use multiple sort fields by separating each field with a comma (sort,title,-date_from).')
+            . ' '
+            . $this->_('Custom values specific to SearchEngine:')
+            . "\n\n"
+            . $this->_('- **_indexed_templates**: Sort results by the order of indexed templates');
         $sort = $this->maybeUseConfig($sort);
         $finder_settings->add($sort);
 
@@ -425,6 +428,9 @@ class Config extends Base {
         if (!empty($this->data['debugger_query'])) {
             $debugger->setQuery($this->data['debugger_query']);
         }
+        if (!empty($this->data['debugger_query_args'])) {
+            $debugger->setQueryArgs($this->data['debugger_query_args']);
+        }
 
         /** @var InputfieldFieldset Fieldset for Debugger */
         $debugger_settings = $this->wire('modules')->get('InputfieldFieldset');
@@ -465,6 +471,15 @@ class Config extends Base {
         $debugger_query->description = $this->_('Type in the search to debug.');
         $debugger_query->value = $this->data[$debugger_query->name] ?? '';
         $debugger_settings->add($debugger_query);
+
+        /** @var InputfieldTextarea Additional arguments for query */
+        $debugger_query_args = $this->wire('modules')->get('InputfieldTextarea');
+        $debugger_query_args->name = 'debugger_query_args';
+        $debugger_query_args->label = $this->_('Additional arguments');
+        $debugger_query_args->description = $this->_('Additional arguments passed to the Finder.');
+        $debugger_query_args->notes = $this->_('Note: provided value needs to be valid JSON.');
+        $debugger_query_args->value = $this->data[$debugger_query_args->name] ?? '{}';
+        $debugger_settings->add($debugger_query_args);
 
         /** @var InputfieldMarkup Query debug output */
         $debugger_query_markup = $this->wire('modules')->get('InputfieldMarkup');

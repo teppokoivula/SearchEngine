@@ -1,7 +1,7 @@
 /**
  * SearchEngine JS Debugger
  *
- * @version 0.5.0
+ * @version 0.5.1
  */
 class PWSE_Debugger {
 
@@ -16,7 +16,8 @@ class PWSE_Debugger {
         if (debugContainers.length) {
 
             // define base url for debug requests
-            this.debugURL = SearchEngine.configURL + '&se-debug=1&';
+            this.configURL = ProcessWire.config.urls.admin + 'module/edit?name=SearchEngine';
+            this.debugURL = this.configURL + '&se-debug=1&';
 
             debugContainers.forEach(debugContainer => {
 
@@ -78,7 +79,7 @@ class PWSE_Debugger {
                     this.findCollapsed(debugContainer);
 
                     // init tabs
-                    window.SearchEngine.Tabs.init(debugContainer);
+                    window.pwse.tabs.init(debugContainer);
                 });
         });
     }
@@ -150,7 +151,7 @@ class PWSE_Debugger {
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
                     this.findCollapsed(debugContainer);
-                    window.SearchEngine.Tabs.init(debugContainer);
+                    window.pwse.tabs.init(debugContainer);
                 });
         });
 
@@ -187,6 +188,9 @@ class PWSE_Debugger {
             debugButton.button.setAttribute('class', 'ui-button ui-state-default');
         }
 
+        // get debug query args
+        const debugQueryArgs = document.getElementById('Inputfield_debugger_query_args');
+
         // listen to keyup event
         document.getElementById('Inputfield_debugger_query').addEventListener("keyup", function(e) {
             if (e.key == 'Enter') {
@@ -216,7 +220,11 @@ class PWSE_Debugger {
             debugButton.button.setAttribute('disabled', 'disabled');
             debugButton.button.setAttribute('class', 'ui-button ui-state-disabled');
             debugButton.icon.classList.add('fa-spin');
-            fetch(this.debugURL + 'se-debug-query=' + encodeURIComponent(debugQuery))
+            fetch(
+                this.debugURL
+                + 'se-debug-query=' + encodeURIComponent(debugQuery)
+                + '&se-debug-query-args=' + encodeURIComponent(JSON.stringify(JSON.parse(debugQueryArgs.value)))
+            )
                 .then(response => response.text())
                 .then(data => {
                     prevQuery = debugQuery;
@@ -227,7 +235,7 @@ class PWSE_Debugger {
                     debugContainer.innerHTML = data;
                     debugContainer.setAttribute('style', 'margin-top: 2rem');
                     this.highlight(debugContainer);
-                    window.SearchEngine.Tabs.init(debugContainer);
+                    window.pwse.tabs.init(debugContainer);
                 });
         });
     }
@@ -321,6 +329,6 @@ class PWSE_Debugger {
 
 }
 
-document.addEventListener("SearchEngineConstructed", function() {
-    window.SearchEngine.Debugger = new PWSE_Debugger();
+document.addEventListener("pwse_init", function() {
+    window.pwse.debugger = new PWSE_Debugger();
 });
