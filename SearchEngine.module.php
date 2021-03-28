@@ -85,7 +85,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'group_param' => 't',
             'selector_extra' => '',
             // supported values for results_grouped_by: null (default), "template".
-            'results_grouped_by' => 'template',
+            'results_grouped_by' => null,
             // optional: define templates that should get their own tabs, the rest will be grouped under the "all" tab.
             'group_by_templates' => [],
         ],
