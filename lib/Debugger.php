@@ -434,7 +434,7 @@ class Debugger extends Base {
                 ],
                 [
                     'label' => $this->_('Resulting SQL query'),
-                    'value' => $query instanceof QuerySet ? $this->renderer->renderTabs('query-sql-query', array_map(function($query) {
+                    'value' => $query instanceof QuerySet ? $this->renderer->renderTabs('debugger-sql-query', array_map(function($query) {
                         return [
                             'label' => $query->label ?: 'Query',
                             'content' => '<pre class="pwse-pre">' . $this->sanitizer->entities($query->getSQL()) . '</pre>',
@@ -470,7 +470,7 @@ class Debugger extends Base {
                 [
                     'label' => $this->_('Results'),
                     'value' => $query->resultsCount . ' / ' . $query->resultsTotal
-                        . $this->renderer->renderTabs('query-results', [
+                        . $this->renderer->renderTabs('debugger-results', [
                             'json' => [
                                 'label' => 'JSON',
                                 'content' => '<pre class="pwse-pre">' . $se->renderResultsJSON($json_args, $query) . '</pre>',
