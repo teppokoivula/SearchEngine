@@ -155,7 +155,7 @@ class Renderer extends Base {
      * Render markup for search results
      *
      * @param array $args Optional arguments.
-     * @param Query|QuerySet $query Optional prepopulated Query object or QuerySet containing one or more Query objects
+     * @param Query|QuerySet $query Optional prepopulated Query object or QuerySet containing one or more Query objects.
      * @return string
      *
      * @throws WireException if query parameter is unrecognized.
@@ -333,7 +333,7 @@ class Renderer extends Base {
     /**
      * Render markup for a results list summary
      *
-     * @param string $type Type of summary (none, one, many)
+     * @param string $type Type of summary (none, one, many).
      * @param Query $query
      * @param array $args
      * @return string
