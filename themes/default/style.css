@@ -168,14 +168,14 @@
 .pwse-tabs__tablist {
     display: block;
     list-style-type: none;
-    margin: 0 -.5rem 2rem;
+    margin: 0 -.35rem 2rem;
     padding: 0;
 }
 
 .pwse-tabs__tablist-item {
     display: inline-block;
     margin-bottom: -.0625rem;
-    padding: .5rem;
+    padding: .35rem;
     position: relative;
 }
 
@@ -185,7 +185,7 @@
     border-radius: .25rem;
     display: inline-block;
     text-decoration: none;
-    padding: .75rem 1.5rem .5rem;
+    padding: .75rem 1.5rem .65rem;
     transition: all .25s;
 }
 
