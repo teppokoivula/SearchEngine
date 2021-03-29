@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Finder
  *
- * @version 0.2.0
+ * @version 0.2.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -182,18 +182,35 @@ class Finder extends Base {
      * @return array
      */
     protected function getMatchingTemplates(Query $query, array $templates): array {
+
+        // Get DatabaseQuerySelect from Query
         $query_select = $query->getQuery();
-        $query_select->set('select', ['pwse_t.name, pages.templates_id']);
+
+        // Get "select" statements from the DatabaseQuerySelect object and remove any values we don't need here
+        $select = $query_select->get('select') ?? [];
+        foreach ($select as $select_key => $select_value) {
+            if (strpos($select_value, 'MATCH(') === 0 && strpos($select_value, ' AS _score_')) continue;
+            unset($select[$select_key]);
+        }
+
+        // Prepend new select statement for template name and ID
+        $select = ['pwse_t.name, pages.templates_id'] + $select;
+
+        // Modify the DatabaseQuerySelect object
+        $query_select->set('select', $select);
         $query_select->set('groupby', ['pages.templates_id']);
         $query_select->leftjoin('templates AS pwse_t ON pwse_t.id=pages.templates_id');
         $query_select->set('limit', []);
+
+        // Perform SQL query and process returned results
         $db_statement = $this->database->query($query_select->getQuery());
-        $db_templates = $db_statement->fetchAll(\PDO::FETCH_KEY_PAIR);
+        $db_templates = $db_statement->fetchAll(\PDO::FETCH_GROUP);
         $sorted_templates = [];
         foreach ($templates as $template) {
             if (!isset($db_templates[$template])) continue;
-            $sorted_templates[$db_templates[$template]] = $template;
+            $sorted_templates[$db_templates[$template][0]['templates_id']] = $template;
         }
+
         return $sorted_templates;
     }
 
