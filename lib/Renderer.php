@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.8.0
+ * @version 0.8.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -608,11 +608,11 @@ class Renderer extends Base {
     /**
      * Render a pager for search results
      *
-     * @param array $args Optional arguments.
+     * @param array $args Arguments.
      * @param Query Query object.
      * @return string Rendered pager markup.
      */
-    public function renderPager(array $args = [], Query $query): string {
+    public function renderPager(array $args, Query $query): string {
 
         // Return empty string if Query has no results.
         if ($query->results === null) {
@@ -709,13 +709,13 @@ class Renderer extends Base {
     /**
      * Get resources of specified type for a given theme
      *
-     * @param array $args Optional arguments.
+     * @param array $args Arguments.
      * @param string $type Type of returned resources (styles or scripts).
      * @return array Filenames as an array.
      *
      * @throws WireException if theme isn't found.
      */
-    protected function getResources(array $args = [], string $type): array {
+    protected function getResources(array $args, string $type): array {
 
         // Prepare args.
         $args = $this->prepareArgs($args);
@@ -747,12 +747,12 @@ class Renderer extends Base {
     /**
      * Render markup for including resources of a specific type from given theme
      *
-     * @param array $args Optional arguments.
+     * @param array $args Arguments.
      * @param string $type Type of returned resources (styles or scripts).
      * @param string $template Template to wrap resource filename with.
      * @return string Markup for embedding resources.
      */
-    protected function renderResources(array $args = [], string $type): string {
+    protected function renderResources(array $args, string $type): string {
 
         // Prepare args.
         $args = $this->prepareArgs($args);
