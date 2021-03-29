@@ -5,11 +5,12 @@ namespace SearchEngine;
 use ProcessWire\WireArray;
 use ProcessWire\PageArray;
 use ProcessWire\HookEvent;
+use ProcessWire\DatabaseQuerySelect;
 
 /**
  * SearchEngine Query class
  *
- * @version 0.5.0
+ * @version 0.6.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
@@ -170,9 +171,9 @@ class Query extends QueryBase {
      *
      * @internal
      *
-     * @return \ProcessWire\DatabaseQuerySelect
+     * @return DatabaseQuerySelect
      */
-    public function getQuery(): \ProcessWire\DatabaseQuerySelect {
+    public function getQuery(): DatabaseQuerySelect {
 
         // If we already have a database query, return it
         if ($this->database_query !== null) {
@@ -206,10 +207,10 @@ class Query extends QueryBase {
      *
      * @internal
      *
-     * @param \ProcessWire\DatabaseQuerySelect|null
+     * @param DatabaseQuerySelect|null
      * @return Query Self-reference
      */
-    public function setQuery(?\ProcessWire\DatabaseQuerySelect $database_query): Query {
+    public function setQuery(?DatabaseQuerySelect $database_query): Query {
         $this->database_query = $database_query;
         $this->results = null;
         $this->pager = null;
@@ -219,10 +220,11 @@ class Query extends QueryBase {
     /**
      * Returns SQL query based on all provided arguments
      *
+     * @param DatabaseQuerySelect|null $query Optional database query object
      * @return string
      */
-    public function getSQL(): string {
-        $query = $this->getQuery();
+    public function getSQL(?DatabaseQuerySelect $query = null): string {
+        $query = $query ?? $this->getQuery();
         if (method_exists($query, 'getDebugQuery')) {
             // ProcessWire 3.0.158+
             return $query->getDebugQuery();
