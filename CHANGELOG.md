@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.1] - 2021-03-29
+
+### Changed
+- Grouping disabled by default; this wasn't supposed to be enabled by default.
+
+### Fixed
+- PHP8 deprecation notices regarding required parameters following optional parameters.
+- Query issue introduced by 0.29.0 when using fulltext indexes and grouping.
+
 ## [0.29.0] - 2021-03-28
 
 ### Added
@@ -19,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tab support for front-end result rendering.
 
 ### Changed
-
 - Query object results and all properties based on results are lazy loaded by default, fetched when first accessed.
 - SearchEngine front-end JavaScript files are now bundled with Parcel.
 
