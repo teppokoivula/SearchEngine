@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.2] - 2021-03-29
+
+### Fixed
+- Notice that was displayed before module config was initially saved.
+- Query issue affecting group_by setting used on ProcessWire 3.0.158+.
+
 ## [0.29.1] - 2021-03-29
 
 ### Changed
