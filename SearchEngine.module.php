@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.29.1
+ * @version 0.29.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -488,10 +488,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         // Make sure that indexed templates is defined and includes configured templates as well as those that might
         // have had the index field manually added
         $module_config['indexed_templates'] = [];
-        $index_field = null;
-        if ($module_config['index_field'] !== null) {
-            $index_field = $this->wire('fields')->get($module_config['index_field']);
-        }
+        $index_field = !empty($module_config['index_field']) ? $this->fields->get($module_config['index_field']) : null;
         if ($index_field !== null) {
             $templates_with_index_field = $index_field->getTemplates()->get('name[]');
             $module_config['indexed_templates'] = array_unique(array_merge(
