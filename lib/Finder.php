@@ -189,6 +189,7 @@ class Finder extends Base {
         // Get "select" statements from the DatabaseQuerySelect object and remove any values we don't need here
         $select = $query_select->get('select') ?? [];
         foreach ($select as $select_key => $select_value) {
+            $select_value = trim($select_value);
             if (strpos($select_value, 'MATCH(') === 0 && strpos($select_value, ' AS _score_')) continue;
             unset($select[$select_key]);
         }
@@ -203,7 +204,7 @@ class Finder extends Base {
         $query_select->set('limit', []);
 
         // Perform SQL query and process returned results
-        $db_statement = $this->database->query($query_select->getQuery());
+        $db_statement = $this->database->query($query->getSQL($query_select));
         $db_templates = $db_statement->fetchAll(\PDO::FETCH_GROUP);
         $sorted_templates = [];
         foreach ($templates as $template) {
