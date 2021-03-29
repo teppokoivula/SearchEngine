@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.8.2
+ * @version 0.8.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -200,12 +200,14 @@ class Renderer extends Base {
                 $group = $this->wire('sanitizer')->text($group);
                 $this->wire('input')->whitelist($args['find_args']['group_param'], $group);
             }
-            $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group) {
+            $is_first_group = true;
+            $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group, &$is_first_group) {
                 // Content should only be rendered if a) this is an active tab or b) autoload_result_groups is enabled.
                 $content = null;
-                if (!empty($args['autoload_result_groups']) || $group === null || $group === $query->group) {
+                if (!empty($args['autoload_result_groups']) || $group === null && $is_first_group || $group === $query->group) {
                     $content = $this->renderResultsList($query, $data, $args);
                 }
+                $is_first_group = false;
                 return [
                     'label' => $this->renderTabLabel($query, $data, $args),
                     'link' => $this->getTabLink($query, $args),
