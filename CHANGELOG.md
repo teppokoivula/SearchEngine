@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.3] - 2021-03-29
+
+### Fixed
+- PHP8 notices caused by the Debugger in the module config screen.
+- Layout issue in rendering group labels.
+
 ## [0.29.2] - 2021-03-29
 
 ### Fixed

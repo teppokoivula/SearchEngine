@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.5.0
+ * @version 0.5.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -623,8 +623,8 @@ class Debugger extends Base {
         $index = $this->wire('sanitizer')->unentities($index);
 
         // get words
-        preg_match_all("/[\w-']+/ui", $index, $index_words);
-        $index_words = $index_words[0];
+        preg_match_all("/[\w\-']+/ui", $index, $index_words);
+        $index_words = $index_words[0] ?? [];
         $index_words = array_map(function($word) {
             $word = trim($word, " \t\n\r\x0B-&");
             $word = mb_strtolower($word);

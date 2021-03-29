@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.8.1
+ * @version 0.8.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -308,24 +308,24 @@ class Renderer extends Base {
         }
 
         // Render combined results list(s).
-        $results_list_items = '';
         $results_list_group = '';
         foreach ($groups as $group_name => $group) {
+
+            // Render results list group heading (if applicable)
             if ($group_by !== null && $group_name != $results_list_group) {
                 $results_list_group = $group_name;
-                $results_list_items .= sprintf(
+                $results_list .= sprintf(
                     $data['templates']['results_list_group_heading'],
                     $group['label']
                 );
             }
-            $results_list_items .= implode($group['items']);
-        }
 
-        // Render wrapper for the results list.
-        $results_list .= sprintf(
-            $data['templates']['results_list'],
-            $results_list_items
-        );
+            // Render wrapper for the results list.
+            $results_list .= sprintf(
+                $data['templates']['results_list'],
+                implode($group['items'])
+            );
+        }
 
         // Render pager.
         if (!empty($args['pager'])) {
@@ -368,7 +368,7 @@ class Renderer extends Base {
         $tab_list = [];
         $has_active_tab = false;
         foreach ($tabs as $tab) {
-            if (!$tab['active']) continue;
+            if (empty($tab['active'])) continue;
             $has_active_tab = true;
             break;
         }
