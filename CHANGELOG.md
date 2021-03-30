@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.5] - 2021-03-30
+
+### Fixed
+- Issue where automatically generated descriptions were causing parsing errors.
+- Issue where some search queries were not properly highlighted due to extra quotes.
+
 ## [0.29.4] - 2021-03-29
 
 ### Fixed

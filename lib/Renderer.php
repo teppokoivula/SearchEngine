@@ -594,9 +594,10 @@ class Renderer extends Base {
         $desc = '';
         $index = $result->get($index_field) ?? '';
         if (!empty($index)) {
-            $desc_padding = round((249 - mb_strlen($query->query)) / 2);
+            $query_string = trim($query->query, '"');
+            $desc_padding = round((249 - mb_strlen($query_string)) / 2);
             $index = preg_split('/\r\n|\n/u', $index)[0];
-            if (preg_match('/.{0,' . $desc_padding . '}' . $query->query . '.{0,' . $desc_padding . '}/ui', $index, $matches)) {
+            if (preg_match('/.{0,' . $desc_padding . '}' . preg_quote($query_string, '/') . '.{0,' . $desc_padding . '}/ui', $index, $matches)) {
                 $desc = $matches[0];
                 $desc_length = mb_strlen($desc);
                 $add_prefix = mb_strpos($desc, '...') === 0 || mb_substr($index, 0, $desc_length) !== $desc;
@@ -827,9 +828,17 @@ class Renderer extends Base {
      * @return string String with highlights, or the original string if no matches found.
      */
     protected function maybeHighlight(string $string, string $query, Data $data): string {
-        if ($data['results_highlight_query'] && stripos($string, $query) !== false) {
+
+        // Bail out early if highlighting is disabled.
+        if (!$data['results_highlight_query']) return $string;
+
+        // Clean up quotes from the (sanitized) query string.
+        $query_string = trim($query, '"');
+
+        // Check if there are instances that can be highlighted.
+        if (stripos($string, $query_string) !== false) {
             $string = preg_replace(
-                '/' . preg_quote($query, '/') . '/i',
+                '/' . preg_quote($query_string, '/') . '/i',
                 sprintf(
                     $data['templates']['result_highlight'],
                     '$0'
@@ -837,6 +846,7 @@ class Renderer extends Base {
                 $string
             );
         }
+
         return $string;
     }
 
