@@ -2,18 +2,20 @@
 
 namespace SearchEngine;
 
+use ProcessWire\PageArray;
+
 /**
  * SearchEngine QuerySet class
  *
  * This class represents a set of one or more Query objects.
  *
- * @version 0.1.0
+ * @version 0.1.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
  * @property-read string $selector Final selector string.
- * @property array $items Query objects contained in this set.
- * @property-read \ProcessWire\PageArray|null $results Combined results from all Query objects.
+ * @property Query[] $items Query objects contained in this set.
+ * @property-read PageArray|null $results Combined results from all Query objects, or null if none found.
  * @property-read int $resultsCount Number of combined visible results in all Query objects.
  * @property-read int $resultsTotal Number of combined total results in all Query objects.
  * @property-read string $resultsGroupedBy Identifier that Query results are grouped by. Same as groupedBy.
@@ -26,7 +28,7 @@ class QuerySet extends QueryBase implements \IteratorAggregate {
     /**
      * Query objects contained in this set
      *
-     * @var array
+     * @var Query[]
      */
     protected $items = [];
 
@@ -56,9 +58,12 @@ class QuerySet extends QueryBase implements \IteratorAggregate {
     public function __get($name) {
         switch ($name) {
             case 'results':
-                $results = new \ProcessWire\PageArray();
+                $results = new PageArray();
                 foreach ($this->items as $item) {
-                    $results->add($item->results);
+                    $item_results = $item->getResults();
+                    if ($item_results !== null) {
+                        $results->add($item_results);
+                    }
                 }
                 return $results->count() ? $results : null;
                 break;
