@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.29.6] - 2021-04-03
+
+### Added
+- Query object now has a readable results property, which works like getResults() except that null is always returned in case there are no results.
+- New hookable method Renderer::renderResultsListHeading().
+
+### Changed
+- Renderer::renderResultsListSummary() made hookable.
+
+### Fixed
+- Better validation for Query object result handling for QuerySet.
+
 ## [0.29.5] - 2021-03-30
 
 ### Fixed
