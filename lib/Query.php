@@ -10,13 +10,14 @@ use ProcessWire\DatabaseQuerySelect;
 /**
  * SearchEngine Query class
  *
- * @version 0.6.0
+ * @version 0.6.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
  * @property-read string $selector Final selector string.
  * @property-read string $sql Final SQL query.
  * @property-read string $resultsString Results rendered as a list.
+ * @property-read PageArray|null $results Results as a PageArray, or null if none found.
  * @property-read int $resultsCount Number of visible results.
  * @property-read int $resultsTotal Number of total results.
  * @property-read string $pager Rendered pager or empty string if not supported.
@@ -105,6 +106,10 @@ class Query extends QueryBase {
             case 'resultsString':
                 $results = $this->getResults();
                 return !empty($results) && method_exists($results, '___getMarkup') ? $results->render() : '';
+                break;
+            case 'results':
+                $results = $this->getResults();
+                return !empty($results) ? $results : null;
                 break;
             case 'resultsCount':
                 $results = $this->getResults();
