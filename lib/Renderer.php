@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.8.3
+ * @version 0.8.4
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -185,12 +185,6 @@ class Renderer extends Base {
             return $this->renderErrors($args, $query);
         }
 
-        // Header for results list.
-        $results_heading = sprintf(
-            $args['templates']['results_heading'],
-            $args['strings']['results_heading']
-        );
-
         // Results list.
         $results_list = '';
         if ($query instanceof QuerySet) {
@@ -223,7 +217,7 @@ class Renderer extends Base {
         $results = \ProcessWire\wirePopulateStringTags(
             sprintf(
                 $args['templates']['results'],
-                $results_heading
+                $this->renderResultsListHeading($query, $args)
               . $results_list
             ),
             $data
@@ -338,6 +332,20 @@ class Renderer extends Base {
     }
 
     /**
+     * Render markup for a results list heading
+     *
+     * @param Query|QuerySet $query
+     * @param array $args
+     * @return string
+     */
+    protected function ___renderResultsListHeading(QueryBase $query, array $args): string {
+        return sprintf(
+            $args['templates']['results_heading'],
+            $args['strings']['results_heading']
+        );
+    }
+
+    /**
      * Render markup for a results list summary
      *
      * @param string $type Type of summary (none, one, many).
@@ -345,7 +353,7 @@ class Renderer extends Base {
      * @param array $args
      * @return string
      */
-    protected function renderResultsListSummary(string $type, Query $query, array $args): string {
+    protected function ___renderResultsListSummary(string $type, Query $query, array $args): string {
         return sprintf(
             $args['templates']['results_summary'],
             vsprintf($args['strings']['results_summary_' . $type] ?? '', [
