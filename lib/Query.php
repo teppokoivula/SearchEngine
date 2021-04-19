@@ -10,11 +10,12 @@ use ProcessWire\DatabaseQuerySelect;
 /**
  * SearchEngine Query class
  *
- * @version 0.6.1
+ * @version 0.6.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
  * @property-read string $selector Final selector string.
+ * @property-read string $operator Operator used by the selector.
  * @property-read string $sql Final SQL query.
  * @property-read string $resultsString Results rendered as a list.
  * @property-read PageArray|null $results Results as a PageArray, or null if none found.
@@ -76,16 +77,6 @@ class Query extends QueryBase {
     protected $group = '';
 
     /**
-     * Constructor method
-     *
-     * @param string|null $query The query
-     * @param array $args Additional arguments, see QueryBase class for details
-     */
-    public function __construct(?string $query = '', array $args = []) {
-        parent::__construct($query, $args);
-    }
-
-    /**
      * Magic getter method
      *
      * This method is added so that we can keep some properties (original_*) readable from the
@@ -99,6 +90,9 @@ class Query extends QueryBase {
         switch ($name) {
             case 'selector':
                 return $this->getSelector();
+                break;
+            case 'operator':
+                return $this->getOperator();
                 break;
             case 'sql':
                 return $this->getSQL();
