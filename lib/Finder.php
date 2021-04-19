@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Finder
  *
- * @version 0.2.1
+ * @version 0.2.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -28,12 +28,6 @@ class Finder extends Base {
         if (empty($query->query)) {
             return $query;
         }
-
-        // Merge arguments with defaults
-        $query->args = array_replace_recursive(
-            $this->getOptions()['find_args'],
-            $query->args
-        );
 
         // Check if finding results should be delegated to findByTemplatesGrouped
         if ($query->args['group_by'] === 'template') {
