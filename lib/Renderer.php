@@ -911,7 +911,7 @@ class Renderer extends Base {
                 return "\b" . preg_quote($value, '/') . "\b";
             }, array_filter(explode(' ', $query))));
             $string = preg_replace(
-                '/(' . $query_words . ')/i',
+                '/(' . $query_words . ')/ui',
                 sprintf(
                     $data['templates']['result_highlight'],
                     '$0'
