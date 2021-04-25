@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.30.0] - 2021-04-23
+## [0.30.0] - 2021-04-25
 
 ### Added
 - Automatically generated descriptions now support multi-part query string matching, i.e. query terms that are not in order, or not adjacent to each other.
