@@ -652,12 +652,20 @@ class Renderer extends Base {
      * @return string
      */
     protected function formatResultAutoDesc(string $match, string $index, string $desc): string {
-        if ($match !== '') {
-            $match_length = mb_strlen($match);
-            $add_prefix = (empty($desc) || mb_substr($desc, -3) !== '...') && (mb_strpos($match, '...') === 0 || mb_substr($index, 0, $match_length) !== $match);
-            $add_suffix = mb_substr($index, -$match_length) !== $match || mb_strrpos($match, '.') !== $match_length;
-            $match = ($add_prefix ? '...' . $match : $match) . ($add_suffix ? '...' : '');
-        }
+
+        // Bail out early if match is empty.
+        if ($match === '') return '';
+
+        // Remove scraps of HTML entities from the end of a strings.
+        $match = rtrim(preg_replace('/(?:<(?!.+>)|&(?!.+;)).*$/us', '', $match));
+        if ($match === '') return '';
+
+        // Add prefix/suffix if necessary.
+        $match_length = mb_strlen($match);
+        $add_prefix = (empty($desc) || mb_substr($desc, -3) !== '...') && (mb_strpos($match, '...') === 0 || mb_substr($index, 0, $match_length) !== $match);
+        $add_suffix = mb_substr($index, -$match_length) !== $match || mb_strrpos($match, '.') !== $match_length;
+        $match = ($add_prefix ? '...' . $match : $match) . ($add_suffix ? '...' : '');
+
         return $match;
     }
 
