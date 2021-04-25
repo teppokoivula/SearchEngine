@@ -5,11 +5,11 @@ namespace SearchEngine;
 /**
  * Base class for Query type objects (Query, QuerySet)
  *
- * @version 0.1.0
+ * @version 0.2.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
-class QueryBase extends Base {
+abstract class QueryBase extends Base {
 
     /**
      * The query provided for the find operation
@@ -149,6 +149,15 @@ class QueryBase extends Base {
             return implode(',', $this->args[$name]);
         }
         return (string) $this->args[$name];
+    }
+
+    /**
+     * Returns operator based on provided arguments
+     *
+     * @return string
+     */
+    public function getOperator(): string {
+        return $this->args['operator'];
     }
 
     /**

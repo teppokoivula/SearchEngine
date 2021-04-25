@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.8.4
+ * @version 0.9.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -602,18 +602,71 @@ class Renderer extends Base {
         $desc = '';
         $index = $result->get($index_field) ?? '';
         if (!empty($index)) {
+            $desc_max_length = 255;
+            $desc_sep_length = 3;
             $query_string = trim($query->query, '"');
-            $desc_padding = round((249 - mb_strlen($query_string)) / 2);
+            $desc_padding = round(($desc_max_length - ($desc_sep_length * 2) - mb_strlen($query_string) - 2) / 2);
             $index = preg_split('/\r\n|\n/u', $index)[0];
-            if (preg_match('/.{0,' . $desc_padding . '}' . preg_quote($query_string, '/') . '.{0,' . $desc_padding . '}/ui', $index, $matches)) {
-                $desc = $matches[0];
-                $desc_length = mb_strlen($desc);
-                $add_prefix = mb_strpos($desc, '...') === 0 || mb_substr($index, 0, $desc_length) !== $desc;
-                $add_suffix = mb_substr($index, -$desc_length) !== $desc || mb_strrpos($desc, '.') !== $desc_length;
-                $desc = ($add_prefix ? '...' . $desc : $desc) . ($add_suffix ? '...' : '');
+            if (preg_match('/.{0,' . $desc_padding . '}\b' . preg_quote($query_string, '/') . '\b.{0,' . $desc_padding . '}/ui', $index, $matches)) {
+                // There's a full match for the query string in the index.
+                $desc = $this->formatResultAutodesc($matches[0], $index, $desc);
+            } else if (strpos($query_string, ' ') !== false) {
+                // Query string has multiple words, look for partial matches.
+                $desc_length = 0;
+                $desc_padding = 50;
+                $match_offset = 0;
+                $query_string = implode('|', array_map(function($value) {
+                    return "\b" . preg_quote($value, '/') . "\b";
+                }, array_filter(explode(' ', str_replace([',', '.'], '', $query_string)))));
+                while ($desc_length < $desc_max_length) {
+                    if (!preg_match('/.{0,' . $desc_padding . '}(' . $query_string . ').{0,' . $desc_padding . '}/ui', $index, $matches, \PREG_OFFSET_CAPTURE, $match_offset)) {
+                        // No more matches found, break out of the while loop.
+                        break;
+                    }
+                    $desc_part = $this->formatResultAutoDesc($matches[0][0], $index, $desc);
+                    $desc_part_length = mb_strlen($desc_part);
+                    $desc_length += $desc_part_length;
+                    if ($desc_length > $desc_max_length) {
+                        $desc_part = mb_substr($desc_part, 0, $desc_part_length - ($desc_length - $desc_max_length) - $desc_sep_length);
+                        if (!preg_match('/' . $query_string . '/ui', $desc_part)) {
+                            // Drop last desc part if it doesn't contain our query string.
+                            break;
+                        }
+                        $desc_part = $this->formatResultAutoDesc($desc_part, $index, $desc);
+                    } else {
+                        $match_offset = $matches[0][1] + mb_strlen($matches[0][0]);
+                    }
+                    $desc .= $desc_part;
+                }
             }
         }
         return $desc;
+    }
+
+    /**
+     * Format an automatically generated description match
+     *
+     * @param string $match
+     * @param string $index
+     * @param string $desc
+     * @return string
+     */
+    protected function formatResultAutoDesc(string $match, string $index, string $desc): string {
+
+        // Bail out early if match is empty.
+        if ($match === '') return '';
+
+        // Remove scraps of HTML entities from the end of a strings.
+        $match = rtrim(preg_replace('/(?:<(?!.+>)|&(?!.+;)).*$/us', '', $match));
+        if ($match === '') return '';
+
+        // Add prefix/suffix if necessary.
+        $match_length = mb_strlen($match);
+        $add_prefix = (empty($desc) || mb_substr($desc, -3) !== '...') && (mb_strpos($match, '...') === 0 || mb_substr($index, 0, $match_length) !== $match);
+        $add_suffix = mb_substr($index, -$match_length) !== $match || mb_strrpos($match, '.') !== $match_length;
+        $match = ($add_prefix ? '...' . $match : $match) . ($add_suffix ? '...' : '');
+
+        return $match;
     }
 
     /**
@@ -840,13 +893,25 @@ class Renderer extends Base {
         // Bail out early if highlighting is disabled.
         if (!$data['results_highlight_query']) return $string;
 
-        // Clean up quotes from the (sanitized) query string.
-        $query_string = trim($query, '"');
+        // Clean up quotes and spaces from the start and end of the (sanitized) query string.
+        $query_string = trim($query, '" ');
 
         // Check if there are instances that can be highlighted.
         if (stripos($string, $query_string) !== false) {
             $string = preg_replace(
                 '/' . preg_quote($query_string, '/') . '/i',
+                sprintf(
+                    $data['templates']['result_highlight'],
+                    '$0'
+                ),
+                $string
+            );
+        } else if (strpos($query, ' ') !== false) {
+            $query_words = implode('|', array_map(function($value) {
+                return "\b" . preg_quote($value, '/') . "\b";
+            }, array_filter(explode(' ', $query))));
+            $string = preg_replace(
+                '/(' . $query_words . ')/ui',
                 sprintf(
                     $data['templates']['result_highlight'],
                     '$0'

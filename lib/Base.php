@@ -5,11 +5,11 @@ namespace SearchEngine;
 /**
  * SearchEngine Base class
  *
- * @version 0.2.0
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
-class Base extends \ProcessWire\Wire {
+abstract class Base extends \ProcessWire\Wire {
 
     /**
      * Get options from the SearchEngine module

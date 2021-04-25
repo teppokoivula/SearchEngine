@@ -9,11 +9,12 @@ use ProcessWire\PageArray;
  *
  * This class represents a set of one or more Query objects.
  *
- * @version 0.1.1
+ * @version 0.1.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
  * @property-read string $selector Final selector string.
+ * @property-read string $operator Operator used by the selector.
  * @property Query[] $items Query objects contained in this set.
  * @property-read PageArray|null $results Combined results from all Query objects, or null if none found.
  * @property-read int $resultsCount Number of combined visible results in all Query objects.
@@ -40,16 +41,6 @@ class QuerySet extends QueryBase implements \IteratorAggregate {
     protected $grouped_by = '';
 
     /**
-     * Constructor method
-     *
-     * @param string|null $query The query
-     * @param array $args Additional arguments, see QueryBase class for details
-     */
-    public function __construct(?string $query = '', array $args = []) {
-        parent::__construct($query, $args);
-    }
-
-    /**
      * Magic getter method
      *
      * @param string $name Property name.
@@ -57,6 +48,12 @@ class QuerySet extends QueryBase implements \IteratorAggregate {
      */
     public function __get($name) {
         switch ($name) {
+            case 'selector':
+                return $this->getSelector();
+                break;
+            case 'operator':
+                return $this->getOperator();
+                break;
             case 'results':
                 $results = new PageArray();
                 foreach ($this->items as $item) {
