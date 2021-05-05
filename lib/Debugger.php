@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.5.1
+ * @version 0.5.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -299,7 +299,7 @@ class Debugger extends Base {
             foreach ($index as $index_language => $index_content) {
                 if (!empty($index_language)) {
                     $debug['index']['content'][$index_language] = [
-                        'heading' => $index_language,
+                        'label' => $index_language,
                         'content' => '',
                     ];
                 }
@@ -449,7 +449,7 @@ class Debugger extends Base {
             if ($language !== null) {
                 $debug['info']['content'][$language->name] = [
                     'label' => $language->name,
-                    'value' => $info_content,
+                    'content' => $info_content,
                 ];
             } else {
                 $debug['info']['content'] = $info_content;
@@ -489,7 +489,7 @@ class Debugger extends Base {
             if ($language !== null) {
                 $debug['results']['content'][$language->name] = [
                     'label' => $language->name,
-                    'value' => $results_content,
+                    'content' => $results_content,
                 ];
             } else {
                 $debug['results']['content'] = $results_content;
@@ -597,7 +597,7 @@ class Debugger extends Base {
                     $subsection['content'] = $subsection['content'][null]['content'];
                 } else {
                     // multilanguage content, render tabs
-                    $out .= $this->renderer->renderTabs($container_data['type'] ?? $key, $subsection['content']);
+                    $out .= $this->renderer->renderTabs('debugger-' . $container_data['type'] ?? $key, $subsection['content']);
                     continue;
                 }
             }
