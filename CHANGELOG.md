@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.2] - 2021-06-27
+
+### Fixed
+- An issue where JSON output no longer contained actual results due to result lazy loading changes made in 0.29.0.
+
 ## [0.30.1] - 2021-05-05
 
 ### Fixed

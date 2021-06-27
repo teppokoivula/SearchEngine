@@ -9,7 +9,7 @@ use ProcessWire\PageArray;
  *
  * This class represents a set of one or more Query objects.
  *
- * @version 0.1.2
+ * @version 0.1.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
@@ -125,7 +125,7 @@ class QuerySet extends QueryBase implements \IteratorAggregate {
      * @return bool
      */
     public function __isset(string $name): bool {
-        return !empty($this->$name);
+        return !empty($this->$name) || !empty($this->__get($name));
     }
 
 	/**
