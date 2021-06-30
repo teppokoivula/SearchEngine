@@ -17,7 +17,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.10.0
+ * @version 0.10.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -201,10 +201,10 @@ class Config extends Base {
         $sort->label = $this->_('Sort order');
         $sort->description = $this->_('Sort order used when finding content. See [documentation for sorting results](https://processwire.com/docs/selectors/#sort) for more details.');
         $sort->notes = $this->_('You can use multiple sort fields by separating each field with a comma (sort,title,-date_from).')
-            . ' '
-            . $this->_('Custom values specific to SearchEngine:')
-            . "\n\n"
-            . $this->_('- **_indexed_templates**: Sort results by the order of indexed templates');
+            . ' ' . $this->_('Custom values specific to SearchEngine:') . "\n"
+            . "\n" . $this->_('- **_indexed_templates**: Sort results by the order of indexed templates')
+            . "\n" . $this->_('- **_relevance**: Sort results by relevance')
+            . ' (' . $this->_('experimental') . ')';
         $sort = $this->maybeUseConfig($sort);
         $finder_settings->add($sort);
 

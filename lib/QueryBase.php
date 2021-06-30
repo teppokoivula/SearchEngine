@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * Base class for Query type objects (Query, QuerySet)
  *
- * @version 0.2.0
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -176,6 +176,9 @@ abstract class QueryBase extends Base {
             $sort_values = explode(',', $this->args['sort']);
             foreach ($sort_values as $sort_value) {
                 $sort_value = trim($sort_value, " \t\n\r\0\x0B\"");
+                if ($sort_value == '_relevance') {
+                    continue;
+                }
                 if (!empty($sort_value)) {
                     $sort[] = 'sort=' . $this->wire('sanitizer')->selectorValue($sort_value);
                 }

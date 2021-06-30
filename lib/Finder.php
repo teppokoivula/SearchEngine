@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Finder
  *
- * @version 0.2.2
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -27,6 +27,11 @@ class Finder extends Base {
         // Bail out early if query is empty
         if (empty($query->query)) {
             return $query;
+        }
+
+        // Check if results should be ordered by relevance
+        if ($query->args['sort'] === '_relevance') {
+            $query = $this->sortByRelevance($query);
         }
 
         // Check if finding results should be delegated to findByTemplatesGrouped
@@ -53,6 +58,36 @@ class Finder extends Base {
             return $this->findByTemplates($query, $templates);
         }
 
+        return $query;
+    }
+
+    /**
+     * Sort results by relevance
+     *
+     * @param Query $query
+     * @return Query
+     */
+    protected function sortByRelevance(Query $query): Query {
+
+        // Get query object, modify it, and replace original query with the modified version
+        $pwse_query = $query->getQuery();
+        $pwse_query->set('_pwse', []);
+        $pwse_query
+            ->select('MATCH (field_search_index.data) AGAINST (\'' . $this->sanitizeQuery($query->query) . '\' IN NATURAL LANGUAGE MODE) AS pwse_relevance')
+            ->orderby('pwse_relevance DESC', true);
+        $query->setQuery($pwse_query);
+
+        return $query;
+    }
+
+    /**
+     * Sanitize query string for use in MATCH ... AGAINST statement
+     *
+     * @param string $query
+     * @return string $query
+     */
+    protected function sanitizeQuery(string $query): string {
+        $query = preg_replace('/[^\p{L}\p{N}_]+/u', ' ', $query);
         return $query;
     }
 
