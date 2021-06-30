@@ -139,6 +139,7 @@ class Config extends Base {
         $indexed_fields->addOptions([
             'id' => 'id',
             'name' => 'name',
+            'path' => 'path',
         ]);
         $compatible_fieldtype_options = $this->options['compatible_fieldtypes'] ?? [];
         if (!empty($this->data['override_compatible_fieldtypes'])) {

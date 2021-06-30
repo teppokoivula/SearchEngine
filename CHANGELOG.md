@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - New sort option _relevance. At the moment this feature is considered experimental.
+- Support for indexing page paths.
 
 ## [0.30.2] - 2021-06-27
 

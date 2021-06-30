@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.12.1
+ * @version 0.13.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -181,6 +181,7 @@ class Indexer extends Base {
             $properties = [
                 'ids' => 'id',
                 'names' => 'name',
+                'paths' => 'path',
             ];
             $prefixes = $this->getOptions()['prefixes'];
             foreach ($properties as $property_group => $property) {
