@@ -17,7 +17,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.10.0
+ * @version 0.10.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -361,6 +361,8 @@ class Config extends Base {
             'FieldtypePassword',
             'FieldtypeFieldsetOpen',
             'FieldtypeFieldsetClose',
+            'FieldtypeFieldsetTabOpen',
+            'FieldtypeFieldsetTabClose',
             'FieldtypeFieldsetPage',
         ];
         foreach ($this->wire('modules')->find('className^=Fieldtype') as $fieldtype) {

@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.30.2
+ * @version 0.30.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -254,7 +254,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         // Trigger manual indexing when module config is saved
         $this->addHookBefore('Modules::saveModuleConfigData', $this, 'saveConfigData');
 
-        // Update search index when a page is saved
+        // Update search index when a page is saved. Note: this needs to happen after save (savedPageOrField) instead
+        // of before it (savePageOrFieldReady) due to issues related to enabling output formatting state on the fly.
         $this->addHookBefore('Pages::savedPageOrField', $this, 'savePageIndex');
     }
 
