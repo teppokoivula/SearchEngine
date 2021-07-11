@@ -362,6 +362,8 @@ class Config extends Base {
             'FieldtypePassword',
             'FieldtypeFieldsetOpen',
             'FieldtypeFieldsetClose',
+            'FieldtypeFieldsetTabOpen',
+            'FieldtypeFieldsetTabClose',
             'FieldtypeFieldsetPage',
         ];
         foreach ($this->wire('modules')->find('className^=Fieldtype') as $fieldtype) {

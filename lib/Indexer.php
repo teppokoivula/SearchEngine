@@ -117,7 +117,7 @@ class Indexer extends Base {
             if ($save) {
                 $of = $page->of();
                 $page->of(false);
-                $page->save($index_field, [
+                $this->wire('pages')->___saveField($page, $index_field, [
                     'quiet' => true,
                     'noHooks' => true,
                 ]);

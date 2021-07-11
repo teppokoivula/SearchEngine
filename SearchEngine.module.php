@@ -254,7 +254,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         // Trigger manual indexing when module config is saved
         $this->addHookBefore('Modules::saveModuleConfigData', $this, 'saveConfigData');
 
-        // Update search index when a page is saved
+        // Update search index when a page is saved. Note: this needs to happen after save (savedPageOrField) instead
+        // of before it (savePageOrFieldReady) due to issues related to enabling output formatting state on the fly.
         $this->addHookBefore('Pages::savedPageOrField', $this, 'savePageIndex');
     }
 

@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New sort option _relevance. At the moment this feature is considered experimental.
 - Support for indexing page paths.
 
+## [0.30.3] - 2021-07-11
+
+### Changed
+- When Indexer::indexPage() is called with the save argument set to true (default value), use Pages::___saveField() instead of Page::save() to make sure that save related hooks are not unintentionally fired.
+
 ## [0.30.2] - 2021-06-27
 
 ### Fixed
