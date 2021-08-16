@@ -69,11 +69,20 @@ class Finder extends Base {
      */
     protected function sortByRelevance(Query $query): Query {
 
+        // Check if user language is non-default, in which case we'll need the ID for our SQL query.
+        $language = $this->user->language->isDefault() ? '' : (int) $this->user->language->id;
+        if ($language !== '') {
+            $index_field = $this->modules->get('SearchEngine')->getIndexField();
+            if ($index_field === null || !$index_field->type instanceof \ProcessWire\FieldtypeTextareaLanguage) {
+                $language = '';
+            }
+        }
+
         // Get query object, modify it, and replace original query with the modified version
         $pwse_query = $query->getQuery();
         $pwse_query->set('_pwse', []);
         $pwse_query
-            ->select('MATCH (field_search_index.data) AGAINST (\'' . $this->sanitizeQuery($query->query) . '\' IN NATURAL LANGUAGE MODE) AS pwse_relevance')
+            ->select('MATCH (field_search_index.data' . $language . ') AGAINST (\'' . $this->sanitizeQuery($query->query) . '\' IN NATURAL LANGUAGE MODE) AS pwse_relevance')
             ->orderby('pwse_relevance DESC', true);
         $query->setQuery($pwse_query);
 
