@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.9.0
+ * @version 0.9.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -605,21 +605,26 @@ class Renderer extends Base {
             $desc_max_length = 255;
             $desc_sep_length = 3;
             $query_string = trim($query->query, '"');
+            $query_string_quoted = preg_quote($query_string, '/');
             $desc_padding = round(($desc_max_length - ($desc_sep_length * 2) - mb_strlen($query_string) - 2) / 2);
             $index = preg_split('/\r\n|\n/u', $index)[0];
-            if (preg_match('/.{0,' . $desc_padding . '}\b' . preg_quote($query_string, '/') . '\b.{0,' . $desc_padding . '}/ui', $index, $matches)) {
-                // There's a full match for the query string in the index.
+            if (preg_match('/.{0,' . $desc_padding . '}(?:\b' . $query_string_quoted . '\b|' . $query_string_quoted . ').{0,' . $desc_padding . '}/ui', $index, $matches)) {
+                // There's a match (exact or partial) for the query string in the index.
                 $desc = $this->formatResultAutodesc($matches[0], $index, $desc);
             } else if (strpos($query_string, ' ') !== false) {
                 // Query string has multiple words, look for partial matches.
                 $desc_length = 0;
                 $desc_padding = 50;
                 $match_offset = 0;
-                $query_string = implode('|', array_map(function($value) {
-                    return "\b" . preg_quote($value, '/') . "\b";
-                }, array_filter(explode(' ', str_replace([',', '.'], '', $query_string)))));
+                $query_string = array_map(function($value) {
+                    return preg_quote($value, '/');
+                }, array_unique(array_filter(explode(' ', str_replace([',', '.'], '', $query_string)))));
+                $query_string_parts = implode('|', $query_string);
+                $query_string_exact = implode('|', array_map(function($value) {
+                    return "\b" . $value . "\b";
+                }, $query_string));
                 while ($desc_length < $desc_max_length) {
-                    if (!preg_match('/.{0,' . $desc_padding . '}(' . $query_string . ').{0,' . $desc_padding . '}/ui', $index, $matches, \PREG_OFFSET_CAPTURE, $match_offset)) {
+                    if (!preg_match('/.{0,' . $desc_padding . '}(' . $query_string_exact . '|' . $query_string_parts . ').{0,' . $desc_padding . '}/ui', $index, $matches, \PREG_OFFSET_CAPTURE, $match_offset)) {
                         // No more matches found, break out of the while loop.
                         break;
                     }
@@ -628,7 +633,7 @@ class Renderer extends Base {
                     $desc_length += $desc_part_length;
                     if ($desc_length > $desc_max_length) {
                         $desc_part = mb_substr($desc_part, 0, $desc_part_length - ($desc_length - $desc_max_length) - $desc_sep_length);
-                        if (!preg_match('/' . $query_string . '/ui', $desc_part)) {
+                        if (!preg_match('/' . $query_string_parts . '/ui', $desc_part)) {
                             // Drop last desc part if it doesn't contain our query string.
                             break;
                         }
@@ -908,8 +913,8 @@ class Renderer extends Base {
             );
         } else if (strpos($query, ' ') !== false) {
             $query_words = implode('|', array_map(function($value) {
-                return "\b" . preg_quote($value, '/') . "\b";
-            }, array_filter(explode(' ', $query))));
+                return preg_quote($value, '/');
+            }, array_unique(array_filter(explode(' ', $query)))));
             $string = preg_replace(
                 '/(' . $query_words . ')/ui',
                 sprintf(

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.4] - 2022-01-16
+
+### Changed
+- Improvements to _auto_desc and description highlighting for partial word matches.
+
 ## [0.30.3] - 2021-07-11
 
 ### Changed

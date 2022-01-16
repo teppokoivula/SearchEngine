@@ -26,6 +26,7 @@
     display: inline-block;
     margin-right: 1rem;
     min-width: 2.5rem;
+    user-select: text;
 }
 
 .pwse-operator-details__list-item--active .pwse-operator-details__button {
