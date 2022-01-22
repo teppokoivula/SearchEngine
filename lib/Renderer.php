@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.9.1
+ * @version 0.9.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -1027,7 +1027,7 @@ class Renderer extends Base {
 
         // Additional sanitization for strings.
         foreach ($args['strings'] as $key => $string) {
-            $args['strings'][$key] = trim($string, "\"");
+            $args['strings'][$key] = $string === null ? null : trim($string, "\"");
         }
 
         // Replace parent selectors (ampersands, after SCSS syntax) in class names. Keys without

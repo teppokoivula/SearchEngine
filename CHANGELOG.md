@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.30.5] - 2022-0122
+
+### Fixed
+- PHP 8.1 deprecation in Renderer (trim() with null param).
+
 ## [0.30.4] - 2022-01-16
 
 ### Changed
