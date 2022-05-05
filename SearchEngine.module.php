@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.30.5
+ * @version 0.30.6
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -597,16 +597,18 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
     }
 
     /**
-     * When the module is uninstalled delete the index field or prompt to remove it manually
+     * Remove index field
      *
+     * @param string|null $index_field_name Index field name. If name is null, get the default name from settings.
      */
-    public function uninstall() {
+    public function removeIndexField(string $index_field_name = null) {
 
-        // Init runtime options
-        $this->initOptions();
+        // If index field name is null, get default value from options
+        if (is_null($index_field_name)) {
+            $index_field_name = $this->options['index_field'];
+        }
 
-        // Remove search index field (if it exists and unless it's still in use)
-        $index_field = $this->getIndexField($this->options['index_field']);
+        $index_field = $this->getIndexField($index_field_name);
         if ($index_field && $index_field->_is_valid_index_field) {
             $used_by_templates = $index_field->getTemplates();
             if (count($used_by_templates)) {
@@ -629,6 +631,19 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 }
             }
         }
+    }
+
+    /**
+     * When the module is uninstalled delete the index field or prompt to remove it manually
+     *
+     */
+    public function uninstall() {
+
+        // Init runtime options
+        $this->initOptions();
+
+        // Remove search index field (if it exists and unless it's still in use)
+        $this->removeIndexField();
     }
 
     /**

@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.30.5] - 2022-0122
+## [0.30.6] - 2022-05-05
+
+### Changed
+- Split code used for removing index field into separate method for the SearchEngine main class.
+
+## [0.30.5] - 2022-01-22
 
 ### Fixed
 - PHP 8.1 deprecation in Renderer (trim() with null param).

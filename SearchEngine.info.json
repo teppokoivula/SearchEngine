@@ -2,7 +2,7 @@
     "title": "SearchEngine",
     "summary": "SearchEngine is a module for indexing and searching site contents.",
     "icon": "search",
-    "version": "0.30.5",
+    "version": "0.30.6",
     "author": "Teppo Koivula",
     "href": "https://github.com/teppokoivula/SearchEngine",
     "requires": [
