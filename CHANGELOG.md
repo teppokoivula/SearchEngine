@@ -11,7 +11,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New sort option _relevance. At the moment this feature is considered experimental.
 - Support for indexing page paths.
 
-## [0.30.5] - 2022-0122
+## [0.31.0] - 2022-07-12
+
+### Added
+- Added support for ProFields: Combo.
+
+## [0.30.6] - 2022-05-05
+
+### Changed
+- Split code used for removing index field into separate method for the SearchEngine main class.
+
+## [0.30.5] - 2022-01-22
 
 ### Fixed
 - PHP 8.1 deprecation in Renderer (trim() with null param).

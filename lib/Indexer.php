@@ -239,6 +239,11 @@ class Indexer extends Base {
                 ]))));
             } else if ($field->type instanceof \ProcessWire\FieldtypeTextareas) {
                 return $page->getFormatted($field->name)->render('');
+            } else if ($field->type instanceof \ProcessWire\FieldtypeCombo) {
+                return $this->processor->processIndex(array_values($page->get($field->name)->getArray()), [
+                    'withMeta' => false,
+                    'withTags' => true,
+                ]);
             } else if ($field->type instanceof \ProcessWire\FieldtypeOptions) {
                 return $page->getFormatted($field->name)->render();
             } else {
