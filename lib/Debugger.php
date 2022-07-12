@@ -155,7 +155,7 @@ class Debugger extends Base {
      */
     public function debugIndex(bool $include_container = true): string {
 
-        // container for debug output
+        // Container for debug output
         $debug = [
             'indexable_content' => [
                 'heading' => $this->_('Content being indexed'),
@@ -167,11 +167,11 @@ class Debugger extends Base {
             ],
         ];
 
-        // common variables
+        // Common variables
         $indexed_templates = implode('|', $this->getOptions()['indexed_templates']);
         $indexed_fields = $this->getOptions()['indexed_fields'];
 
-        // content being indexed
+        // Content being indexed
         $debug['indexable_content']['content'] = $this->renderList([
             [
                 'label' => $this->_('Indexed templates'),
@@ -187,7 +187,7 @@ class Debugger extends Base {
             ],
         ]);
 
-        // languages
+        // Languages
         $languages = [null];
         if ($this->index_field->type == 'FieldtypeTextareaLanguage') {
             $languages = [];
@@ -196,7 +196,7 @@ class Debugger extends Base {
             }
         }
 
-        // display debug for each language
+        // Display debug for each language
         foreach ($languages as $language) {
             $index = '';
             foreach ($this->wire('pages')->findMany($this->index_field . '!=, include=unpublished, status!=trash') as $indexed_page) {
@@ -228,7 +228,7 @@ class Debugger extends Base {
             ];
         }
 
-        // return markup
+        // Return markup
         return $this->renderSection($debug, $include_container, [
             'type' => 'index',
         ]);
@@ -242,12 +242,12 @@ class Debugger extends Base {
      */
     public function debugPage(bool $include_container = true): string {
 
-        // bail out early if no valid page is defined
+        // Bail out early if no valid page is defined
         if (!$this->page || !$this->page->id) {
             return '';
         }
 
-        // container for debug output
+        // Container for debug output
         $debug = [
             'info' => [
                 'heading' => $this->_('Page info'),
@@ -259,7 +259,7 @@ class Debugger extends Base {
             ],
         ];
 
-        // page info
+        // Page info
         $debug['info']['content'] = $this->renderList([
             [
                 'label' => $this->_('ID'),
@@ -293,7 +293,7 @@ class Debugger extends Base {
             ],
         ]);
 
-        // contents of the index
+        // Contents of the index
         if ($this->pageHasIndexfield($this->page)) {
             $index = $this->getIndexFor($this->page);
             foreach ($index as $index_language => $index_content) {
@@ -342,7 +342,7 @@ class Debugger extends Base {
             $debug['index']['content'] = '<em>' . $this->_('Selected page has no index field.') . '</em>';
         }
 
-        // return markup
+        // Return markup
         return $this->renderSection($debug, $include_container, [
             'type' => 'page',
         ]);
@@ -356,17 +356,17 @@ class Debugger extends Base {
      */
     public function debugQuery(bool $include_container = true): string {
 
-        // bail out early if no query is defined
+        // Bail out early if no query is defined
         if (!$this->query) {
             return '';
         }
 
-        // init SearchEngine and fetch Renderer
+        // Init SearchEngine and fetch Renderer
         $se = $this->wire('modules')->get('SearchEngine');
         $se->initOnce();
         $renderer = $se->renderer;
 
-        // container for debug output
+        // Container for debug output
         $debug = [
             'info' => [
                 'heading' => $this->_('Query info'),
@@ -378,7 +378,7 @@ class Debugger extends Base {
             ],
         ];
 
-        // languages
+        // Languages
         $original_language = null;
         $languages = [null];
         if ($this->index_field->type == 'FieldtypeTextareaLanguage') {
@@ -389,22 +389,22 @@ class Debugger extends Base {
             }
         }
 
-        // display debug for each language
+        // Display debug for each language
         foreach ($languages as $language) {
 
-            // set up timer
+            // Set up timer
             $timer = \ProcessWire\Debug::timer();
 
-            // perform query
+            // Perform query
             if ($language !== null) {
                 $this->wire('user')->language = $language;
             }
 
-            // query response may be a Query object, or an array of Query objects if grouped result set was requested
+            // Query response may be a Query object, or an array of Query objects if grouped result set was requested
             $query = $se->find($this->query, $this->query_args);
             $query_timer = sprintf($this->_('%s seconds'), \ProcessWire\Debug::timer($timer));
 
-            // query info
+            // Query info
             $info_content = $this->renderList([
                 [
                     'label' => $this->_('Original query'),
@@ -455,7 +455,7 @@ class Debugger extends Base {
                 $debug['info']['content'] = $info_content;
             }
 
-            // results
+            // Results
             $json_args = $renderer->prepareArgs([
                 'results_json_options' => JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE,
             ]);
@@ -496,12 +496,12 @@ class Debugger extends Base {
             }
         }
 
-        // reset language
+        // Reset language
         if ($original_language) {
             $this->wire('user')->language = $original_language;
         }
 
-        // return markup
+        // Return markup
         return $this->renderSection($debug, $include_container, [
             'type' => 'query',
         ]);
@@ -516,19 +516,19 @@ class Debugger extends Base {
      */
     public function renderDebugContainer(string $content = '', array $data = []): string {
 
-        // inject scripts
+        // Inject scripts
         $this->wire('config')->scripts->add(
             $this->wire('config')->urls->get('SearchEngine') . 'js/dist/admin.js'
         );
 
-        // inject styles
+        // Inject styles
         foreach (['tabs', 'debugger'] as $styles) {
             $this->wire('config')->styles->add(
                 $this->wire('config')->urls->get('SearchEngine') . 'css/' . $styles . '.css'
             );
         }
 
-        // data attributes for debug output container
+        // Data attributes for debug output container
         $data = array_merge([
             'debug-button-label' => $this->_('Debug'),
             'refresh-button-label' => $this->_('Refresh'),
@@ -539,7 +539,7 @@ class Debugger extends Base {
             'type' => 'page',
         ], $data);
 
-        // construct and return container markup
+        // Construct and return container markup
         return '<div class="pwse-debug" '
             . implode(" ", array_map(function($key, $value) {
                 return 'data-' . $key . '="' . $value . '"';
@@ -557,16 +557,16 @@ class Debugger extends Base {
      */
     protected function renderList(array $items): string {
 
-        // filter items and bail out early if the resulting array is empty
+        // Filter items and bail out early if the resulting array is empty
         $items = array_filter($items);
         if (empty($items)) {
             return '';
         }
 
-        // container for output
+        // Container for output
         $out = '';
 
-        // append items
+        // Append items
         foreach ($items as $item) {
             if (is_null($item['value']) || $item['value'] == '') continue;
             $out .= '<li>'
@@ -575,7 +575,7 @@ class Debugger extends Base {
                 . '</li>';
         }
 
-        // return list markup
+        // Return list markup
         return $out == '' ? '' : '<ul>' . $out . '</ul>';
     }
 
@@ -593,10 +593,10 @@ class Debugger extends Base {
             $out .= '<h2>' . $subsection['heading'] . '</h2>';
             if (is_array($subsection['content'])) {
                 if (isset($subsection['content'][null])) {
-                    // single language content
+                    // Single language content
                     $subsection['content'] = $subsection['content'][null]['content'];
                 } else {
-                    // multilanguage content, render tabs
+                    // Multilanguage content, render tabs
                     $out .= $this->renderer->renderTabs('debugger-' . $container_data['type'] ?? $key, $subsection['content']);
                     continue;
                 }
@@ -618,11 +618,11 @@ class Debugger extends Base {
      */
     protected function getWords(string $index = '', bool $unique = false): array {
 
-        // prepare index
+        // Prepare index
         $index = trim($index);
         $index = $this->wire('sanitizer')->unentities($index);
 
-        // get words
+        // Get words
         preg_match_all("/[\w\-']+/ui", $index, $index_words);
         $index_words = $index_words[0] ?? [];
         $index_words = array_map(function($word) {
@@ -638,12 +638,12 @@ class Debugger extends Base {
             return mb_strlen($word) > 2;
         });
 
-        // unique only?
+        // Unique only?
         if ($unique) {
             $index_words = array_unique($index_words);
         }
 
-        // sort words alphabetically
+        // Sort words alphabetically
         sort($index_words);
 
         return $index_words;
@@ -656,23 +656,23 @@ class Debugger extends Base {
      */
     public function initAJAXAPI() {
 
-        // bail out early if se-debug GET param isn't set
+        // Bail out early if se-debug GET param isn't set
         if (!$this->wire('input')->get('se-debug')) return;
 
-        // require superuser role
+        // Require superuser role
         if (!$this->wire('user')->isSuperuser()) {
             throw new WirePermissionException("You don't have permission to execute that action");
         }
 
         if ($this->wire('input')->get('se-debug-page-id')) {
 
-            // debug single page
+            // Debug single page
             $this->setPage((int) $this->wire('input')->get('se-debug-page-id'));
             exit($this->debugPage(false));
 
         } else if ($this->wire('input')->get('se-reindex-page-id')) {
 
-            // reindex single page
+            // Reindex single page
             $indexPageID = (int) $this->wire('input')->get('se-reindex-page-id');
             $indexPage = $this->wire('pages')->get($indexPageID);
             if ($indexPage && $indexPage->id) {
@@ -686,7 +686,7 @@ class Debugger extends Base {
 
         } else if ($this->wire('input')->get('se-debug-query')) {
 
-            // debug query
+            // Debug query
             $this->setQuery($this->wire('input')->get('se-debug-query'));
             $this->setQueryArgs($this->wire('input')->get('se-debug-query-args'));
 
@@ -694,7 +694,7 @@ class Debugger extends Base {
 
         } else if ($this->wire('input')->get('se-debug-index')) {
 
-            // debug index
+            // Debug index
             exit($this->debugIndex(false));
 
         }
