@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.31.0] - 2022-07-12
+
+### Added
+- Added support for ProFields: Combo.
+
 ## [0.30.6] - 2022-05-05
 
 ### Changed
