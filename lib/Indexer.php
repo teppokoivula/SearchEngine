@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.13.0
+ * @version 0.14.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -227,16 +227,10 @@ class Indexer extends Base {
                 $field_value = $page->getUnformatted($field->name);
                 if ($field_value instanceof \ProcessWire\WireArray) {
                     return $field_value->implode(' ', function($item) {
-                        return implode(' ', array_filter([
-                            $item->name,
-                            $item->description,
-                        ]));
+                        return $this->getPagefileIndexValue($item);
                     });
                 } else if ($field_value instanceof \ProcessWire\Pagefile) {
-                    return implode(' ', array_filter([
-                        $field_value->name,
-                        $field_value->description,
-                    ]));
+                    return $this->getPagefileIndexValue($field_value);
                 }
             } else if ($field->type instanceof \ProcessWire\FieldtypeTable) {
                 return $this->sanitizer->unentities(strip_tags(str_replace('</td><td>', ' ', $page->getFormatted($field->name)->render([
@@ -322,6 +316,19 @@ class Indexer extends Base {
             }
         }
         return $index;
+    }
+
+    /**
+     * Get index value for a Pagefile
+     *
+     * @param \ProcessWire\Pagefile $file
+     * @return string|null
+     */
+    protected function ___getPagefileIndexValue(\ProcessWire\Pagefile $file): ?string {
+        return implode(' ', array_filter([
+            $file->name,
+            $file->description,
+        ]));
     }
 
     /**
