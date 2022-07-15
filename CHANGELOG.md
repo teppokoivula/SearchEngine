@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New sort option _relevance. At the moment this feature is considered experimental.
 - Support for indexing page paths.
 
+## [0.33.0] - 2022-07-16
+
+### Added
+- New hookable method Indexer::getPagefileIndexValue().
+
 ## [0.32.0] - 2022-07-15
 
 ### Added
