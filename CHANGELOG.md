@@ -11,6 +11,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New sort option _relevance. At the moment this feature is considered experimental.
 - Support for indexing page paths.
 
+## [0.32.0] - 2022-07-15
+
+### Added
+- New hookable methods Query::prepared(), QuerySet::prepared(), and QueryBase::prepared().
+- Elapsed time is displayed after reindexing single page in module config screen (Debugger).
+
+### Changed
+- Refactored parts of Indexer to better support potential future improvements.
+
+### Fixed
+- PHP 8.1 deprecation issue for QuerySet::getIterator()
+
 ## [0.31.0] - 2022-07-12
 
 ### Added

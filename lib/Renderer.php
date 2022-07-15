@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.9.2
+ * @version 0.9.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -357,7 +357,7 @@ class Renderer extends Base {
         return sprintf(
             $args['templates']['results_summary'],
             vsprintf($args['strings']['results_summary_' . $type] ?? '', [
-                trim($query->query, '\"'),
+                trim($query->display_query, '\"'),
                 $query->resultsTotal,
             ])
         );
@@ -533,7 +533,7 @@ class Renderer extends Base {
             // Note: text sanitizer has maxLength of 255 by default. This currently limits the max length of the
             // description text, and also needs to be taken into account for in the getResultAutodesc() method.
             $value = $this->wire('sanitizer')->text($value);
-            $value = $this->maybeHighlight($value, $query->query, $data);
+            $value = $this->maybeHighlight($value, $query->display_query, $data);
             $value = sprintf($data['templates']['result_desc'], $value);
         }
         return $value;

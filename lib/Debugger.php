@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.5.2
+ * @version 0.5.3
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -677,8 +677,10 @@ class Debugger extends Base {
             $indexPage = $this->wire('pages')->get($indexPageID);
             if ($indexPage && $indexPage->id) {
                 $indexer = new Indexer;
+                $timer = \ProcessWire\Debug::timer();
                 if ($indexer->indexPage($indexPage)) {
-                    exit('<div class="uk-alert-success" style="color: #32d296; background: #edfbf6" uk-alert>' . $this->_('Page indexed succesfully.') . '</div>');
+                    $message = sprintf($this->_('Page indexed succesfully in %s seconds.'), \ProcessWire\Debug::timer($timer));
+                    exit('<div class="uk-alert-success" style="color: #32d296; background: #edfbf6" uk-alert>' . $message . '</div>');
                 }
                 exit('<div class="uk-alert-warning" uk-alert>' . $this->_('Error occurred while trying to index the page.') . '</div>');
             }

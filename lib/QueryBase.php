@@ -21,9 +21,16 @@ abstract class QueryBase extends Base {
     /**
      * The original, unmodified query provided for the find operation
      *
-     * @var mixed
+     * @var string|null
      */
     protected $original_query = '';
+
+    /**
+     * Version of the query intended for front-end display (before potential internal modifications)
+     *
+     * @var string|null
+     */
+    protected $display_query = '';
 
     /**
      * Additional arguments provided for the find operation
@@ -79,7 +86,35 @@ abstract class QueryBase extends Base {
         if (empty($args['no_validate'])) {
             $this->errors = $this->validateQuery($this->query);
         }
+
+        // Set display query and run hookable prepared method
+        $this->display_query = $this->query;
+        $this->prepared();
     }
+
+    /**
+     * Prepared method for hooks, executed after query object instance is constructed
+     *
+     * This method can be used in case you need to modify the user-provided query string before using it to find the
+     * results. Please note that there's a separate display_query property that is (by default) used by the end user
+     * visible rendered templates ("One result for "[display_query]:" etc.)
+     *
+     * Example use:
+     *
+     * ```
+     * wire()->addHookAfter('Query::prepared', function(HookEvent $event) {
+     *     // add "url:" and "href:" as alternatives to "link:"
+     *     $event->object->query = preg_replace(
+     *         '/\b(?:url|href):([^\s\b]+)$/i',
+     *         'link:$1',
+     *         $event->object->query
+     *     );
+     * });
+     * ```
+     *
+     * @since 0.3.0 (SearchEngine 0.32.0)
+     */
+    protected function ___prepared() {}
 
     /**
      * Sanitize provided query string.
