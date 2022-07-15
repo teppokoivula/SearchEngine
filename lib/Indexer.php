@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.12.1
+ * @version 0.13.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -139,25 +139,28 @@ class Indexer extends Base {
      * @return array
      */
     protected function ___getPageIndex(?\ProcessWire\Page $page, array $indexed_fields = [], string $prefix = '', array $args = []): array {
+
         // This is a precaution (enhancing fault tolerance) in case a null value somehow gets passed here; reportedly
         // this has occurred with some Repeater/RepeaterMatrix + FieldtypePage combinations.
         if (is_null($page)) return [];
-        $index = [];
+
+        // Change current user's language to the one we're currently processing
         $user_language = null;
         if (!empty($args['language'])) {
-            // Change current user's language to the one we're currently processing
             $user_language = $this->wire('user')->language;
             $this->wire('user')->language = $args['language'];
         }
+
+        // Create index for provided page
+        $index = [];
         if ($page->id && !empty($indexed_fields)) {
-            $repeatable_fieldtypes = [
-                'FieldtypePageTable',
-                'FieldtypeRepeater',
-                'FieldtypeRepeaterMatrix',
-            ];
+
+            // Index Page fields defined as indexable via module config
             foreach ($page->fields as $field) {
-                if (in_array($field->name, $indexed_fields)) {
-                    if (in_array($field->type, $repeatable_fieldtypes)) {
+                if ($this->isIndexedField($field, $page, [
+                    'indexed_fields' => $indexed_fields,
+                ])) {
+                    if ($this->isRepeatableField($field)) {
                         // Note: union operator is slightly faster than array_merge() and makes sense
                         // here since we're working with associative arrays only.
                         $index += $this->getRepeatableIndexValue($page, $field, $indexed_fields, $prefix);
@@ -166,25 +169,28 @@ class Indexer extends Base {
                     } else if ($field->type instanceof \ProcessWire\FieldtypePage) {
                         // Note: unlike with FieldtypeFieldsetPage above, here we want to check for both FieldtypePage
                         // AND any class that might potentially extend it, which is why we're using instanceof.
-                        $indexed_page_reference_fields = [
+                        $index += $this->getPageReferenceIndexValue($page, $field, [
                             'id',
                             'name',
                             'title',
-                        ];
-                        $index += $this->getPageReferenceIndexValue($page, $field, $indexed_page_reference_fields, $prefix);
+                        ], $prefix);
                     } else {
                         $index[$prefix . $field->name] = $this->getIndexValue($page, $field);
                     }
                 }
             }
-            // Check for Page properties, which are not included in the fields property of a Page
+
+            // Index Page properties defined indexable via module config. Note that these properties are not included
+            // in the "fields" property of the Page object, so we're checking for them separately.
             $properties = [
                 'ids' => 'id',
                 'names' => 'name',
             ];
             $prefixes = $this->getOptions()['prefixes'];
             foreach ($properties as $property_group => $property) {
-                if (in_array($property, $indexed_fields)) {
+                if ($this->isIndexedField($property, $page, [
+                    'indexed_fields' => $indexed_fields,
+                ])) {
                     $field_prefix = empty($prefix) ? 'page' : rtrim($prefix, '.');
                     $property_prefix = $prefixes[$property] ?? '';
                     if (!isset($args[$property . '_prefix']) && !empty($prefixes[$property]) && $prefixes[$property] != ':') {
@@ -197,10 +203,12 @@ class Indexer extends Base {
                 }
             }
         }
+
+        // Restore current user's original language
         if (!empty($user_language)) {
-            // Restore current user's original language
             $this->wire('user')->language = $user_language;
         }
+
         return $index;
     }
 
@@ -255,6 +263,8 @@ class Indexer extends Base {
 
     /**
      * Get index value for a repeatable page field
+     *
+     * Index value for a repeatable field is a combination of index values for each individual item.
      *
      * @param \ProcessWire\Page $page
      * @param \ProcessWire\Field $field
@@ -312,6 +322,36 @@ class Indexer extends Base {
             }
         }
         return $index;
+    }
+
+    /**
+     * Check if a field should be indexed
+     *
+     * @param \ProcessWire\Field|string $field
+     * @param \ProcessWire\Page $page
+     * @param array $args Additional arguments:
+     *  - indexed_fields: Fields selected for indexing via module config
+     * @return bool
+     */
+    protected function isIndexedField($field, \ProcessWire\Page $page, array $args = []): bool {
+        $field_name = $field instanceof \ProcessWire\Field ? $field->name : $field;
+        return !empty($args['indexed_fields']) && in_array($field_name, $args['indexed_fields']);
+    }
+
+    /**
+     * Check if a field is repeatable
+     *
+     * Repeatable fields contain Page objects (or objects with a class derived from the Page class) as their values.
+     *
+     * @param \ProcessWire\Field $field
+     * @return bool
+     */
+    protected function isRepeatableField(\ProcessWire\Field $field): bool {
+        return in_array($field->type, [
+            'FieldtypePageTable',
+            'FieldtypeRepeater',
+            'FieldtypeRepeaterMatrix',
+        ]);
     }
 
 }
