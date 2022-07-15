@@ -9,7 +9,7 @@ use ProcessWire\PageArray;
  *
  * This class represents a set of one or more Query objects.
  *
- * @version 0.1.3
+ * @version 0.1.4
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
@@ -133,7 +133,7 @@ class QuerySet extends QueryBase implements \IteratorAggregate {
 	 *
 	 * @return \ArrayObject
 	 */
-	public function getIterator() {
+	public function getIterator(): \Traversable {
 		return new \ArrayObject($this->items);
 	}
 
