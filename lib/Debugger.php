@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.5.4
+ * @version 0.5.5
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -627,6 +627,7 @@ class Debugger extends Base {
             "/"
             . "(?:\+\d{1,2} )?\(?\d{3}\)?[ .-]?\d{3,4}[ .-]?\d{3,4}" // phone number
             . "|(?![\b\s])[\+\-]?\d(?:(?:[ \,\.])?\d)+\b" // numeric
+            . "|\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b" // email address
             . "|(?:https?):\/\/(?:\.?[\w\d-]+\/?|[\w\d-]+\.\w+)+" // URL or path
             . "|[\w\-']+" // word
             . "/ui",
