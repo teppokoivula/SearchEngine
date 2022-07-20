@@ -326,7 +326,7 @@ class Debugger extends Base {
                     [
                         'label' => $this->_('Unique words'),
                         'value' => count($index_words)
-                                . '<pre class="pwse-pre">' . implode(', ', $index_words) . '</pre>',
+                                . '<pre class="pwse-pre pwse-collapse">' . implode(', ', $index_words) . '</pre>',
                     ],
                     [
                         'label' => $this->_('Metadata'),
