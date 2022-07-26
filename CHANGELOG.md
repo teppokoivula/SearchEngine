@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.1] - 2022-07-26
+
+### Fixed
+- Issue where Debugger was discarding some content unintentionally when debugging entire index.
+
 ## [0.34.0] - 2022-07-26
 
 ### Added

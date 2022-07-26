@@ -201,7 +201,7 @@ class Debugger extends Base {
             $index = '';
             foreach ($this->wire('pages')->findMany($this->index_field . '!=, include=unpublished, status!=trash') as $indexed_page) {
                 $page_index = $this->getIndexfor($indexed_page, $language);
-                $index .= ' ' . reset($page_index);
+                $index .= ' ' . preg_split('/\r\n|\n|\r/', reset($page_index))[0];
             }
             $index_words = $this->getWords($index, true);
             $debug['indexed_content']['content'][$language === null ? null : $language->name] = [
