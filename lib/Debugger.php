@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.5.5
+ * @version 0.5.6
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -621,6 +621,9 @@ class Debugger extends Base {
         // Prepare index
         $index = trim($index);
         $index = $this->wire('sanitizer')->unentities($index);
+
+        // Discard meta
+        $index = preg_split('/\r\n|\n|\r/', $index)[0];
 
         // Get words
         preg_match_all(

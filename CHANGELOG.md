@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.34.0] - 2022-07-26
+
+### Added
+- New IndexValue value object class.
+- Indexing file fields stores file names and metadata, latter of which currently includes (per page) unique hash and modify timestamp, in page specific search index metadata.
+
+### Changed
+- Indexer::getIndexValue() returns IndexValue instead of string.
+- Processor discards meta keys before generating URL index.
+- Debugger discards metadata before generating unique word list.
+
+### Fixed
+- Issue where some meta values were unintentionally included in combined text index.
+
 ## [0.33.3] - 2022-07-20
 
 ### Changed

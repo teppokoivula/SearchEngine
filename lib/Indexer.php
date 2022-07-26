@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.14.0
+ * @version 0.15.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -175,7 +175,12 @@ class Indexer extends Base {
                             'title',
                         ], $prefix);
                     } else {
-                        $index[$prefix . $field->name] = $this->getIndexValue($page, $field);
+                        $index_value = $this->getIndexValue($page, $field);
+                        $index[$prefix . $field->name] = $index_value->getValue();
+                        foreach ($index_value->getMeta(true) as $meta_key => $meta_value) {
+                            $meta_value = explode(':', $meta_value);
+                            $index[self::META_PREFIX . $meta_key . '.' . $field->name . '.' . array_shift($meta_value) . ':'] = implode(':', $meta_value);
+                        }
                     }
                 }
             }
@@ -199,7 +204,7 @@ class Indexer extends Base {
                         $property_prefix = $property . ':';
                     }
                     $property_prefix = (ctype_alnum($property_prefix[0] ?? '') ? '.' : '') . $property_prefix;
-                    $index[self::META_PREFIX . $property_group . '.' . $field_prefix] = $property_prefix . $this->getIndexValue($page, $property);
+                    $index[self::META_PREFIX . $property_group . '.' . $field_prefix] = $property_prefix . $this->getIndexValue($page, $property)->getValue();
                 }
             }
         }
@@ -217,42 +222,49 @@ class Indexer extends Base {
      *
      * @param \ProcessWire\Page $page
      * @param \ProcessWire\Field|string $field Field object or name of a field (string).
-     * @return mixed
+     * @return IndexValue
      */
-    protected function ___getIndexValue(\ProcessWire\Page $page, $field) {
-        $value = '';
+    protected function ___getIndexValue(\ProcessWire\Page $page, $field): IndexValue {
         $field_name = $field;
         if ($field instanceof \ProcessWire\Field) {
+            $field_name = $field->name;
             if ($field->type instanceof \ProcessWire\FieldtypeFile) {
+                $value = [];
+                $files = [];
                 $field_value = $page->getUnformatted($field->name);
-                if ($field_value instanceof \ProcessWire\WireArray) {
-                    return $field_value->implode(' ', function($item) {
-                        return $this->getPagefileIndexValue($item);
-                    });
-                } else if ($field_value instanceof \ProcessWire\Pagefile) {
-                    return $this->getPagefileIndexValue($field_value);
+                if ($field_value instanceof \ProcessWire\Pagefile) {
+                    $field_value = $this->wire(new \ProcessWire\Pagefiles($page))->add($field_value);
                 }
+                if ($field_value instanceof \ProcessWire\WireArray) {
+                    foreach ($field_value as $item) {
+                        $value[] = $this->getPagefileIndexValue($item);
+                        $files[] = [
+                            'file.name:' . $item->name,
+                            'file.meta:' . $item->hash . '|' . $item->modified,
+                        ];
+                    }
+                }
+                return (new IndexValue(implode(' ', $value)))->setMeta([
+                    'files' => $files,
+                ]);
             } else if ($field->type instanceof \ProcessWire\FieldtypeTable) {
-                return $this->sanitizer->unentities(strip_tags(str_replace('</td><td>', ' ', $page->getFormatted($field->name)->render([
+                return new IndexValue($this->sanitizer->unentities(strip_tags(str_replace('</td><td>', ' ', $page->getFormatted($field->name)->render([
                     'tableClass' => null,
                     'useWidth' => false,
                     'thead' => ' ',
-                ]))));
+                ])))));
             } else if ($field->type instanceof \ProcessWire\FieldtypeTextareas) {
-                return $page->getFormatted($field->name)->render('');
+                return new IndexValue($page->getFormatted($field->name)->render(''));
             } else if ($field->type instanceof \ProcessWire\FieldtypeCombo) {
-                return $this->processor->processIndex(array_values($page->get($field->name)->getArray()), [
+                return new IndexValue($this->processor->processIndex(array_values($page->get($field->name)->getArray()), [
                     'withMeta' => false,
                     'withTags' => true,
-                ]);
+                ]));
             } else if ($field->type instanceof \ProcessWire\FieldtypeOptions) {
-                return $page->getFormatted($field->name)->render();
-            } else {
-                $field_name = $field->name;
+                return new IndexValue($page->getFormatted($field->name)->render());
             }
         }
-        $value = $page->getFormatted($field_name);
-        return $value;
+        return new IndexValue($page->getFormatted($field_name));
     }
 
     /**
