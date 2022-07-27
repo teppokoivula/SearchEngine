@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.15.0
+ * @version 0.16.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -130,7 +130,7 @@ class Indexer extends Base {
     }
 
     /**
-     * Store page data in search index and return it as an array
+     * Get index for a single page
      *
      * @param \ProcessWire\Page|null $page
      * @param array $indexed_fields
@@ -157,31 +157,13 @@ class Indexer extends Base {
 
             // Index Page fields defined as indexable via module config
             foreach ($page->fields as $field) {
-                if ($this->isIndexedField($field, $page, [
+                if ($this->isIndexedField($field, [
                     'indexed_fields' => $indexed_fields,
+                    'object' => $page,
                 ])) {
-                    if ($this->isRepeatableField($field)) {
-                        // Note: union operator is slightly faster than array_merge() and makes sense
-                        // here since we're working with associative arrays only.
-                        $index += $this->getRepeatableIndexValue($page, $field, $indexed_fields, $prefix);
-                    } else if ($field->type->className() == 'FieldtypeFieldsetPage') {
-                        $index += $this->getPageIndex($page->getUnformatted($field->name), $indexed_fields, $prefix . $field->name . '.', $args);
-                    } else if ($field->type instanceof \ProcessWire\FieldtypePage) {
-                        // Note: unlike with FieldtypeFieldsetPage above, here we want to check for both FieldtypePage
-                        // AND any class that might potentially extend it, which is why we're using instanceof.
-                        $index += $this->getPageReferenceIndexValue($page, $field, [
-                            'id',
-                            'name',
-                            'title',
-                        ], $prefix);
-                    } else {
-                        $index_value = $this->getIndexValue($page, $field);
-                        $index[$prefix . $field->name] = $index_value->getValue();
-                        foreach ($index_value->getMeta(true) as $meta_key => $meta_value) {
-                            $meta_value = explode(':', $meta_value);
-                            $index[self::META_PREFIX . $meta_key . '.' . $field->name . '.' . array_shift($meta_value) . ':'] = implode(':', $meta_value);
-                        }
-                    }
+                    $field_index = $this->getFieldIndex($field, $page, $indexed_fields, $prefix, $args);
+                    if (empty($field_index)) continue;
+                    $index += $field_index;
                 }
             }
 
@@ -193,8 +175,9 @@ class Indexer extends Base {
             ];
             $prefixes = $this->getOptions()['prefixes'];
             foreach ($properties as $property_group => $property) {
-                if ($this->isIndexedField($property, $page, [
+                if ($this->isIndexedField($property, [
                     'indexed_fields' => $indexed_fields,
+                    'object' => $page,
                 ])) {
                     $field_prefix = empty($prefix) ? 'page' : rtrim($prefix, '.');
                     $property_prefix = $prefixes[$property] ?? '';
@@ -218,26 +201,69 @@ class Indexer extends Base {
     }
 
     /**
-     * Get the index value for a single page field
+     * Get index for a single field
      *
-     * @param \ProcessWire\Page $page
+     * @param \ProcessWire\Field $field
+     * @param \ProcessWire\WireData $object
+     * @param array $indexed_fields
+     * @param string $prefix
+     * @param array $args
+     * @return array
+     */
+    protected function ___getFieldIndex(\ProcessWire\Field $field, \ProcessWire\WireData $object, array $indexed_fields = [], string $prefix = '', array $args = []): array {
+        $index = [];
+        if ($this->isRepeatableField($field)) {
+            // Note: union operator is slightly faster than array_merge() and makes sense
+            // here since we're working with associative arrays only.
+            $index = $this->getRepeatableIndexValue($object, $field, $indexed_fields, $prefix);
+        } else if ($field->type->className() == 'FieldtypeFieldsetPage') {
+            $index = $this->getPageIndex(
+                $this->getUnformattedFieldValue($object, $field->name),
+                $indexed_fields,
+                $prefix . $field->name . '.',
+                $args
+            );
+        } else if ($field->type instanceof \ProcessWire\FieldtypePage) {
+            // Note: unlike with FieldtypeFieldsetPage above, here we want to check for both FieldtypePage
+            // AND any class that might potentially extend it, which is why we're using instanceof.
+            $index = $this->getPageReferenceIndexValue($object, $field, [
+                'id',
+                'name',
+                'title',
+            ], $prefix);
+        } else {
+            $index_value = $this->getIndexValue($object, $field, $indexed_fields);
+            $index[$prefix . $field->name] = $index_value->getValue();
+            foreach ($index_value->getMeta(true) as $meta_key => $meta_value) {
+                $meta_value = explode(':', $meta_value);
+                $index[self::META_PREFIX . $meta_key . '.' . $field->name . '.' . array_shift($meta_value) . ':'] = implode(':', $meta_value);
+            }
+        }
+        return array_filter($index);
+    }
+
+    /**
+     * Get the index value for a single field
+     *
+     * @param \ProcessWire\WireData $object
      * @param \ProcessWire\Field|string $field Field object or name of a field (string).
+     * @param array $indexed_fields
      * @return IndexValue
      */
-    protected function ___getIndexValue(\ProcessWire\Page $page, $field): IndexValue {
+    protected function ___getIndexValue(\ProcessWire\WireData $object, $field, array $indexed_fields = []): IndexValue {
         $field_name = $field;
         if ($field instanceof \ProcessWire\Field) {
             $field_name = $field->name;
             if ($field->type instanceof \ProcessWire\FieldtypeFile) {
                 $value = [];
                 $files = [];
-                $field_value = $page->getUnformatted($field->name);
+                $field_value = $this->getUnformattedFieldValue($object, $field->name);
                 if ($field_value instanceof \ProcessWire\Pagefile) {
-                    $field_value = $this->wire(new \ProcessWire\Pagefiles($page))->add($field_value);
+                    $field_value = $this->wire(new \ProcessWire\Pagefiles($object))->add($field_value);
                 }
                 if ($field_value instanceof \ProcessWire\WireArray) {
                     foreach ($field_value as $item) {
-                        $value[] = $this->getPagefileIndexValue($item);
+                        $value[] = $this->getPagefileIndexValue($item, $indexed_fields);
                         $files[] = [
                             'file.name:' . $item->name,
                             'file.meta:' . $item->hash . '|' . $item->modified,
@@ -248,23 +274,27 @@ class Indexer extends Base {
                     'files' => $files,
                 ]);
             } else if ($field->type instanceof \ProcessWire\FieldtypeTable) {
-                return new IndexValue($this->sanitizer->unentities(strip_tags(str_replace('</td><td>', ' ', $page->getFormatted($field->name)->render([
+                $field_value = $this->getFormattedFieldValue($object, $field->name);
+                return new IndexValue(is_object($field_value) ? $this->sanitizer->unentities(strip_tags(str_replace('</td><td>', ' ', $field_value->render([
                     'tableClass' => null,
                     'useWidth' => false,
                     'thead' => ' ',
-                ])))));
+                ])))) : '');
             } else if ($field->type instanceof \ProcessWire\FieldtypeTextareas) {
-                return new IndexValue($page->getFormatted($field->name)->render(''));
+                $field_value = $this->getFormattedFieldValue($object, $field->name);
+                return new IndexValue(is_object($field_value) ? $field_value->render('') : '');
             } else if ($field->type instanceof \ProcessWire\FieldtypeCombo) {
-                return new IndexValue($this->processor->processIndex(array_values($page->get($field->name)->getArray()), [
+                $field_value = $object->get($field->name);
+                return new IndexValue(is_object($field_value) ? $this->processor->processIndex(array_values($object->get($field->name)->getArray()), [
                     'withMeta' => false,
                     'withTags' => true,
-                ]));
+                ]) : '');
             } else if ($field->type instanceof \ProcessWire\FieldtypeOptions) {
-                return new IndexValue($page->getFormatted($field->name)->render());
+                $field_value = $this->getFormattedFieldValue($object, $field->name);
+                return new IndexValue(is_object($field_value) ? $field_value->render() : '');
             }
         }
-        return new IndexValue($page->getFormatted($field_name));
+        return new IndexValue($this->getFormattedFieldValue($object, $field_name));
     }
 
     /**
@@ -299,15 +329,15 @@ class Indexer extends Base {
     /**
      * Get index value for a Page Reference field
      *
-     * @param \ProcessWire\Page $page
+     * @param \ProcessWire\WireData $object
      * @param \ProcessWire\Field $field
      * @param array $indexed_fields
      * @param string $prefix
      * @return array
      */
-    protected function ___getPageReferenceIndexValue(\ProcessWire\Page $page, \ProcessWire\Field $field, array $indexed_fields = [], string $prefix = ''): array {
+    protected function ___getPageReferenceIndexValue(\ProcessWire\WireData $object, \ProcessWire\Field $field, array $indexed_fields = [], string $prefix = ''): array {
         $index = [];
-        $page_ref = $page->getUnformatted($field->name);
+        $page_ref = $this->getUnformattedFieldValue($object, $field->name);
         if ($page_ref instanceof \ProcessWire\Page) {
             $page_ref = $this->wire(new \ProcessWire\PageArray())->add($page_ref);
         }
@@ -334,27 +364,100 @@ class Indexer extends Base {
      * Get index value for a Pagefile
      *
      * @param \ProcessWire\Pagefile $file
+     * @param array $indexed_fields
      * @return string|null
      */
-    protected function ___getPagefileIndexValue(\ProcessWire\Pagefile $file): ?string {
+    protected function ___getPagefileIndexValue(\ProcessWire\Pagefile $file, array $indexed_fields = []): ?string {
+        $field_values = [];
+        if (!empty($indexed_fields)) {
+            $fields_template = $file->pagefiles->getFieldsTemplate();
+            if ($fields_template) {
+                foreach ($fields_template->fields as $field) {
+                    if ($this->isIndexedField($field, [
+                        'indexed_fields' => $indexed_fields,
+                        'object' => $file,
+                    ])) {
+                        $field_index = $this->getFieldIndex($field, $file, $indexed_fields);
+                        if (empty($field_index)) continue;
+                        $field_values += $field_index;
+                    }
+                }
+                if (!empty($field_values)) {
+                    $field_values = $this->processor->processIndex($field_values, [
+                        'withMeta' => false,
+                        'withTags' => true,
+                    ]);
+                }
+            }
+        }
         return implode(' ', array_filter([
-            $file->name,
-            $file->description,
+            'description' => $this->isIndexedField('description', [
+                'object' => $file,
+                'indexed_fields' => $indexed_fields,
+            ]) ? $file->description : null,
+            'tags' => $this->isIndexedField('tags', [
+                'object' => $file,
+                'indexed_fields' => $indexed_fields,
+            ]) ? $file->tags : null,
+            'field_values' => $field_values,
         ]));
+    }
+
+    /**
+     * Get formatted field value from WireData derived object
+     *
+     * @param \ProcessWire\WireData $object
+     * @param string $field_name
+     * @return mixed
+     */
+    protected function getFormattedFieldValue(\ProcessWire\WireData $object, string $field_name) {
+        if ($object instanceof \ProcessWire\Page) {
+            return $object->getFormatted($field_name);
+        }
+        if ($object instanceof \ProcessWire\Field && method_exists($object, 'getFieldValue')) {
+            return $object->getFieldValue($field_name, true);
+        }
+        return $object->get($field_name);
+    }
+
+    /**
+     * Get unformatted field value from WireData derived object
+     *
+     * @param \ProcessWire\WireData $object
+     * @param string $field_name
+     * @return mixed
+     */
+    protected function getUnformattedFieldValue(\ProcessWire\WireData $object, string $field_name) {
+        if ($object instanceof \ProcessWire\Page) {
+            return $object->getUnformatted($field_name);
+        }
+        if ($object instanceof \ProcessWire\Field && method_exists($object, 'getFieldValue')) {
+            return $object->getFieldValue($field_name, false);
+        }
+        return $object->get($field_name);
     }
 
     /**
      * Check if a field should be indexed
      *
      * @param \ProcessWire\Field|string $field
-     * @param \ProcessWire\Page $page
      * @param array $args Additional arguments:
      *  - indexed_fields: Fields selected for indexing via module config
+     *  - object: object (e.g. Page or Pagefile) that this field belongs to
      * @return bool
      */
-    protected function isIndexedField($field, \ProcessWire\Page $page, array $args = []): bool {
+    protected function isIndexedField($field, array $args = []): bool {
+        if (empty($args['indexed_fields'])) {
+            return false;
+        }
         $field_name = $field instanceof \ProcessWire\Field ? $field->name : $field;
-        return !empty($args['indexed_fields']) && in_array($field_name, $args['indexed_fields']);
+        if (!empty($args['object']) && $args['object'] instanceof \ProcessWire\Pagefile) {
+            if (in_array($args['object']->field . '.*', $args['indexed_fields'])) {
+                return true;
+            }
+            $field_name = $args['object']->field . '.' . $field_name;
+        }
+        return in_array($field_name, $args['indexed_fields']);
     }
 
     /**

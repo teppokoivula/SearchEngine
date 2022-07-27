@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.34.1
+ * @version 0.35.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -325,9 +325,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         // Build an index and make sure that the index_pages_now setting doesn't get saved
         if (!empty($data['index_pages_now'])) {
             $indexing_selector = $data['index_pages_now_selector'] ?? null;
-            $indexing_started = new \DateTime();
+            $indexing_started = Debug::timer();
             $indexed_pages = $this->indexer->indexPages($indexing_selector);
-            $elapsed_time = $indexing_started->diff(new \Datetime());
+            $elapsed_time = Debug::timer($indexing_started);
             if ($indexed_pages === 0) {
                 $this->warning(sprintf(
                     $this->_('SearchEngine couldn\'t find any pages to index. Please make sure that your indexing settings are configured properly, and your index field "%s" has been added to at least one template with existing pages.'),
@@ -335,9 +335,9 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 ));
             } else {
                 $this->message(sprintf(
-                    $this->_('%d pages indexed in %d seconds.'),
+                    $this->_('%d pages indexed in %s seconds.'),
                     $indexed_pages,
-                    $elapsed_time->format('%s')
+                    $elapsed_time
                 ));
             }
             unset($data['index_pages_now']);

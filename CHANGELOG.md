@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.0] - 2022-07-27
+
+### Added
+- Support for indexing Pagefile custom field values and tags.
+
+### Changed
+- File field description is no longer indexed by default. In order to index description, it needs to be selected via indexed field config setting, specifically (`file_field_name.description`) or using wildcard (`file_field_name.*`).
+
 ## [0.34.1] - 2022-07-26
 
 ### Fixed
