@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * Index value object
  *
- * @version 0.1.0
+ * @version 0.1.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -28,10 +28,10 @@ class IndexValue {
     /**
      * Constructor
      *
-     * @param string $value
+     * @param string|null $value
      */
-    public function __construct(string $value = '') {
-        $this->value = $value;
+    public function __construct(?string $value = '') {
+        $this->value = $value ?? '';
     }
 
     /**
