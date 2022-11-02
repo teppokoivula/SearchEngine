@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.2] - 2022-11-02
+
+### Added
+- Finnish translations.
+
 ## [0.35.1] - 2022-08-04
 
 ### Fixed
