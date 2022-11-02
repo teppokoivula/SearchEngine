@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Processor
  *
- * @version 0.3.0
+ * @version 0.3.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -35,7 +35,7 @@ class Processor extends Base {
             $processed_index = array_filter($index, function($index_key) {
                 return strpos($index_key, Indexer::META_PREFIX) !== 0;
             }, ARRAY_FILTER_USE_KEY);
-            $processed_index = implode(' ... ', $index);
+            $processed_index = implode(' ... ', $processed_index);
             $processed_index = str_replace('<', ' <', $processed_index);
             if (!$args['withTags']) {
                 $processed_index = strip_tags($processed_index);
@@ -81,6 +81,7 @@ class Processor extends Base {
                 } else {
                     $meta_index[$meta_key] = $index_value;
                 }
+                unset($index[$index_key]);
             }
         }
 

@@ -1,0 +1,25 @@
+en,fi,description,file,hash
+Search,Hae,,site/modules/SearchEngine/lib/Renderer.php,13348442cc6a27032d2b4aa28b75a5d3
+Label,Nimike,,site/modules/SearchEngine/lib/Renderer.php,b021df6aac4654c454f46c77646e745f
+"Unable to init theme ""%s"".","Teeman ""%s"" käyttöönotto epäonnistui.",,site/modules/SearchEngine/lib/Renderer.php,95bc2a119a5816bb4444b8e9f1beddca
+"Index field ""%s"" was added to template ""%s"".","Hakuindeksikenttä ""%s"" lisättiin sivupohjaan ""%s"".",,site/modules/SearchEngine/SearchEngine.module.php,6113214ae18e92b07d06e87cb3c841cf
+"Index field ""%s"" was removed from template ""%s"".","Hakuindeksikenttä ""%s"" poistettiin sivupohjasta ""%s"".",,site/modules/SearchEngine/SearchEngine.module.php,2b1ae67e00239e64289f33c87c9eb3a3
+"SearchEngine couldn't find any pages to index. Please make sure that your indexing settings are configured properly, and your index field ""%s"" has been added to at least one template with existing pages.","SearchEngine ei löytänyt indeksoitavia sivuja. Varmista, että indeksointiasetukset on täytetty oikein ja että hakuindeksikenttä ""%s"" on lisätty ainakin yhteen sivupohjaan.",,site/modules/SearchEngine/SearchEngine.module.php,1d50c24e5d2a99fca8ced0ca2b0aa1c8
+"%d pages indexed in %s seconds.","%d sivua indeksoitu %s sekunnissa.",,site/modules/SearchEngine/SearchEngine.module.php,7ff96391d83151d77f44de1afe4d32ca
+"Search the site...","Hae sivustolta...",,site/modules/SearchEngine/SearchEngine.module.php,5755fd29625862d412e3d3f61a2978dd
+"Search results",Hakutulokset,,site/modules/SearchEngine/SearchEngine.module.php,eb6b06cab0dd72e04c4da68d511facf2
+"One result for ""%s"":","Yksi tulos haulla ""%s"":",,site/modules/SearchEngine/SearchEngine.module.php,c916b4a7c20231f836c0f33065e8c4cf
+"%2$d results for ""%1$s"":","%2$d tulosta haulla ""%1$s"":",,site/modules/SearchEngine/SearchEngine.module.php,f740a8760f4a2a71553165cd0ba88ed8
+"No results for ""%s"".","Ei tuloksia haulla ""%s"".",,site/modules/SearchEngine/SearchEngine.module.php,fb0e34318660c619f498bb74dc59d195
+"Sorry, we were unable to process your query","Valitettavasti hakua ei pystytty käsittelemään.",,site/modules/SearchEngine/SearchEngine.module.php,23dfc665f1a6922b44c33216c1692441
+"Your query was empty. Please provide a proper query.","Hakusana puuttui. Syötä hakusanat hakukenttään.",,site/modules/SearchEngine/SearchEngine.module.php,612e35428f252212d74029be41286b38
+"Your query was too short. Please use at least %d characters.","Hakusana on liian lyhyt. Syötä hakukenttään vähintään %d merkkiä.",,site/modules/SearchEngine/SearchEngine.module.php,f3e3d924ebbc5abcfb5ad4f40d291234
+"Index field ""%s"" already exists and is of expected type (%s). Using existing field.","Hakuindeksikenttä ""%s"" oli jo olemassa ja on oikeaa tyyppiä (%s). Käytetään olemassaolevaa kenttää.",,site/modules/SearchEngine/SearchEngine.module.php,7840e351e8b6aa0fe8102b69089a05ee
+"Index field ""%s"" already exists but is not of compatible type. Please remove this field and create the index field, or override the ""index_field"" setting of the SearchEngine module.","Hakuindeksikenttä ""%s"" oli jo olemassa, mutta ei ole oikeaa tyyppiä. Poista kenttä ennen moduulin asennusta tai yliaja SearchEngine-moduulin asetus ""index_field"" sivuston asetusten kautta.",,site/modules/SearchEngine/SearchEngine.module.php,a8da80ebdd774e8746fcbb3f29591c58
+"Index field ""%s"" created. Please add this field to templates you want to make searchable.","Hakuindeksikenttä ""%s"" luotu. Lisää tämä kenttä niihin sivupohjiin, joiden haluat olevan haun piirissä.",,site/modules/SearchEngine/SearchEngine.module.php,f8b56d69f1999cac828bca9128e4c033
+"Index field ""%s"" is still used by one or more templates. Please remove this field manually if you no longer need it.","Hakuindeksikenttä ""%s"" on yhä käytössä yhdessä tai useammassa sivupohjassa. Poista kenttä käsin jos et enää tarvitse sitä.",,site/modules/SearchEngine/SearchEngine.module.php,748f4a806a8bc95e72954f4c079279ed
+"Index field ""%s"" was automatically removed.","Hakuindeksikenttä ""%s"" poistettiin automaattisesti.",,site/modules/SearchEngine/SearchEngine.module.php,b0202f99834ca7b20495735fa01e0e88
+"Index field ""%s"" couldn't be automatically removed. Please remove this field manually if you no longer need it.","Hakuindeksikenttää ""%s"" ei voitu poistaa automaattisesti. Poista kenttä käsin jos et enää tarvitse sitä.",,site/modules/SearchEngine/SearchEngine.module.php,7b8ca7d742c059fb823c37136d622c87
+Search,Haku,"Context: input label",site/modules/SearchEngine/SearchEngine.module.php,fb6b64c6d9ce7f851cca5c2492566a4b
+Search,Hae,"Context: submit button text",site/modules/SearchEngine/SearchEngine.module.php,e8e3dceffcccdd04c384f9a63079e3d7
+All,Kaikki,"Context: Tab label",site/modules/SearchEngine/SearchEngine.module.php,ff623ed14854e648a87f17b44eeb083d

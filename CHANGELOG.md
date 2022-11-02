@@ -11,6 +11,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New sort option _relevance. At the moment this feature is considered experimental.
 - Support for indexing page paths.
 
+## [0.35.2] - 2022-11-02
+
+### Added
+- Finnish translations.
+
+## [0.35.1] - 2022-08-04
+
+### Fixed
+- Fixed issue where IndexValue could sometimes receive unexpected null value, causing errors.
+
+## [0.35.0] - 2022-07-27
+
+### Added
+- Support for indexing Pagefile custom field values and tags.
+
+### Changed
+- File field description is no longer indexed by default. In order to index description, it needs to be selected via indexed field config setting, specifically (`file_field_name.description`) or using wildcard (`file_field_name.*`).
+
+## [0.34.1] - 2022-07-26
+
+### Fixed
+- Issue where Debugger was discarding some content unintentionally when debugging entire index.
+
+## [0.34.0] - 2022-07-26
+
+### Added
+- New IndexValue value object class.
+- Indexing file fields stores file names and metadata, latter of which currently includes (per page) unique hash and modify timestamp, in page specific search index metadata.
+
+### Changed
+- Indexer::getIndexValue() returns IndexValue instead of string.
+- Processor discards meta keys before generating URL index.
+- Debugger discards metadata before generating unique word list.
+
+### Fixed
+- Issue where some meta values were unintentionally included in combined text index.
+
 ## [0.33.3] - 2022-07-20
 
 ### Changed

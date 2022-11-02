@@ -17,7 +17,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.10.1
+ * @version 0.11.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -135,7 +135,9 @@ class Config extends Base {
         $indexed_fields = $this->wire('modules')->get('InputfieldAsmSelect');
         $indexed_fields->name = 'indexed_fields';
         $indexed_fields->label = $this->_('Select indexed fields');
+        $indexed_fields->description = $this->_('Select indexed fields from the list. Note that some fields, e.g. file fields with custom fields enabled, have separate options for main field and subfields.');
         $indexed_fields->columnWidth = 50;
+        $indexed_fields->hideDeleted = false;
         $indexed_fields->addOptions([
             'id' => 'id',
             'name' => 'name',
@@ -151,6 +153,19 @@ class Config extends Base {
                     continue;
                 }
                 $indexed_fields->addOption($field->name);
+                if ($field->type == 'FieldtypeFile') {
+                    $indexed_fields->addOption($field->name . '.*');
+                    $indexed_fields->addOption($field->name . '.description');
+                    $indexed_fields->addOption($field->name . '.tags');
+                    if (method_exists($field->type, 'getFieldsTemplate')) {
+                        $fields_template = $field->type->getFieldsTemplate($field);
+                        if ($fields_template) {
+                            foreach ($fields_template->fields as $subfield) {
+                                $indexed_fields->addOption($field->name . '.' . $subfield);
+                            }
+                        }
+                    }
+                }
             }
         }
         if (!empty($this->wire('config')->SearchEngine[$indexed_fields->name])) {
@@ -168,6 +183,7 @@ class Config extends Base {
         $indexed_templates->label = $this->_('Indexed templates');
         $indexed_templates->description = $this->_('In order for a template to be indexed, it needs to include the index field. Selecting a template here will automatically add the index field to it.');
         $indexed_templates->columnWidth = 50;
+        $indexed_templates->hideDeleted = false;
         $index_field_templates = $this->wire('fields')->get($this->options['index_field'])->getTemplates()->get('name[]');
         foreach ($this->wire('templates')->getAll() as $template) {
             $option_attributes = null;
@@ -358,6 +374,7 @@ class Config extends Base {
         $compatible_fieldtypes->label = $this->_('Compatible fieldtypes');
         $compatible_fieldtypes->description = $this->_('Fieldtypes considered compatible with this module.');
         $compatible_fieldtypes->showIf = 'override_compatible_fieldtypes=1';
+        $compatible_fieldtypes->hideDeleted = false;
         $incompatible_fieldtype_options = [
             'FieldtypePassword',
             'FieldtypeFieldsetOpen',
@@ -397,6 +414,7 @@ class Config extends Base {
                 $indexer_actions->addOption($action_name, $action_name);
             }
         }
+        $indexer_actions->hideDeleted = false;
         $indexer_actions = $this->maybeUseConfig($indexer_actions);
         $advanced_settings->add($indexer_actions);
 

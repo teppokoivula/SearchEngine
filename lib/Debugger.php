@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.5.5
+ * @version 0.5.6
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -201,7 +201,7 @@ class Debugger extends Base {
             $index = '';
             foreach ($this->wire('pages')->findMany($this->index_field . '!=, include=unpublished, status!=trash') as $indexed_page) {
                 $page_index = $this->getIndexfor($indexed_page, $language);
-                $index .= ' ' . reset($page_index);
+                $index .= ' ' . preg_split('/\r\n|\n|\r/', reset($page_index))[0];
             }
             $index_words = $this->getWords($index, true);
             $debug['indexed_content']['content'][$language === null ? null : $language->name] = [
@@ -621,6 +621,9 @@ class Debugger extends Base {
         // Prepare index
         $index = trim($index);
         $index = $this->wire('sanitizer')->unentities($index);
+
+        // Discard meta
+        $index = preg_split('/\r\n|\n|\r/', $index)[0];
 
         // Get words
         preg_match_all(
