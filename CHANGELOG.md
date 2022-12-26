@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.3] - 2022-12-26
+
+### Fixed
+- Fix unlikely (but possible) error caused by module config screen being loaded after disabling module autoload via admin.
+
 ## [0.35.2] - 2022-11-02
 
 ### Added
