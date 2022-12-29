@@ -312,16 +312,18 @@ class Indexer extends Base {
         $index = [];
         $index_num = 0;
         $prefixes = $this->getOptions()['prefixes'];
-        foreach ($page->get($field->name) as $child) {
-            if ($child->status >= \ProcessWire\Page::statusHidden) continue;
-            $args = [
-                'id_prefix' => str_replace('{field.name}', $field->name, $prefixes['id'] ?? ''),
-                'name_prefix' => str_replace('{field.name}', $field->name, $prefixes['name'] ?? ''),
-            ];
-            // Note: union operator is slightly faster than array_merge() and makes sense here since we're working with
-            // associative arrays only.
-            $index += $this->getPageIndex($child, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.', $args);
-            ++$index_num;
+        if (null !== $page->get($field->name)) {
+            foreach ($page->get($field->name) as $child) {
+                if ($child->status >= \ProcessWire\Page::statusHidden) continue;
+                $args = [
+                    'id_prefix' => str_replace('{field.name}', $field->name, $prefixes['id'] ?? ''),
+                    'name_prefix' => str_replace('{field.name}', $field->name, $prefixes['name'] ?? ''),
+                ];
+                // Note: union operator is slightly faster than array_merge() and makes sense here since we're working with
+                // associative arrays only.
+                $index += $this->getPageIndex($child, $indexed_fields, $prefix . $field->name . '.' . $index_num . '.', $args);
+                ++$index_num;
+            }
         }
         return $index;
     }
