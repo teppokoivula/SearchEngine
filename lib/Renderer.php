@@ -911,10 +911,10 @@ class Renderer extends Base {
                 ),
                 $string
             );
-        } else if (mb_strpos($query, ' ') !== false) {
+        } else if (mb_strpos($query_string, ' ') !== false) {
             $query_words = implode('|', array_map(function($value) {
                 return preg_quote($value, '/');
-            }, array_unique(array_filter(explode(' ', $query)))));
+            }, array_unique(array_filter(explode(' ', $query_string)))));
             $string = preg_replace(
                 '/(' . $query_words . ')/ui',
                 sprintf(
