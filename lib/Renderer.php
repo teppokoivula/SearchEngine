@@ -483,9 +483,12 @@ class Renderer extends Base {
         // Populate results data.
         if (!empty($query->results)) {
             $results['results'] = [];
+            $data = new Data($options['render_args']);
             foreach ($query->results as $result) {
-                $results['results'][] = array_map(function($field) use ($result, $options, $query) {
-                    return $this->getResultValue($result, $field, $query, $options['index_field']);
+                $results['results'][] = array_map(function($field) use ($result, $options, $data, $query) {
+                    $res = $this->getResultValue($result, $field, $query, $options['index_field']);
+                    $res = $this->maybeHighlight($res, $query->display_query, $data);
+                    return $res;
                 }, $args['results_json_fields']);
             }
             $results['count'] = $query->resultsCount;
@@ -530,6 +533,7 @@ class Renderer extends Base {
             $value = (string) $value;
         }
         if (!empty($value)) {
+            // bd($value);
             // Note: text sanitizer has maxLength of 255 by default. This currently limits the max length of the
             // description text, and also needs to be taken into account for in the getResultAutodesc() method.
             $value = $this->wire('sanitizer')->text($value);
