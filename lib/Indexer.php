@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.16.0
+ * @version 0.16.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -213,8 +213,6 @@ class Indexer extends Base {
     protected function ___getFieldIndex(\ProcessWire\Field $field, \ProcessWire\WireData $object, array $indexed_fields = [], string $prefix = '', array $args = []): array {
         $index = [];
         if ($this->isRepeatableField($field)) {
-            // Note: union operator is slightly faster than array_merge() and makes sense
-            // here since we're working with associative arrays only.
             $index = $this->getRepeatableIndexValue($object, $field, $indexed_fields, $prefix);
         } else if ($field->type->className() == 'FieldtypeFieldsetPage') {
             $index = $this->getPageIndex(
@@ -310,9 +308,11 @@ class Indexer extends Base {
      */
     protected function ___getRepeatableIndexValue(\Processwire\Page $page, \ProcessWire\Field $field, array $indexed_fields = [], string $prefix = ''): array {
         $index = [];
+        $children = $page->get($field->name);
+        if ($children === null) return $index;
         $index_num = 0;
         $prefixes = $this->getOptions()['prefixes'];
-        foreach ($page->get($field->name) as $child) {
+        foreach ($children as $child) {
             if ($child->status >= \ProcessWire\Page::statusHidden) continue;
             $args = [
                 'id_prefix' => str_replace('{field.name}', $field->name, $prefixes['id'] ?? ''),

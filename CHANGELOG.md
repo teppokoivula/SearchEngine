@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.35.4] - 2023-06-07
+
+### Fixed
+- Fix PHP warning resulting from repeatable field value being null when page is being indexed.
+
 ## [0.35.3] - 2022-12-26
 
 ### Fixed
