@@ -611,7 +611,7 @@ class Renderer extends Base {
             if (preg_match('/.{0,' . $desc_padding . '}(?:\b' . $query_string_quoted . '\b|' . $query_string_quoted . ').{0,' . $desc_padding . '}/ui', $index, $matches)) {
                 // There's a match (exact or partial) for the query string in the index.
                 $desc = $this->formatResultAutodesc($matches[0], $index, $desc);
-            } else if (strpos($query_string, ' ') !== false) {
+            } else if (mb_strpos($query_string, ' ') !== false) {
                 // Query string has multiple words, look for partial matches.
                 $desc_length = 0;
                 $desc_padding = 50;
@@ -902,19 +902,19 @@ class Renderer extends Base {
         $query_string = trim($query, '" ');
 
         // Check if there are instances that can be highlighted.
-        if (stripos($string, $query_string) !== false) {
+        if (mb_stripos($string, $query_string) !== false) {
             $string = preg_replace(
-                '/' . preg_quote($query_string, '/') . '/i',
+                '/' . preg_quote($query_string, '/') . '/ui',
                 sprintf(
                     $data['templates']['result_highlight'],
                     '$0'
                 ),
                 $string
             );
-        } else if (strpos($query, ' ') !== false) {
+        } else if (mb_strpos($query_string, ' ') !== false) {
             $query_words = implode('|', array_map(function($value) {
                 return preg_quote($value, '/');
-            }, array_unique(array_filter(explode(' ', $query)))));
+            }, array_unique(array_filter(explode(' ', $query_string)))));
             $string = preg_replace(
                 '/(' . $query_words . ')/ui',
                 sprintf(
