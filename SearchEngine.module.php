@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.35.5
+ * @version 0.36.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -88,9 +88,13 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             // Supported values for group_by: null (default) and "template".
             'group_by' => null,
             // Optional: values allowed for grouping.
+            // Note: if you provide a string value as key, it is considered a group name. In case
+            // of templates single group value may contain multiple pipe-separated template names.
             'group_by_allow' => [],
             // Optional: values not allowed for grouping.
             'group_by_disallow' => [],
+            // Optional: labels for groups.
+            'group_labels' => [],
         ],
         'pager_args' => [
             // These arguments are passed to MarkupPagerNav. You can find more details from the

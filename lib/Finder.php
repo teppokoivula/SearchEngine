@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Finder
  *
- * @version 0.2.2
+ * @version 0.3.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -32,9 +32,16 @@ class Finder extends Base {
         // Check if finding results should be delegated to findByTemplatesGrouped
         if ($query->args['group_by'] === 'template') {
             $templates = array_merge($args['pinned_templates'] ?? [], $this->getOptions()['indexed_templates']);
-            if (!empty($query->args['group_by_allow'])) {
+            $group_by_allow = $query->args['group_by_allow'] ?? [];
+            foreach ($group_by_allow as $key => $value) {
+                if (is_string($value) && strpos($value, '|') !== false) {
+                    unset($group_by_allow[$key]);
+                    $group_by_allow = array_merge($group_by_allow, explode('|', $value));
+                }
+            }
+            if (!empty($group_by_allow)) {
                 // if find args include an array of allowed group values, group by said values only
-                $templates = array_intersect($templates, $query->args['group_by_allow']);
+                $templates = array_intersect($templates, $group_by_allow);
             }
             if (!empty($query->args['group_by_disallow'])) {
                 // if find args include an array of disallowed group values, remove those
@@ -150,16 +157,42 @@ class Finder extends Base {
             $templates = $templates_with_ids;
         }
 
-        // Construct separate query for each template
-        foreach ($templates as $id => $name) {
-            $new_query = clone $query;
-            $new_query->label = $this->templates->get($id)->getLabel();
-            $new_query->group = $this->templates->get($id)->name;
-            $new_query = $this->findByTemplates($new_query, [$name], [
-                'named_only' => true,
-                'lazy' => true,
-            ]);
-            $queries->add($new_query);
+        // Construct separate query for each template or template group
+        $group_by_allow = $query->args['group_by_allow'] ?? [];
+        if (empty($group_by_allow)) {
+            foreach ($templates as $id => $name) {
+                $new_query = clone $query;
+                $new_query->label = $query->args['group_labels'][$name] ?? $this->templates->get($id)->getLabel();
+                $new_query->group = $this->templates->get($id)->name;
+                $new_query = $this->findByTemplates($new_query, [$name], [
+                    'named_only' => true,
+                    'lazy' => true,
+                ]);
+                $queries->add($new_query);
+            }
+        } else {
+            $grouped_templates = [];
+            foreach ($group_by_allow as $group_name => $group) {
+                $group_name = is_string($group_name) ? $group_name : $group;
+                $group_templates = strpos($group, '|') === false ? [$group] : explode('|', $group);
+                $templates_by_name = array_flip($templates);
+                foreach ($group_templates as $group_template) {
+                    if (isset($templates_by_name[$group_template])) {
+                        $grouped_templates[$group_name][$templates_by_name[$group_template]] = $group_template;
+                    }
+                }
+            }
+            foreach ($grouped_templates as $group => $group_templates) {
+                $group_template = count($group_templates) === 1 ? key($group_templates) : null;
+                $new_query = clone $query;
+                $new_query->label = $query->args['group_labels'][$group] ?? ($group_template ? $this->templates->get($group_template)->getLabel() : $group);
+                $new_query->group = $group;
+                $new_query = $this->findByTemplates($new_query, $group_templates, [
+                    'named_only' => true,
+                    'lazy' => true,
+                ]);
+                $queries->add($new_query);
+            }
         }
 
         // Add metadata

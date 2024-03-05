@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.0] - 2024-03-05
+
+### Added
+- Support for including multiple templates in a single group using pipe separated values.
+- Support for naming groups by providing string keys within the `gruoup_by_allow` option.
+- New option `group_labels` for providing labels for tabs rendered when grouping results.
+
 ## [0.35.5] - 2023-06-07
 
 ### Fixed
