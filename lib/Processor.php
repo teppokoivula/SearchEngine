@@ -35,6 +35,9 @@ class Processor extends Base {
             $processed_index = array_filter($index, function($index_key) {
                 return strpos($index_key, Indexer::META_PREFIX) !== 0;
             }, ARRAY_FILTER_USE_KEY);
+            // Flatten any multidimensional arrays to a single dimension, then convert to string for indexing
+            $processed_index = new \RecursiveIteratorIterator(new \RecursiveArrayIterator($processed_index));
+            $processed_index = iterator_to_array($processed_index, false);
             $processed_index = implode(' ... ', $processed_index);
             $processed_index = str_replace('<', ' <', $processed_index);
             if (!$args['withTags']) {
