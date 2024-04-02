@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.36.1] - 2024-04-03
+
+### Fixed
+- Fix an issue where Debugger throwing an exception when missing page was selected could prevent accessing module config screen.
+
 ## [0.36.0] - 2024-03-05
 
 ### Added
