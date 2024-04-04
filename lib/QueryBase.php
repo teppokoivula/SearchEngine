@@ -221,7 +221,7 @@ abstract class QueryBase extends Base {
         return implode(', ', array_filter([
             empty($this->args['limit']) ? '' : 'limit=' . $this->args['limit'],
             empty($sort) ? '' : implode(', ', $sort),
-            implode([$options['index_field'], $this->args['operator'], $this->query]),
+            implode([$options['search_field'] ?? $options['index_field'], $this->args['operator'], $this->query]),
             $this->getStringArgument('selector_extra'),
         ]));
     }

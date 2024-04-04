@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.37.0] - 2024-04-05
+
+### Added
+- Support for separate, optional `search_field` configuration setting for defining the field (or fields) used when searching.
+
+### Fixed
+- Previously sort setting could not be cleared using module config screen; this has now been fixed. Additionally sort setting defaults to empty value.
+
 ## [0.36.1] - 2024-04-03
 
 ### Fixed
