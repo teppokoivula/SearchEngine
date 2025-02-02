@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * Base class for Query type objects (Query, QuerySet)
  *
- * @version 0.3.0
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -63,6 +63,7 @@ abstract class QueryBase extends Base {
      *  - query_param (string, used for whitelisting the query param, defaults to no query param)
      *  - selector_extra (string|array, additional selector or array of selectors, defaults to blank string)
      *  - sort (string, sort value, may contain multiple comma-separated values, defaults to no defined sort)
+     *  - no_sanitize (bool, set to `true` in order to skip the query sanitization step)
      *  - no_validate (bool, set to `true` in order to skip the query validation step)
      */
     public function __construct(?string $query = '', array $args = []) {
@@ -77,7 +78,9 @@ abstract class QueryBase extends Base {
         $this->args = array_replace_recursive($this->getOptions()['find_args'], $args);
 
         // Sanitize query string and whitelist query param (if possible)
-        $this->query = $this->sanitizeQuery($query);
+        $this->query = empty($args['no_sanitize'])
+            ? $this->sanitizeQuery($query)
+            : $query;
         if (!empty($this->query) && !empty($this->args['query_param'])) {
             $this->wire('input')->whitelist($this->args['query_param'], $this->query);
         }

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.0] - 2025-02-02
+
+### Added
+- Support for new query argument `no_sanitize`, which will skip the sanitization process for provided search query. This feature was added to handle some quite specific use cases where the value has already been sanitized, and regular sanitization process (selectorValue etc.) are not wanted; use only if you're certain that this is the case.
+
 ## [0.37.0] - 2024-04-05
 
 ### Added
