@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.2] - 2025-02-02
+
+### Fixed
+- Fixed an issue where tab links were not rendering whitelisted array values correctly.
+
 ## [0.38.1] - 2025-02-02
 
 ### Fixed

@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.9.3
+ * @version 0.9.4
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -254,9 +254,16 @@ class Renderer extends Base {
         }
 
         // construct and return tab link
-        return $this->wire('page')->url . $this->wire('input')->urlSegmentStr() . '?' . implode('&', array_map(function($key, $value) {
-            return $key . '=' . urlencode($value);
-        }, array_keys($params), $params));
+        return $this->wire('page')->url . $this->wire('input')->urlSegmentStr() . '?' . implode('&', array_filter(array_map(function($key, $value) {
+            if (\is_string($value)) {
+                return $key . '=' . urlencode($value);
+            } else if (\is_array($value)) {
+                return implode('&', array_map(function($value) use ($key) {
+                    return $key . '[]=' . urlencode($value);
+                }, array_filter($value)));
+            }
+            return '';
+        }, array_keys($params), $params)));
     }
 
     /**
