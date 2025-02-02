@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.1] - 2025-02-02
+
+### Fixed
+- Fixed incorrect ARIA attribute name in results list default template/markup.
+
 ## [0.38.0] - 2025-02-02
 
 ### Added
