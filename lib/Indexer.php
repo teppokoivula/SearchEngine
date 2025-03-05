@@ -408,16 +408,29 @@ class Indexer extends Base {
      *
      * @param \ProcessWire\WireData $object
      * @param string $field_name
-     * @return mixed
+     * @return string|null
      */
-    protected function getFormattedFieldValue(\ProcessWire\WireData $object, string $field_name) {
+    protected function getFormattedFieldValue(\ProcessWire\WireData $object, string $field_name): ?string {
+        $val = null;
+
         if ($object instanceof \ProcessWire\Page) {
-            return $object->getFormatted($field_name);
+            $val = $object->getFormatted($field_name);
+        } elseif ($object instanceof \ProcessWire\Field && method_exists($object, 'getFieldValue')) {
+            $val = $object->getFieldValue($field_name, true);
+        } else {
+            $val = $object->get($field_name);
         }
-        if ($object instanceof \ProcessWire\Field && method_exists($object, 'getFieldValue')) {
-            return $object->getFieldValue($field_name, true);
+
+        // Handle non-string values
+        if (is_array($val)) {
+            return implode(' ', $val);
+        } elseif (is_object($val) && method_exists($val, '__toString')) {
+            return (string) $val;
+        } elseif (is_object($val)) {
+            return '';
         }
-        return $object->get($field_name);
+
+        return $val === null ? null : (string) $val;
     }
 
     /**
