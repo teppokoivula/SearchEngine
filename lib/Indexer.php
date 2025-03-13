@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.16.1
+ * @version 0.16.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -52,7 +52,7 @@ class Indexer extends Base {
      * @param array $args Additional arguments.
      * @return int The number of indexed pages.
      */
-    public function indexPages(string $selector = null, bool $save = true, array $args = []) {
+    public function indexPages(?string $selector = null, bool $save = true, array $args = []) {
         $indexed_pages = 0;
         $return = isset($args['return']) && $args['return'] == 'index' ? 'index' : 'status';
         $index = [];

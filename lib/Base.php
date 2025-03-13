@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Base class
  *
- * @version 0.3.0
+ * @version 0.3.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -26,7 +26,7 @@ abstract class Base extends \ProcessWire\Wire {
      * @param array|null $strings Optional custom/override strings.
      * @return array Array of strings.
      */
-    protected function getStrings(array $strings = null) {
+    protected function getStrings(?array $strings = null) {
         $options = $this->getOptions();
         $strings = empty($strings) ? $options['render_args']['strings'] : array_replace_recursive(
             $options['render_args']['strings'],

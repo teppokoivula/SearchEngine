@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.9.4
+ * @version 0.9.5
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -160,7 +160,7 @@ class Renderer extends Base {
      *
      * @throws WireException if query parameter is unrecognized.
      */
-    public function ___renderResults(array $args = [], QueryBase $query = null): string {
+    public function ___renderResults(array $args = [], ?QueryBase $query = null): string {
 
         // Prepare args and get Data object.
         $args = $this->prepareArgs($args);
@@ -446,7 +446,7 @@ class Renderer extends Base {
      * @param QueryBase|null $query Optional prepopulated Query object, a QuerySet containing one or more Query objects, or null.
      * @return string Results as JSON
      */
-    public function ___renderResultsJSON(array $args = [], QueryBase $query = null): string {
+    public function ___renderResultsJSON(array $args = [], ?QueryBase $query = null): string {
 
         // Prepare args, options, and return value placeholder.
         $args = $this->prepareArgs($args);
@@ -570,7 +570,7 @@ class Renderer extends Base {
      * @param string $index_field Optional index field name.
      * @return mixed
      */
-    protected function getResultValue(Page $result, string $field, Query $query, string $index_field = null) {
+    protected function getResultValue(Page $result, string $field, Query $query, ?string $index_field = null) {
         $value = '';
         $fields = [$field];
         if (strpos($fields[0], '|') !== false) {
@@ -1071,7 +1071,7 @@ class Renderer extends Base {
      * @param string $name String name.
      * @return string|null String value, or null if string doesn't exist and fallback isn't provided.
      */
-    protected function getString(string $name, string $fallback = null): ?string {
+    protected function getString(string $name, ?string $fallback = null): ?string {
         $string = $this->getOptions()['render_args']['strings'][$name] ?? $fallback;
         return $string;
     }
