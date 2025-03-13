@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.4] - 2025-03-13
+
+### Fixed
+- Fixed an issue where PageTitleLanguage fields inside repeaters could in some cases return an array, causing type error due to Indexer::getFormattedFieldValue not enforcing string values. Thanks to @gebeer.
+
 ## [0.38.3] - 2025-03-13
 
 ### Fixed
