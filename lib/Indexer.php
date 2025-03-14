@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Indexer
  *
- * @version 0.16.3
+ * @version 0.16.4
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -486,7 +486,7 @@ class Indexer extends Base {
      * @param \ProcessWire\Field $field
      * @return bool
      */
-    protected function isRepeatableField(\ProcessWire\Field $field): bool {
+    protected function ___isRepeatableField(\ProcessWire\Field $field): bool {
         return in_array($field->type, [
             'FieldtypePageTable',
             'FieldtypeRepeater',
