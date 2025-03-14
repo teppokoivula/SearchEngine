@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.38.5] - 2025-03-14
+
+### Fixed
+- Temporarily disabled object to string conversion in Indexer::getFormattedFieldValue, as it appears to be in conflict with some fieldtypes (e.g. ProFields Table). Array handling was left in place, but objects require additional testing.
+
 ## [0.38.4] - 2025-03-13
 
 ### Fixed

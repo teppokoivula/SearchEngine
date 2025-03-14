@@ -408,29 +408,34 @@ class Indexer extends Base {
      *
      * @param \ProcessWire\WireData $object
      * @param string $field_name
-     * @return string|null
+     * @return mixed
      */
-    protected function getFormattedFieldValue(\ProcessWire\WireData $object, string $field_name): ?string {
-        $val = null;
+    protected function getFormattedFieldValue(\ProcessWire\WireData $object, string $field_name) {
 
+        $value = null;
+
+        // Get initial value from object
         if ($object instanceof \ProcessWire\Page) {
-            $val = $object->getFormatted($field_name);
+            $value = $object->getFormatted($field_name);
         } elseif ($object instanceof \ProcessWire\Field && method_exists($object, 'getFieldValue')) {
-            $val = $object->getFieldValue($field_name, true);
+            $value = $object->getFieldValue($field_name, true);
         } else {
-            $val = $object->get($field_name);
+            $value = $object->get($field_name);
         }
 
-        // Handle non-string values
-        if (is_array($val)) {
-            return implode(' ', $val);
-        } elseif (is_object($val) && method_exists($val, '__toString')) {
-            return (string) $val;
-        } elseif (is_object($val)) {
-            return '';
+        // Handle array values
+        if (is_array($value)) {
+            $value = implode(' ', $value);
         }
 
-        return $val === null ? null : (string) $val;
+        // Handle object values - commented out for now, needs more testing (see GitHub PR #29)
+        // if (is_object($value) && method_exists($value, '__toString')) {
+        //     $value = (string) $value;
+        // } elseif (is_object($value)) {
+        //     $value = '';
+        // }
+
+        return $value;
     }
 
     /**
