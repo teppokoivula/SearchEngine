@@ -205,7 +205,9 @@ abstract class QueryBase extends Base {
      */
     public function getSelector(): string {
 
+        // Get options and selector_extra
         $options = $this->wire('modules')->get('SearchEngine')->options;
+        $selector_extra = $this->getStringArgument('selector_extra');
 
         // Define sort order
         $sort = [];
@@ -220,12 +222,38 @@ abstract class QueryBase extends Base {
             }
         }
 
+        // Define template part of the selector:
+        //
+        // - If selector_extra contains a template, we use that
+        // - If selector_extra does not contain a template, we use $options['indexed_templates']
+        $template = [];
+        $selector_extra_without_groups = $selector_extra === '' ? '' : (
+            // To avoid accidentally returning more results than intended, we remove any OR-groups or sub-selectors
+            // from the selector_extra string and only check if the "main" selector contains a template restriction.
+            strpos($selector_extra, '[') !== false || strpos($selector_extra, '(') !== false
+                ? preg_replace('/[\(\[\{].*?[\)\]\}]/', '', $selector_extra)
+                : $selector_extra
+        );
+        if ($selector_extra_without_groups === '' || !preg_match('/\btemplate=/', $selector_extra_without_groups)) {
+            $template = $options['indexed_templates'] ?? [];
+            if (!empty($template)) {
+                if (is_array($template)) {
+                    $template = array_filter(array_unique(array_map(function($template_name) {
+                        return $this->wire('sanitizer')->templateName($template_name);
+                    }, $template)));
+                } else {
+                    $template = [$this->wire('sanitizer')->templateName($template)];
+                }
+            }
+        }
+
         // Construct and return selector string
         return implode(', ', array_filter([
             empty($this->args['limit']) ? '' : 'limit=' . $this->args['limit'],
             empty($sort) ? '' : implode(', ', $sort),
             implode([$options['search_field'] ?? $options['index_field'], $this->args['operator'], $this->query]),
-            $this->getStringArgument('selector_extra'),
+            empty($template) ? '' : 'template=' . implode('|', $template),
+            $selector_extra,
         ]));
     }
 

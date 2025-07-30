@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.39.0] - 2025-07-30
+
+### Changed
+- Created selectors now automatically include a template rule, limiting results not just by search index field value, but also by templates known to be searchable.
+
 ## [0.38.6] - 2025-03-14
 
 ### Changed

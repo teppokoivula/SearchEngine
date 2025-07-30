@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Finder
  *
- * @version 0.3.0
+ * @version 0.3.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -14,8 +14,8 @@ class Finder extends Base {
     /**
      * Find content matching provided query string
      *
-     * @param string|null $query The query
-     * @param array $args Additional arguments, see Query::__construct() for details. Values specific to Finder:
+     * @param string|null $query The query string
+     * @param array $args Additional arguments, see QueryBase::__construct() for details. Values specific to Finder:
      *  - pinned_templates (array, each item should be a template name)
      * @return Query|QuerySet Resulting Query object, or QuerySet containing multiple Query objects in case of a grouped result set
      */

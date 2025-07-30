@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.38.6
+ * @version 0.39.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -374,7 +374,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      *
      * This method is a wrapper for \SearchEngine\Finder::find().
      *
-     * @param mixed $query The query.
+     * @param mixed $query The query string, or a prepared Query object.
      * @param array $args Additional arguments, see Query::__construct() for details.
      * @return \SearchEngine\Query|\SearchEngine\QuerySet Resulting Query, or QuerySet in case of a grouped result set
      */
