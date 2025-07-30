@@ -10,7 +10,7 @@ use ProcessWire\DatabaseQuerySelect;
 /**
  * SearchEngine Query class
  *
- * @version 0.6.3
+ * @version 0.6.4
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  *
@@ -23,7 +23,8 @@ use ProcessWire\DatabaseQuerySelect;
  * @property-read int $resultsTotal Number of total results.
  * @property-read string $pager Rendered pager or empty string if not supported.
  * @property-read string $resultsPager Rendered pager or empty string if not supported.
- * @property-read string $label Query object label, or empty string if label not found.
+ * @property string $label Query object label, or empty string if label not found.
+ * @property string $group Query object group, or empty string if group not found.
  * @property null|WireArray|PageArray $results Results as an array type object or null if none found.
  */
 class Query extends QueryBase {
@@ -69,7 +70,7 @@ class Query extends QueryBase {
     /**
      * Group
      *
-     * The group in a grouped set of queries that this particular Query object represents. May be, for an exaqmple, a
+     * The group in a grouped set of queries that this particular Query object represents. May be, for an example, a
      * template name.
      *
      * @var string
