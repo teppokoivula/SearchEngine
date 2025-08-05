@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.9.5
+ * @version 0.10.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -580,11 +580,8 @@ class Renderer extends Base {
         }
         $value = '';
         foreach ($fields as $field) {
-            if ($field === '_auto_desc') {
-                if (is_null($index_field)) {
-                    $index_field = $this->getOptions()['index_field'];
-                }
-                $value = $this->getResultAutoDesc($result, $query, $index_field);
+            if (strpos($field, '_') === 0) {
+                $value = $this->getResultPseudoValue($result, $field, $query, $index_field);
             } else if (strpos($field, 'template.') === 0) {
                 $value = $result->template->get(substr($field, 9));
             } else if (strpos($field, 'parent.') === 0) {
@@ -653,6 +650,31 @@ class Renderer extends Base {
             }
         }
         return $desc;
+    }
+
+    /**
+     * Get a pseudo value for a result
+     *
+     * If a field name starts with an underscore, this method is called to retrieve the value. By
+     * default we support the "_auto_desc" pseudo field, which returns an automatically generated
+     * description for the result based on the index field and the query.
+     *
+     * This method can be hooked into to support additional pseudo fields.
+     *
+     * @param Page $result Single result object.
+     * @param string $field Name of the pseudo field.
+     * @param Query $query Query object.
+     * @param string|null $index_field Optional index field name.
+     * @return mixed
+     */
+    protected function ___getResultPseudoValue(Page $result, string $field, Query $query, ?string $index_field = null) {
+        if ($field === '_auto_desc') {
+            if (is_null($index_field)) {
+                $index_field = $this->getOptions()['index_field'];
+            }
+            return $this->getResultAutoDesc($result, $query, $index_field);
+        }
+        return $result->get($field);
     }
 
     /**

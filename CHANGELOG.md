@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.39.2] - 2025-08-05
+
+### Added
+- Added new hookable method Renderer::getResultPseudoValue(). This method can be hooked into if you need to provide a custom implementation for some part of the rendered output, e.g. a custom description for search results with your own logic for how to get the value from the result object.
+- CLAUDE.md file for providing context for Claude Code (AI).
+
 ## [0.39.1] - 2025-08-05
 
 ### Fixed
