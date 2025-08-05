@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * SearchEngine Finder
  *
- * @version 0.3.1
+ * @version 0.3.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -19,7 +19,7 @@ class Finder extends Base {
      *  - pinned_templates (array, each item should be a template name)
      * @return Query|QuerySet Resulting Query object, or QuerySet containing multiple Query objects in case of a grouped result set
      */
-    public function find($query = null, array $args = []): QueryBase {
+    public function find(?string $query = null, array $args = []): QueryBase {
 
         // Prepare a Query object
         $query = $this->wire(new Query($query, $args));

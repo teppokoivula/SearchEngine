@@ -1,6 +1,6 @@
 {
-    "name": "SearchEngine",
-    "version": "0.30.0",
+    "name": "@teppokoivula/search-engine",
+    "version": "0.39.1",
     "description": "SearchEngine ProcessWire module",
     "scripts": {
         "build": "parcel build ./js/*.js -d ./js/dist/ && cleancss ./themes/default/style.css -o themes/default/style.min.css"
