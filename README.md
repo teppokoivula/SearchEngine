@@ -274,6 +274,10 @@ $config->SearchEngine = [
         // This defines whether a pager should be rendered at the end of the results list.
         'pager' => true,
 
+        // This defines whether tabs should be rendered when using group_by. Set to false
+        // to use grouping logic (filtering via URL param) without the tab UI.
+        'tabs' => true,
+
         // Array of classes to use in templates. You can add new classes here as well.
         'classes' => [
             // ...
