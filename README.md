@@ -168,6 +168,32 @@ var_dump($json);
 
 Note that a returned field value (for a specific search result) may be an empty string, but it may also be null. Null return values occur, for an example, if you've specified a field that doesn't exist for that particular page.
 
+When using `group_by` option, the JSON output structure is different – results are nested within an `items` array, with each item representing a group:
+
+```
+{
+    "items": [
+        {
+            "results": [...],
+            "count": 2,
+            "total": 5,
+            "label": "News",
+            "group": "news-item"
+        },
+        {
+            "results": [...],
+            "count": 2,
+            "total": 3,
+            "label": "Events",
+            "group": "events-item"
+        }
+    ],
+    "count": 4,
+    "total": 8,
+    "results_grouped_by": "template"
+}
+```
+
 ### Rebuilding the search index
 
 If you want to rebuild (recreate) the search index for all pages or pages matching a specific selector, you can do that via the Admin GUI (module configuration screen), or you can perform following request via the API:

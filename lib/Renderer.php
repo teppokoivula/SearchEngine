@@ -494,6 +494,7 @@ class Renderer extends Base {
                         'count' => $subquery->resultsCount,
                         'total' => $subquery->resultsTotal,
                         'label' => $subquery->label,
+                        'group' => $subquery->group,
                     ];
                     foreach ($subquery->results as $result) {
                         $results['items'][$key]['results'][] = array_map(function($field) use ($result, $options, $subquery) {

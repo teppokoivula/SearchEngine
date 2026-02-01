@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.40.2] - 2026-02-01
+
+### Added
+- Added `group` property to JSON output items when using `renderResultsJSON()` with grouped results.
+
 ## [0.40.1] - 2026-02-01
 
 ### Fixed
