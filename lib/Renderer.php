@@ -221,9 +221,12 @@ class Renderer extends Base {
                         break;
                     }
                 }
-                // If no matching group found, use first group.
-                if ($active_query === null && !empty($query->items)) {
-                    $active_query = reset($query->items);
+                // If no matching group found, use first group (same as tabs behavior).
+                if ($active_query === null) {
+                    $items = $query->items;
+                    if (!empty($items)) {
+                        $active_query = reset($items);
+                    }
                 }
                 if ($active_query !== null) {
                     $results_list = $this->renderResultsList($active_query, $data, $args);
