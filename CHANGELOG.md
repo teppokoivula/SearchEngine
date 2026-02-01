@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.40.0] - 2026-02-01
+
+### Added
+- New render option `tabs` (default: true) to control whether tabs are rendered when using group_by. Set to false to use grouping logic without tab UI.
+
 ## [0.39.2] - 2025-08-05
 
 ### Added

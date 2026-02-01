@@ -194,21 +194,41 @@ class Renderer extends Base {
                 $group = $this->wire('sanitizer')->text($group);
                 $this->wire('input')->whitelist($args['find_args']['group_param'], $group);
             }
-            $is_first_group = true;
-            $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group, &$is_first_group) {
-                // Content should only be rendered if a) this is an active tab or b) autoload_result_groups is enabled.
-                $content = null;
-                if (!empty($args['autoload_result_groups']) || $group === null && $is_first_group || $group === $query->group) {
-                    $content = $this->renderResultsList($query, $data, $args);
+            // Check if tabs should be rendered.
+            $render_tabs = $args['tabs'] ?? true;
+            if ($render_tabs) {
+                $is_first_group = true;
+                $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group, &$is_first_group) {
+                    // Content should only be rendered if a) this is an active tab or b) autoload_result_groups is enabled.
+                    $content = null;
+                    if (!empty($args['autoload_result_groups']) || $group === null && $is_first_group || $group === $query->group) {
+                        $content = $this->renderResultsList($query, $data, $args);
+                    }
+                    $is_first_group = false;
+                    return [
+                        'label' => $this->renderTabLabel($query, $data, $args),
+                        'link' => $this->getTabLink($query, $args),
+                        'active' => $group !== null && $group === $query->group,
+                        'content' => $content,
+                    ];
+                }, $query->items), $data, $args);
+            } else {
+                // Render only the active group's results without tabs.
+                $active_query = null;
+                foreach ($query->items as $item) {
+                    if ($group !== null && $group === $item->group) {
+                        $active_query = $item;
+                        break;
+                    }
                 }
-                $is_first_group = false;
-                return [
-                    'label' => $this->renderTabLabel($query, $data, $args),
-                    'link' => $this->getTabLink($query, $args),
-                    'active' => $group !== null && $group === $query->group,
-                    'content' => $content,
-                ];
-            }, $query->items), $data, $args);
+                // If no matching group found, use first group.
+                if ($active_query === null && !empty($query->items)) {
+                    $active_query = reset($query->items);
+                }
+                if ($active_query !== null) {
+                    $results_list = $this->renderResultsList($active_query, $data, $args);
+                }
+            }
         } else {
             $results_list = $this->renderResultsList($query, $data, $args);
         }

@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.39.2
+ * @version 0.40.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -138,6 +138,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'autoload_result_groups' => false,
             'results_json_options' => 0,
             'pager' => true,
+            'tabs' => true,
             'classes' => [
                 // Keys without underscores are considered parents (blocks). If a child class name
                 // contains an ampersand (&), it'll be replaced run-time with closest parent class.
