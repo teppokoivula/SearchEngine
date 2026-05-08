@@ -11,6 +11,107 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - New sort option _relevance. At the moment this feature is considered experimental.
 - Support for indexing page paths.
 
+## [0.40.2] - 2026-02-01
+
+### Added
+- Added `group` property to JSON output items when using `renderResultsJSON()` with grouped results.
+
+## [0.40.1] - 2026-02-01
+
+### Fixed
+- Fixed PHP notice "Indirect modification of overloaded property" when using `tabs => false` option.
+
+## [0.40.0] - 2026-02-01
+
+### Added
+- New render option `tabs` (default: true) to control whether tabs are rendered when using group_by. Set to false to use grouping logic without tab UI.
+
+## [0.39.2] - 2025-08-05
+
+### Added
+- Added new hookable method Renderer::getResultPseudoValue(). This method can be hooked into if you need to provide a custom implementation for some part of the rendered output, e.g. a custom description for search results with your own logic for how to get the value from the result object.
+- CLAUDE.md file for providing context for Claude Code (AI).
+
+## [0.39.1] - 2025-08-05
+
+### Fixed
+- PHP 8.4 deprecations (implicitly nullable parameter declarations).
+
+## [0.39.0] - 2025-07-30
+
+### Changed
+- Created selectors now automatically include a template rule, limiting results not just by search index field value, but also by templates known to be searchable.
+
+## [0.38.6] - 2025-03-14
+
+### Changed
+- Indexer::isRepeatableField is now hookable method.
+
+## [0.38.5] - 2025-03-14
+
+### Fixed
+- Temporarily disabled object to string conversion in Indexer::getFormattedFieldValue, as it appears to be in conflict with some fieldtypes (e.g. ProFields Table). Array handling was left in place, but objects require additional testing.
+
+## [0.38.4] - 2025-03-13
+
+### Fixed
+- Fixed an issue where PageTitleLanguage fields inside repeaters could in some cases return an array, causing type error due to Indexer::getFormattedFieldValue not enforcing string values. Thanks to @gebeer.
+
+## [0.38.3] - 2025-03-13
+
+### Fixed
+- Fixed notices caused by PHP 8.4 deprecating implicitly nullable types.
+
+## [0.38.2] - 2025-02-02
+
+### Fixed
+- Fixed an issue where tab links were not rendering whitelisted array values correctly.
+
+## [0.38.1] - 2025-02-02
+
+### Fixed
+- Fixed incorrect ARIA attribute name in results list default template/markup.
+
+## [0.38.0] - 2025-02-02
+
+### Added
+- Support for new query argument `no_sanitize`, which will skip the sanitization process for provided search query. This feature was added to handle some quite specific use cases where the value has already been sanitized, and regular sanitization process (selectorValue etc.) are not wanted; use only if you're certain that this is the case.
+
+## [0.37.0] - 2024-04-05
+
+### Added
+- Support for separate, optional `search_field` configuration setting for defining the field (or fields) used when searching.
+
+### Fixed
+- Previously sort setting could not be cleared using module config screen; this has now been fixed. Additionally sort setting defaults to empty value.
+
+## [0.36.1] - 2024-04-03
+
+### Fixed
+- Fix an issue where Debugger throwing an exception when missing page was selected could prevent accessing module config screen.
+
+## [0.36.0] - 2024-03-05
+
+### Added
+- Support for including multiple templates in a single group using pipe separated values.
+- Support for naming groups by providing string keys within the `gruoup_by_allow` option.
+- New option `group_labels` for providing labels for tabs rendered when grouping results.
+
+## [0.35.5] - 2023-06-07
+
+### Fixed
+- Fix unicode / multibyte character issues in Renderer, thanks to @esl51.
+
+## [0.35.4] - 2023-06-07
+
+### Fixed
+- Fix PHP warning resulting from repeatable field value being null when page is being indexed.
+
+## [0.35.3] - 2022-12-26
+
+### Fixed
+- Fix unlikely (but possible) error caused by module config screen being loaded after disabling module autoload via admin.
+
 ## [0.35.2] - 2022-11-02
 
 ### Added

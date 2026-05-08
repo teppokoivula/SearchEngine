@@ -17,7 +17,7 @@ use ProcessWire\InputfieldWrapper;
 /**
  * SearchEngine Config
  *
- * @version 0.11.0
+ * @version 0.11.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -44,6 +44,11 @@ class Config extends Base {
      */
     public function __construct(array $data) {
         parent::__construct();
+
+        // In case autoload has been disabled for SearchEngine (unusual, but possible) make sure that necessary init
+        // is called to avoid errors
+        $this->modules->get('SearchEngine')->initOnce();
+
         $this->data = $data;
         $this->options = $this->getOptions();
     }

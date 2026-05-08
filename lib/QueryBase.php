@@ -5,7 +5,7 @@ namespace SearchEngine;
 /**
  * Base class for Query type objects (Query, QuerySet)
  *
- * @version 0.3.0
+ * @version 0.4.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -63,6 +63,7 @@ abstract class QueryBase extends Base {
      *  - query_param (string, used for whitelisting the query param, defaults to no query param)
      *  - selector_extra (string|array, additional selector or array of selectors, defaults to blank string)
      *  - sort (string, sort value, may contain multiple comma-separated values, defaults to no defined sort)
+     *  - no_sanitize (bool, set to `true` in order to skip the query sanitization step)
      *  - no_validate (bool, set to `true` in order to skip the query validation step)
      */
     public function __construct(?string $query = '', array $args = []) {
@@ -77,7 +78,9 @@ abstract class QueryBase extends Base {
         $this->args = array_replace_recursive($this->getOptions()['find_args'], $args);
 
         // Sanitize query string and whitelist query param (if possible)
-        $this->query = $this->sanitizeQuery($query);
+        $this->query = empty($args['no_sanitize'])
+            ? $this->sanitizeQuery($query)
+            : $query;
         if (!empty($this->query) && !empty($this->args['query_param'])) {
             $this->wire('input')->whitelist($this->args['query_param'], $this->query);
         }
@@ -202,7 +205,9 @@ abstract class QueryBase extends Base {
      */
     public function getSelector(): string {
 
+        // Get options and selector_extra
         $options = $this->wire('modules')->get('SearchEngine')->options;
+        $selector_extra = $this->getStringArgument('selector_extra');
 
         // Define sort order
         $sort = [];
@@ -220,12 +225,38 @@ abstract class QueryBase extends Base {
             }
         }
 
+        // Define template part of the selector:
+        //
+        // - If selector_extra contains a template, we use that
+        // - If selector_extra does not contain a template, we use $options['indexed_templates']
+        $template = [];
+        $selector_extra_without_groups = $selector_extra === '' ? '' : (
+            // To avoid accidentally returning more results than intended, we remove any OR-groups or sub-selectors
+            // from the selector_extra string and only check if the "main" selector contains a template restriction.
+            strpos($selector_extra, '[') !== false || strpos($selector_extra, '(') !== false
+                ? preg_replace('/[\(\[\{].*?[\)\]\}]/', '', $selector_extra)
+                : $selector_extra
+        );
+        if ($selector_extra_without_groups === '' || !preg_match('/\btemplate=/', $selector_extra_without_groups)) {
+            $template = $options['indexed_templates'] ?? [];
+            if (!empty($template)) {
+                if (is_array($template)) {
+                    $template = array_filter(array_unique(array_map(function($template_name) {
+                        return $this->wire('sanitizer')->templateName($template_name);
+                    }, $template)));
+                } else {
+                    $template = [$this->wire('sanitizer')->templateName($template)];
+                }
+            }
+        }
+
         // Construct and return selector string
         return implode(', ', array_filter([
             empty($this->args['limit']) ? '' : 'limit=' . $this->args['limit'],
             empty($sort) ? '' : implode(', ', $sort),
-            implode([$options['index_field'], $this->args['operator'], $this->query]),
-            $this->getStringArgument('selector_extra'),
+            implode([$options['search_field'] ?? $options['index_field'], $this->args['operator'], $this->query]),
+            empty($template) ? '' : 'template=' . implode('|', $template),
+            $selector_extra,
         ]));
     }
 

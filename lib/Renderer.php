@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.9.3
+ * @version 0.10.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -160,7 +160,7 @@ class Renderer extends Base {
      *
      * @throws WireException if query parameter is unrecognized.
      */
-    public function ___renderResults(array $args = [], QueryBase $query = null): string {
+    public function ___renderResults(array $args = [], ?QueryBase $query = null): string {
 
         // Prepare args and get Data object.
         $args = $this->prepareArgs($args);
@@ -194,21 +194,44 @@ class Renderer extends Base {
                 $group = $this->wire('sanitizer')->text($group);
                 $this->wire('input')->whitelist($args['find_args']['group_param'], $group);
             }
-            $is_first_group = true;
-            $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group, &$is_first_group) {
-                // Content should only be rendered if a) this is an active tab or b) autoload_result_groups is enabled.
-                $content = null;
-                if (!empty($args['autoload_result_groups']) || $group === null && $is_first_group || $group === $query->group) {
-                    $content = $this->renderResultsList($query, $data, $args);
+            // Check if tabs should be rendered.
+            $render_tabs = $args['tabs'] ?? true;
+            if ($render_tabs) {
+                $is_first_group = true;
+                $results_list .= $this->renderTabs('query-' . uniqid(), array_map(function($query) use ($data, $args, $group, &$is_first_group) {
+                    // Content should only be rendered if a) this is an active tab or b) autoload_result_groups is enabled.
+                    $content = null;
+                    if (!empty($args['autoload_result_groups']) || $group === null && $is_first_group || $group === $query->group) {
+                        $content = $this->renderResultsList($query, $data, $args);
+                    }
+                    $is_first_group = false;
+                    return [
+                        'label' => $this->renderTabLabel($query, $data, $args),
+                        'link' => $this->getTabLink($query, $args),
+                        'active' => $group !== null && $group === $query->group,
+                        'content' => $content,
+                    ];
+                }, $query->items), $data, $args);
+            } else {
+                // Render only the active group's results without tabs.
+                $active_query = null;
+                foreach ($query->items as $item) {
+                    if ($group !== null && $group === $item->group) {
+                        $active_query = $item;
+                        break;
+                    }
                 }
-                $is_first_group = false;
-                return [
-                    'label' => $this->renderTabLabel($query, $data, $args),
-                    'link' => $this->getTabLink($query, $args),
-                    'active' => $group !== null && $group === $query->group,
-                    'content' => $content,
-                ];
-            }, $query->items), $data, $args);
+                // If no matching group found, use first group (same as tabs behavior).
+                if ($active_query === null) {
+                    $items = $query->items;
+                    if (!empty($items)) {
+                        $active_query = reset($items);
+                    }
+                }
+                if ($active_query !== null) {
+                    $results_list = $this->renderResultsList($active_query, $data, $args);
+                }
+            }
         } else {
             $results_list = $this->renderResultsList($query, $data, $args);
         }
@@ -254,9 +277,16 @@ class Renderer extends Base {
         }
 
         // construct and return tab link
-        return $this->wire('page')->url . $this->wire('input')->urlSegmentStr() . '?' . implode('&', array_map(function($key, $value) {
-            return $key . '=' . urlencode($value);
-        }, array_keys($params), $params));
+        return $this->wire('page')->url . $this->wire('input')->urlSegmentStr() . '?' . implode('&', array_filter(array_map(function($key, $value) {
+            if (\is_string($value)) {
+                return $key . '=' . urlencode($value);
+            } else if (\is_array($value)) {
+                return implode('&', array_map(function($value) use ($key) {
+                    return $key . '[]=' . urlencode($value);
+                }, array_filter($value)));
+            }
+            return '';
+        }, array_keys($params), $params)));
     }
 
     /**
@@ -439,7 +469,7 @@ class Renderer extends Base {
      * @param QueryBase|null $query Optional prepopulated Query object, a QuerySet containing one or more Query objects, or null.
      * @return string Results as JSON
      */
-    public function ___renderResultsJSON(array $args = [], QueryBase $query = null): string {
+    public function ___renderResultsJSON(array $args = [], ?QueryBase $query = null): string {
 
         // Prepare args, options, and return value placeholder.
         $args = $this->prepareArgs($args);
@@ -464,6 +494,7 @@ class Renderer extends Base {
                         'count' => $subquery->resultsCount,
                         'total' => $subquery->resultsTotal,
                         'label' => $subquery->label,
+                        'group' => $subquery->group,
                     ];
                     foreach ($subquery->results as $result) {
                         $results['items'][$key]['results'][] = array_map(function($field) use ($result, $options, $subquery) {
@@ -563,7 +594,7 @@ class Renderer extends Base {
      * @param string $index_field Optional index field name.
      * @return mixed
      */
-    protected function getResultValue(Page $result, string $field, Query $query, string $index_field = null) {
+    protected function getResultValue(Page $result, string $field, Query $query, ?string $index_field = null) {
         $value = '';
         $fields = [$field];
         if (strpos($fields[0], '|') !== false) {
@@ -573,11 +604,8 @@ class Renderer extends Base {
         }
         $value = '';
         foreach ($fields as $field) {
-            if ($field === '_auto_desc') {
-                if (is_null($index_field)) {
-                    $index_field = $this->getOptions()['index_field'];
-                }
-                $value = $this->getResultAutoDesc($result, $query, $index_field);
+            if (strpos($field, '_') === 0) {
+                $value = $this->getResultPseudoValue($result, $field, $query, $index_field);
             } else if (strpos($field, 'template.') === 0) {
                 $value = $result->template->get(substr($field, 9));
             } else if (strpos($field, 'parent.') === 0) {
@@ -611,7 +639,7 @@ class Renderer extends Base {
             if (preg_match('/.{0,' . $desc_padding . '}(?:\b' . $query_string_quoted . '\b|' . $query_string_quoted . ').{0,' . $desc_padding . '}/ui', $index, $matches)) {
                 // There's a match (exact or partial) for the query string in the index.
                 $desc = $this->formatResultAutodesc($matches[0], $index, $desc);
-            } else if (strpos($query_string, ' ') !== false) {
+            } else if (mb_strpos($query_string, ' ') !== false) {
                 // Query string has multiple words, look for partial matches.
                 $desc_length = 0;
                 $desc_padding = 50;
@@ -646,6 +674,31 @@ class Renderer extends Base {
             }
         }
         return $desc;
+    }
+
+    /**
+     * Get a pseudo value for a result
+     *
+     * If a field name starts with an underscore, this method is called to retrieve the value. By
+     * default we support the "_auto_desc" pseudo field, which returns an automatically generated
+     * description for the result based on the index field and the query.
+     *
+     * This method can be hooked into to support additional pseudo fields.
+     *
+     * @param Page $result Single result object.
+     * @param string $field Name of the pseudo field.
+     * @param Query $query Query object.
+     * @param string|null $index_field Optional index field name.
+     * @return mixed
+     */
+    protected function ___getResultPseudoValue(Page $result, string $field, Query $query, ?string $index_field = null) {
+        if ($field === '_auto_desc') {
+            if (is_null($index_field)) {
+                $index_field = $this->getOptions()['index_field'];
+            }
+            return $this->getResultAutoDesc($result, $query, $index_field);
+        }
+        return $result->get($field);
     }
 
     /**
@@ -902,19 +955,19 @@ class Renderer extends Base {
         $query_string = trim($query, '" ');
 
         // Check if there are instances that can be highlighted.
-        if (stripos($string, $query_string) !== false) {
+        if (mb_stripos($string, $query_string) !== false) {
             $string = preg_replace(
-                '/' . preg_quote($query_string, '/') . '/i',
+                '/' . preg_quote($query_string, '/') . '/ui',
                 sprintf(
                     $data['templates']['result_highlight'],
                     '$0'
                 ),
                 $string
             );
-        } else if (strpos($query, ' ') !== false) {
+        } else if (mb_strpos($query_string, ' ') !== false) {
             $query_words = implode('|', array_map(function($value) {
                 return preg_quote($value, '/');
-            }, array_unique(array_filter(explode(' ', $query)))));
+            }, array_unique(array_filter(explode(' ', $query_string)))));
             $string = preg_replace(
                 '/(' . $query_words . ')/ui',
                 sprintf(
@@ -1064,7 +1117,7 @@ class Renderer extends Base {
      * @param string $name String name.
      * @return string|null String value, or null if string doesn't exist and fallback isn't provided.
      */
-    protected function getString(string $name, string $fallback = null): ?string {
+    protected function getString(string $name, ?string $fallback = null): ?string {
         $string = $this->getOptions()['render_args']['strings'][$name] ?? $fallback;
         return $string;
     }

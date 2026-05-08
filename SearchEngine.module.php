@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.35.2
+ * @version 0.40.2
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -39,6 +39,8 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      */
     public static $defaultOptions = [
         'index_field' => 'search_index',
+        // Optional: separate field used for searching. If not defined, the index field is used.
+        'search_field' => null,
         'indexed_fields' => [
             'title',
             'headline',
@@ -80,7 +82,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
         ],
         'find_args' => [
             'limit' => 20,
-            'sort' => 'sort',
+            'sort' => '',
             'operator' => '*=',
             'selector_extra' => '',
             'query_param' => 'q',
@@ -88,9 +90,13 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             // Supported values for group_by: null (default) and "template".
             'group_by' => null,
             // Optional: values allowed for grouping.
+            // Note: if you provide a string value as key, it is considered a group name. In case
+            // of templates single group value may contain multiple pipe-separated template names.
             'group_by_allow' => [],
             // Optional: values not allowed for grouping.
             'group_by_disallow' => [],
+            // Optional: labels for groups.
+            'group_labels' => [],
         ],
         'pager_args' => [
             // These arguments are passed to MarkupPagerNav. You can find more details from the
@@ -132,6 +138,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'autoload_result_groups' => false,
             'results_json_options' => 0,
             'pager' => true,
+            'tabs' => true,
             'classes' => [
                 // Keys without underscores are considered parents (blocks). If a child class name
                 // contains an ampersand (&), it'll be replaced run-time with closest parent class.
@@ -188,7 +195,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'results' => '<div id="{results_id}">%s</div>',
                 'results_heading' => '<h2 class="{classes.results_heading}">%s</h2>',
                 'results_summary' => '<p class="{classes.results_summary}" id="{results_summary_id}">%s</p>',
-                'results_list' => '<ul class="{classes.results_list}" aria-labelled-by="{results_summary_id}">%s</ul>',
+                'results_list' => '<ul class="{classes.results_list}" aria-labelledby="{results_summary_id}">%s</ul>',
                 'results_list_item' => '<li class="{classes.results_list_item}">%s</li>',
                 'results_list_group_heading' => '<h3 class="{classes.results_list_group_heading}">%s</h3>',
                 'result' => '<div class="{classes.result}">%s</div>',
@@ -368,7 +375,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      *
      * This method is a wrapper for \SearchEngine\Finder::find().
      *
-     * @param mixed $query The query.
+     * @param mixed $query The query string, or a prepared Query object.
      * @param array $args Additional arguments, see Query::__construct() for details.
      * @return \SearchEngine\Query|\SearchEngine\QuerySet Resulting Query, or QuerySet in case of a grouped result set
      */
@@ -533,7 +540,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @param string|null $redirect_url Optional redirect URL.
      * @return null|Field Index field, or null if unsuitable field with conflicting name was found.
      */
-    public function createIndexField(string $index_field_name, string $redirect_url = null): ?Field {
+    public function createIndexField(string $index_field_name, ?string $redirect_url = null): ?Field {
         $index_field = $this->getIndexfield($index_field_name);
         if ($index_field) {
             if ($index_field->_is_valid_index_field) {
@@ -574,7 +581,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      * @param string|null $index_field_name Index field name. If name is null, get the default name from settings.
      * @return null|Field Index field or null.
      */
-    public function getIndexField(string $index_field_name = null): ?Field {
+    public function getIndexField(?string $index_field_name = null): ?Field {
 
         // If index field name is null, get default value from options
         if (is_null($index_field_name)) {
@@ -602,7 +609,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
      *
      * @param string|null $index_field_name Index field name. If name is null, get the default name from settings.
      */
-    public function removeIndexField(string $index_field_name = null) {
+    public function removeIndexField(?string $index_field_name = null) {
 
         // If index field name is null, get default value from options
         if (is_null($index_field_name)) {

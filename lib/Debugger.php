@@ -12,7 +12,7 @@ use ProcessWire\WirePermissionException;
 /**
  * SearchEngine Debugger
  *
- * @version 0.5.6
+ * @version 0.5.7
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -71,15 +71,14 @@ class Debugger extends Base {
      *
      * @param int|Page $page Page ID or Page object
      * @return Debugger Self-reference
-     *
-     * @throws WireException if Page is invalid or can't be found
      */
     public function setPage($page): Debugger {
         if (is_int($page)) {
             $page = $this->wire('pages')->get($page);
         }
         if (!$page instanceof Page || !$page->id) {
-            throw new WireException('Invalid or missing Page');
+            $this->error($this->_('Invalid or missing Page selected for debugging'));
+            return $this;
         }
         $this->page = $page;
         return $this;
