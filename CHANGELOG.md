@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.40.3] - 2026-06-15
+
+### Fixed
+- Fixed grouped results not showing all items when `tabs => false` and no group filter is selected. Previously only the first group's results were displayed; now all named groups are combined.
+
 ## [0.40.2] - 2026-02-01
 
 ### Added

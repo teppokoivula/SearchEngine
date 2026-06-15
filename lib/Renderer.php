@@ -15,7 +15,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.10.0
+ * @version 0.10.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -213,23 +213,18 @@ class Renderer extends Base {
                     ];
                 }, $query->items), $data, $args);
             } else {
-                // Render only the active group's results without tabs.
-                $active_query = null;
-                foreach ($query->items as $item) {
-                    if ($group !== null && $group === $item->group) {
-                        $active_query = $item;
-                        break;
+                // Render results without tabs.
+                if ($group !== null) {
+                    // Specific group selected - render only that group.
+                    foreach ($query->items as $item) {
+                        if ($group === $item->group) {
+                            $results_list = $this->renderResultsList($item, $data, $args);
+                            break;
+                        }
                     }
-                }
-                // If no matching group found, use first group (same as tabs behavior).
-                if ($active_query === null) {
-                    $items = $query->items;
-                    if (!empty($items)) {
-                        $active_query = reset($items);
-                    }
-                }
-                if ($active_query !== null) {
-                    $results_list = $this->renderResultsList($active_query, $data, $args);
+                } else {
+                    // No group selected - render all results combined.
+                    $results_list = $this->renderCombinedResultsList($query, $data, $args);
                 }
             }
         } else {
@@ -357,6 +352,62 @@ class Renderer extends Base {
         if (!empty($args['pager'])) {
             $results_list .= $this->renderPager($args, $query);
         }
+
+        return $results_list;
+    }
+
+    /**
+     * Render combined results from all groups in a QuerySet
+     *
+     * Used when tabs are disabled and no specific group filter is selected.
+     *
+     * @param QuerySet $query
+     * @param Data $data
+     * @param array $args
+     * @return string
+     */
+    protected function renderCombinedResultsList(QuerySet $query, Data $data, array $args): string {
+
+        $results_list = '';
+
+        // Collect results from named groups only (skip empty/unnamed groups).
+        $list_items = '';
+        $total_count = 0;
+        foreach ($query->items as $item) {
+            if ($item->group === '' || $item->resultsCount === 0) {
+                continue;
+            }
+            $total_count += $item->resultsCount;
+            foreach ($item->results as $result) {
+                $list_items .= sprintf(
+                    $data['templates']['results_list_item'],
+                    $this->renderResult($result, $data, $item)
+                );
+            }
+        }
+
+        // Bail out early if we don't have any results.
+        if ($total_count === 0) {
+            return sprintf(
+                $args['templates']['results_summary'],
+                $args['strings']['results_summary_none'] ?? ''
+            );
+        }
+
+        // Render summary for combined results.
+        $results_list .= sprintf(
+            $args['templates']['results_summary'],
+            vsprintf($args['strings']['results_summary_' . ($total_count === 1 ? 'one' : 'many')] ?? '', [
+                trim($query->display_query, '\"'),
+                $total_count,
+            ])
+        );
+
+        // Wrap items in results list container.
+        $results_list .= sprintf(
+            $data['templates']['results_list'],
+            $list_items
+        );
 
         return $results_list;
     }
