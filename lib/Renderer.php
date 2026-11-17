@@ -4,6 +4,7 @@ namespace SearchEngine;
 
 use ProcessWire\Inputfield;
 use ProcessWire\Page;
+use ProcessWire\WireData;
 use ProcessWire\WireException;
 
 /**
@@ -15,7 +16,7 @@ use ProcessWire\WireException;
  * @property-read string $styles Rendered styles (link tags).
  * @property-read string $scripts Rendered styles (script tags).
  *
- * @version 0.10.1
+ * @version 0.10.0
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 https://mozilla.org/MPL/2.0/
  */
@@ -213,18 +214,23 @@ class Renderer extends Base {
                     ];
                 }, $query->items), $data, $args);
             } else {
-                // Render results without tabs.
-                if ($group !== null) {
-                    // Specific group selected - render only that group.
-                    foreach ($query->items as $item) {
-                        if ($group === $item->group) {
-                            $results_list = $this->renderResultsList($item, $data, $args);
-                            break;
-                        }
+                // Render only the active group's results without tabs.
+                $active_query = null;
+                foreach ($query->items as $item) {
+                    if ($group !== null && $group === $item->group) {
+                        $active_query = $item;
+                        break;
                     }
-                } else {
-                    // No group selected - render all results combined.
-                    $results_list = $this->renderCombinedResultsList($query, $data, $args);
+                }
+                // If no matching group found, use first group (same as tabs behavior).
+                if ($active_query === null) {
+                    $items = $query->items;
+                    if (!empty($items)) {
+                        $active_query = reset($items);
+                    }
+                }
+                if ($active_query !== null) {
+                    $results_list = $this->renderResultsList($active_query, $data, $args);
                 }
             }
         } else {
@@ -352,62 +358,6 @@ class Renderer extends Base {
         if (!empty($args['pager'])) {
             $results_list .= $this->renderPager($args, $query);
         }
-
-        return $results_list;
-    }
-
-    /**
-     * Render combined results from all groups in a QuerySet
-     *
-     * Used when tabs are disabled and no specific group filter is selected.
-     *
-     * @param QuerySet $query
-     * @param Data $data
-     * @param array $args
-     * @return string
-     */
-    protected function renderCombinedResultsList(QuerySet $query, Data $data, array $args): string {
-
-        $results_list = '';
-
-        // Collect results from named groups only (skip empty/unnamed groups).
-        $list_items = '';
-        $total_count = 0;
-        foreach ($query->items as $item) {
-            if ($item->group === '' || $item->resultsCount === 0) {
-                continue;
-            }
-            $total_count += $item->resultsCount;
-            foreach ($item->results as $result) {
-                $list_items .= sprintf(
-                    $data['templates']['results_list_item'],
-                    $this->renderResult($result, $data, $item)
-                );
-            }
-        }
-
-        // Bail out early if we don't have any results.
-        if ($total_count === 0) {
-            return sprintf(
-                $args['templates']['results_summary'],
-                $args['strings']['results_summary_none'] ?? ''
-            );
-        }
-
-        // Render summary for combined results.
-        $results_list .= sprintf(
-            $args['templates']['results_summary'],
-            vsprintf($args['strings']['results_summary_' . ($total_count === 1 ? 'one' : 'many')] ?? '', [
-                trim($query->display_query, '\"'),
-                $total_count,
-            ])
-        );
-
-        // Wrap items in results list container.
-        $results_list .= sprintf(
-            $data['templates']['results_list'],
-            $list_items
-        );
 
         return $results_list;
     }
@@ -580,32 +530,135 @@ class Renderer extends Base {
     /**
      * Render a single search result
      *
-     * @param Page $result Single result object.
+     * @param WireData $result Single result object.
      * @param Data $data Options as a Data object.
      * @param Query $query Query object.
      * @return string
      */
-    protected function ___renderResult(Page $result, Data $data, Query $query): string {
+    protected function ___renderResult(WireData $result, Data $data, Query $query): string {
+        $is_file_result = $result instanceof SearchResult;
+        $separate = !empty($query->args['match_by_source']);
+        $files = ($is_file_result || $separate) ? [] : $this->getIndexedFiles($result);
+        if ($is_file_result) {
+            $records = $result->get('files');
+            $record = is_array($records) && isset($records[0]) && is_array($records[0]) ? $records[0] : $this->emptyIndexedFileRecord();
+            $data->set('indexed_file_count', 1);
+            $data->set('file', new Data($record));
+        } else {
+            $data->set('indexed_file_count', count($files));
+            $data->set('file', new Data($files ? $files[0] : $this->emptyIndexedFileRecord()));
+        }
+        $data->set('item', $result);
         return \ProcessWire\wirePopulateStringTags(
             sprintf(
                 $data['templates']['result'],
                 $data['templates']['result_link']
               . $data['templates']['result_path']
               . $this->renderResultDesc($result, $data, $query)
+              . $this->renderResultFiles($files, $data)
             ),
-            $data->set('item', $result)
+            $data
         );
+    }
+
+    /**
+     * Render one block per indexed file using the result_file template
+     *
+     * Placeholders available inside that template (and in result_link, result_path, and
+     * result_desc) are {file.is_file}, {file.name}, {file.ext}, {file.path}, {file.url},
+     * {file.filesize}, {file.filesize_str}, {file.description}, {file.field}, {file.page_id},
+     * {file.page_name}, {file.page_url}, {file.page_title}, {file.page_template},
+     * {file.page_template_label}, and {file.stored_page_id}. {file.page_templates} is the
+     * template chain from the root down to the page the file was uploaded to.
+     * {indexed_file_count} is the number of indexed files on the result. {file.*} in the
+     * shared result templates refers to the first indexed file.
+     *
+     * @param array $files
+     * @param Data $data
+     * @return string
+     */
+    protected function renderResultFiles(array $files, Data $data): string {
+        $template = $data['templates']['result_file'] ?? '';
+        if ($template === '' || !$files) {
+            return '';
+        }
+        $markup = '';
+        foreach ($files as $file) {
+            $fileData = clone $data;
+            $fileData->set('file', new Data($file));
+            $markup .= \ProcessWire\wirePopulateStringTags($template, $fileData);
+        }
+        return $markup;
+    }
+
+    /**
+     * Indexed files stored on a result page
+     *
+     * Each record is a file whose content was indexed. An empty array means this result
+     * is not a file index (is_file is null).
+     *
+     * @param WireData $result
+     * @param string|null $index_field
+     * @return array
+     */
+    public function getIndexedFiles(WireData $result, ?string $index_field = null): array {
+        if ($result instanceof SearchResult) {
+            $files = $result->get('files');
+            return is_array($files) ? $files : [];
+        }
+        if ($index_field === null || $index_field === '') {
+            $index_field = $this->getOptions()['index_field'];
+        }
+        $index = $result->get($index_field);
+        if (is_object($index) && method_exists($index, '__toString')) {
+            $index = (string) $index;
+        }
+        if (!is_string($index) || $index === '') {
+            return [];
+        }
+        $indexer = $this->wire('modules')->get('SearchEngine')->indexer;
+        if (!$indexer) {
+            return [];
+        }
+        return $indexer->getIndexedFilesFromIndex($index);
+    }
+
+    /**
+     * Blank file record so {file.*} tags resolve on results that have no indexed file
+     *
+     * @return array
+     */
+    protected function emptyIndexedFileRecord(): array {
+        return [
+            'is_file' => null,
+            'name' => '',
+            'ext' => '',
+            'path' => '',
+            'url' => '',
+            'filesize' => '',
+            'filesize_str' => '',
+            'description' => '',
+            'field' => '',
+            'page_id' => null,
+            'page_name' => '',
+            'page_url' => '',
+            'page_title' => '',
+            'page_template' => '',
+            'page_template_label' => '',
+            'page_templates' => [],
+            'stored_page_id' => null,
+        ];
     }
 
     /**
      * Render a single search result description
      *
-     * @param Page $result Single result object.
+     * @param WireData $result Single result object.
      * @param Data $data Options as a Data object.
      * @param Query $query Query object.
      * @return string
      */
-    protected function ___renderResultDesc(Page $result, Data $data, Query $query): string {
+    protected function ___renderResultDesc(WireData $result, Data $data, Query $query): string {
         $value = $this->getResultValue($result, $data['result_summary_field'], $query, $data['index_field'] ?: null);
         if (!is_string($value)) {
             if (!$this->canBeString($value)) return '';
@@ -639,13 +692,13 @@ class Renderer extends Base {
      *
      * This method also supports fallback values, as well as dynamic "pseudo" fields such as "_auto_desc".
      *
-     * @param Page $result
+     * @param WireData $result
      * @param string $field
      * @param Query $query
      * @param string $index_field Optional index field name.
      * @return mixed
      */
-    protected function getResultValue(Page $result, string $field, Query $query, ?string $index_field = null) {
+    protected function getResultValue(WireData $result, string $field, Query $query, ?string $index_field = null) {
         $value = '';
         $fields = [$field];
         if (strpos($fields[0], '|') !== false) {
@@ -655,8 +708,16 @@ class Renderer extends Base {
         }
         $value = '';
         foreach ($fields as $field) {
-            if (strpos($field, '_') === 0) {
+            if (
+                strpos($field, '_') === 0
+                || $field === 'is_file'
+                || $field === 'files'
+                || strpos($field, 'file.') === 0
+            ) {
                 $value = $this->getResultPseudoValue($result, $field, $query, $index_field);
+            } else if (strpos($field, 'page_template.') === 0) {
+                $page_template = $result->get('page_template');
+                $value = $page_template ? $page_template->get(substr($field, 14)) : '';
             } else if (strpos($field, 'template.') === 0) {
                 $value = $result->template->get(substr($field, 9));
             } else if (strpos($field, 'parent.') === 0) {
@@ -672,14 +733,29 @@ class Renderer extends Base {
     /**
      * Get an automatically generated description for a single search result
      *
-     * @param Page $result Single result object.
+     * @param WireData $result Single result object.
      * @param Query $query Query object.
      * @param string $index_field Index field.
      * @return string
      */
-    protected function getResultAutoDesc(Page $result, Query $query, string $index_field): string {
+    protected function getResultAutoDesc(WireData $result, Query $query, string $index_field): string {
         $desc = '';
         $index = $result->get($index_field) ?? '';
+        if (is_object($index) && method_exists($index, '__toString')) {
+            $index = (string) $index;
+        }
+        if (!is_string($index)) {
+            $index = '';
+        }
+        $index = str_replace(Indexer::SOURCE_SEPARATOR, ' ', $index);
+        // Document results have no page index. _auto_desc uses the extracted file text,
+        // which is where the query matched.
+        if ($result instanceof SearchResult) {
+            $file_text = trim((string) $result->get('_file_text'));
+            if ($file_text !== '') {
+                $index = $file_text;
+            }
+        }
         if (!empty($index)) {
             $desc_max_length = 255;
             $desc_sep_length = 3;
@@ -724,7 +800,44 @@ class Renderer extends Base {
                 }
             }
         }
+        if ($desc === '' && $result instanceof SearchResult) {
+            $desc = $this->fileTextSnippet((string) $result->get('_file_text'), (string) $query->query);
+        }
         return $desc;
+    }
+
+    /**
+     * Excerpt of extracted file text around the query
+     *
+     * Used when the page-index auto description does not find a window in the file text.
+     *
+     * @param string $text
+     * @param string $query
+     * @return string
+     */
+    protected function fileTextSnippet(string $text, string $query): string {
+        $text = trim(preg_replace('/\s+/u', ' ', $text));
+        if ($text === '') {
+            return '';
+        }
+        $needle = trim($query, "\" \t");
+        $pos = $needle === '' ? false : mb_stripos($text, $needle);
+        if ($pos === false && $needle !== '') {
+            $words = preg_split('/\s+/u', $needle, -1, PREG_SPLIT_NO_EMPTY);
+            $pos = empty($words) ? false : mb_stripos($text, $words[0]);
+        }
+        if ($pos === false) {
+            return mb_substr($text, 0, 240);
+        }
+        $start = (int) max(0, $pos - 80);
+        $snippet = mb_substr($text, $start, 240);
+        if ($start > 0) {
+            $snippet = '...' . $snippet;
+        }
+        if ($start + 240 < mb_strlen($text)) {
+            $snippet .= '...';
+        }
+        return $snippet;
     }
 
     /**
@@ -736,20 +849,85 @@ class Renderer extends Base {
      *
      * This method can be hooked into to support additional pseudo fields.
      *
-     * @param Page $result Single result object.
+     * @param WireData $result Single result object.
      * @param string $field Name of the pseudo field.
      * @param Query $query Query object.
      * @param string|null $index_field Optional index field name.
      * @return mixed
      */
-    protected function ___getResultPseudoValue(Page $result, string $field, Query $query, ?string $index_field = null) {
+    protected function ___getResultPseudoValue(WireData $result, string $field, Query $query, ?string $index_field = null) {
         if ($field === '_auto_desc') {
             if (is_null($index_field)) {
                 $index_field = $this->getOptions()['index_field'];
             }
             return $this->getResultAutoDesc($result, $query, $index_field);
         }
+        if ($field === 'is_file' || $field === '_is_file') {
+            return $this->getIndexedFiles($result, $index_field) ? 1 : null;
+        }
+        if ($field === 'files' || $field === '_files') {
+            $files = $this->getIndexedFiles($result, $index_field);
+            return $files ?: null;
+        }
+        $file_key = $this->indexedFileFieldKey($field);
+        if ($file_key !== null) {
+            return $this->getIndexedFileValue($result, $file_key, $index_field);
+        }
         return $result->get($field);
+    }
+
+    /**
+     * Map a JSON/pseudo field name onto an indexed-file record key
+     *
+     * Accepted forms are `file.path` and `_file_path` (plus the other record keys).
+     * `_file_page` and `_file_size` are aliases for `page_id` and `filesize`.
+     *
+     * @param string $field
+     * @return string|null Record key, or null when $field is not a file attribute.
+     */
+    protected function indexedFileFieldKey(string $field): ?string {
+        $key = null;
+        if (strpos($field, 'file.') === 0) {
+            $key = substr($field, 5);
+        } else if (strpos($field, '_file_') === 0) {
+            $key = substr($field, 6);
+        }
+        if ($key === null || $key === '') {
+            return null;
+        }
+        $aliases = [
+            'page' => 'page_id',
+            'size' => 'filesize',
+            'stored_page' => 'stored_page_id',
+        ];
+        return $aliases[$key] ?? $key;
+    }
+
+    /**
+     * One indexed-file attribute for a result
+     *
+     * A single indexed file returns that value. Several files return a list of values.
+     * No indexed file returns null.
+     *
+     * @param WireData $result
+     * @param string $key
+     * @param string|null $index_field
+     * @return mixed
+     */
+    protected function getIndexedFileValue(WireData $result, string $key, ?string $index_field = null) {
+        $files = $this->getIndexedFiles($result, $index_field);
+        if (!$files) {
+            return null;
+        }
+        $values = [];
+        foreach ($files as $file) {
+            if (!array_key_exists($key, $file)) continue;
+            $values[] = $file[$key];
+        }
+        if (!$values) {
+            return null;
+        }
+        return count($values) === 1 ? $values[0] : $values;
     }
 
     /**

@@ -24,7 +24,7 @@ namespace ProcessWire;
  * @method string renderScripts(array $args = []) Render script tags for a given theme.
  * @method string render(array $what = [], array $args = []) Render entire search feature, or optionally just some parts of it (styles, scripts, form, results.)
  *
- * @version 0.40.2
+ * @version 0.42.1
  * @author Teppo Koivula <teppo.koivula@gmail.com>
  * @license Mozilla Public License v2.0 http://mozilla.org/MPL/2.0/
  */
@@ -97,6 +97,12 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'group_by_disallow' => [],
             // Optional: labels for groups.
             'group_labels' => [],
+            // When false (default), a hit is always the page that holds the index, including
+            // when the only matching text is inside an uploaded document.
+            // When true, page content returns the page, a document returns that document,
+            // and a query that matches both returns both. Requires the index to be rebuilt
+            // after this option is turned on.
+            'match_by_source' => false,
         ],
         'pager_args' => [
             // These arguments are passed to MarkupPagerNav. You can find more details from the
@@ -132,6 +138,15 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'title' => 'title',
                 'desc' => 'summary',
                 'url' => 'url',
+                // Indexed-file values. is_file is 1 when the result's index contains a file
+                // indexed by SearchEngineFileIndexer, and null otherwise. file.* / _file_* /
+                // _files read the same records. See Renderer::getResultPseudoValue().
+                // 'is_file' => 'is_file',
+                // 'file_path' => 'file.path',
+                // 'file_url' => 'file.url',
+                // 'file_page' => 'file.page_id',
+                // 'file_page_url' => 'file.page_url',
+                // 'files' => '_files',
             ],
             // Autoloading applies to tabbed interface: if enabled, all results will be loaded as
             // soon as possible. This is more resource intensive than loading them one by one.
@@ -162,6 +177,10 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'result_link' => '&__link',
                 'result_path' => '&__path',
                 'result_desc' => '&__desc',
+                'result_file' => '&__file',
+                'result_file_link' => '&__file-link',
+                'result_file_meta' => '&__file-meta',
+                'result_file_page' => '&__file-page',
                 'result_highlight' => '&__highlight',
                 'tabs' => 'pwse-tabs',
                 'tabs_tablist' => '&__tablist',
@@ -202,6 +221,13 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
                 'result_link' => '<a class="{classes.result_link}" href="{item.url}">{item.title}</a>',
                 'result_path' => '<div class="{classes.result_path}">{item.url}</div>',
                 'result_desc' => '<div class="{classes.result_desc}">%s</div>',
+                // Rendered once per indexed file. Set to an empty string to hide it.
+                // Placeholders: {file.path} {file.url} {file.name} {file.ext} {file.filesize}
+                // {file.filesize_str} {file.description} {file.field} {file.is_file}
+                // {file.page_id} {file.page_name} {file.page_url} {file.page_title}
+                // {file.page_template} {file.page_template_label} {file.stored_page_id}
+                // {indexed_file_count}
+                'result_file' => '<div class="{classes.result_file}"><a class="{classes.result_file_link}" href="{file.path}">{file.name}</a> <span class="{classes.result_file_meta}">{file.ext}</span> <span class="{classes.result_file_page}"><a href="{file.page_url}">{file.page_title}</a></span></div>',
                 'result_highlight' => '<strong class="{classes.result_highlight}">%s</strong>',
                 'tabs' => '<div class="{classes.tabs}" id="%s">%s</div>',
                 'tabs_tablist' => '<ul class="{classes.tabs_tablist}" role="tablist">%s</ul>',
@@ -476,6 +502,7 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
             'indexed_fields',
             'find_args__sort',
             'find_args__operator',
+            'find_args__match_by_source',
             'render_args__themes_directory',
             'indexer_actions',
         ];
@@ -652,6 +679,20 @@ class SearchEngine extends WireData implements Module, ConfigurableModule {
 
         // Remove search index field (if it exists and unless it's still in use)
         $this->removeIndexField();
+    }
+
+    /**
+     * Indexed file records stored in a page's search index
+     *
+     * Empty when the page index has no file indexed by SearchEngineFileIndexer.
+     * Each record includes is_file=1, path, url, and the page the file is stored on.
+     *
+     * @param Page $page
+     * @return array
+     */
+    public function getIndexedFiles(Page $page): array {
+        $this->initOnce();
+        return $this->renderer->getIndexedFiles($page);
     }
 
     /**

@@ -96,6 +96,20 @@
     padding: 1rem 0 0 0;
 }
 
+.search-result__file {
+    font-size: .9rem;
+    margin-top: .35rem;
+}
+
+.search-result__file-link {
+    font-weight: 600;
+}
+
+.search-result__file-meta,
+.search-result__file-page {
+    opacity: .75;
+}
+
 .search-result__highlight {
     font-weight: normal;
     background: yellow;

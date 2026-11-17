@@ -256,6 +256,11 @@ class Query extends QueryBase {
             return $this->results;
         }
 
+        if (!empty($this->args['match_by_source'])) {
+            $this->results = $this->resultsBySource();
+            return $this->results;
+        }
+
         if ($this->database_query && is_array($this->database_query->_pwse)) {
 
             // Hook into PageFinder::getQuery to conditionally override the default query object
@@ -286,6 +291,166 @@ class Query extends QueryBase {
         // Regular Pages find operation
         $this->results = $this->wire('pages')->find($this->getSelector());
         return $this->results;
+    }
+
+    /**
+     * Find pages, then keep a page hit and emit a separate hit for each matching document
+     *
+     * Indexes saved before document text was stored separately cannot be split, so those
+     * pages are returned unchanged.
+     *
+     * @return \ProcessWire\PaginatedArray
+     */
+    protected function resultsBySource(): \ProcessWire\PaginatedArray {
+        $items = [];
+        $indexer = $this->wire('modules')->get('SearchEngine')->indexer;
+        $index_field = $this->getOptions()['index_field'];
+        $operator = $this->getOperator();
+        $allowed_templates = $this->args['_match_templates'] ?? null;
+        if (is_array($allowed_templates) && $allowed_templates) {
+            $allowed_templates = array_flip($allowed_templates);
+        } else {
+            $allowed_templates = null;
+        }
+        $pages = $this->wire('pages')->findMany($this->getSelector());
+        foreach ($pages as $page) {
+            // A grouped find restricts pages.templates_id. File hits use that same page
+            // template, not the document result's own template (`file`).
+            if ($allowed_templates !== null && !isset($allowed_templates[(string) $page->template])) {
+                continue;
+            }
+            $index = $page->get($index_field);
+            if (is_object($index) && method_exists($index, '__toString')) {
+                $index = (string) $index;
+            }
+            if (!is_string($index) || $index === '') {
+                $items[] = $page;
+                continue;
+            }
+            $sources = $indexer->readIndexSources($index);
+            if (empty($sources['segmented'])) {
+                $items[] = $page;
+                continue;
+            }
+            if ($indexer->sourceContains($sources['page'], $this->query, $operator)) {
+                $items[] = $page;
+            }
+            foreach ($sources['files'] as $file) {
+                $haystack = trim(implode(' ', array_filter([
+                    $file['name'] ?? '',
+                    $file['text'] ?? '',
+                ], function($value) {
+                    return $value !== null && $value !== '';
+                })));
+                if ($haystack !== '' && $indexer->sourceContains($haystack, $this->query, $operator)) {
+                    $items[] = $this->makeFileResult($page, $file);
+                }
+            }
+        }
+
+        $limit = (int) ($this->args['limit'] ?? 0);
+        $total = count($items);
+        $page_num = (int) $this->wire('input')->pageNum;
+        if ($page_num < 1) {
+            $page_num = 1;
+        }
+        $start = $limit > 0 ? ($page_num - 1) * $limit : 0;
+        if ($limit > 0) {
+            $items = array_slice($items, $start, $limit);
+        }
+
+        $results = $this->wire(new \ProcessWire\PaginatedArray());
+        foreach ($items as $item) {
+            $results->add($item);
+        }
+        $results->setStart($start);
+        $results->setLimit($limit);
+        $results->setTotal($total);
+        return $results;
+    }
+
+    /**
+     * Build a result that represents one matching document
+     *
+     * @param \ProcessWire\Page $page Page the file is stored on.
+     * @param array $file Indexed file record, including its extracted text.
+     * @return SearchResult
+     */
+    protected function makeFileResult(\ProcessWire\Page $page, array $file): SearchResult {
+        $public = $file;
+        unset($public['text']);
+        $name = (string) ($file['name'] ?? '');
+        $text = trim((string) ($file['text'] ?? ''));
+        $summary = $text !== '' ? $this->fileSnippet($text, $this->query) : (string) ($file['description'] ?? '');
+        // Include the page that stores the file. parents() is only the ancestors, so a file
+        // on a child of Home otherwise breadcrumbs as Home alone.
+        $parents = $this->wire(new \ProcessWire\PageArray());
+        foreach ($page->parents() as $parent) {
+            $parents->add($parent);
+        }
+        if ($page->id) {
+            $parents->add($page);
+        }
+        $hierarchy = $this->wire('modules')->get('SearchEngine')->indexer->pageTemplateHierarchy($page);
+        $leaf = $hierarchy ? $hierarchy[count($hierarchy) - 1] : ['name' => '', 'label' => '', 'id' => null];
+        // Live page values win over the stored record, so a template change applies before reindex.
+        $public['page_template'] = $leaf['name'];
+        $public['page_template_label'] = $leaf['label'];
+        $public['page_templates'] = $hierarchy;
+        return new SearchResult([
+            'id' => $page->id,
+            'title' => $name !== '' ? $name : (string) $page->title,
+            'name' => $name,
+            'url' => (string) ($file['path'] ?? ''),
+            'httpUrl' => (string) ($file['url'] ?? ''),
+            'summary' => $summary,
+            '_file_text' => $text,
+            'parent' => $page,
+            'parents' => $parents,
+            'template' => new SearchResultTemplate([
+                'name' => 'file',
+                'label' => strtoupper((string) ($file['ext'] ?? 'file')),
+            ]),
+            // The page the file was uploaded to. template stays `file` so file rendering
+            // is unchanged; this is the value template filters and groups compare.
+            'page_template' => new SearchResultTemplate([
+                'name' => $leaf['name'],
+                'label' => $leaf['label'],
+                'id' => $leaf['id'],
+            ]),
+            'page_templates' => $hierarchy,
+            'is_file' => 1,
+            'files' => [$public],
+        ]);
+    }
+
+    /**
+     * Short extract of a document around the query, for the result summary
+     *
+     * @param string $text
+     * @param string $query
+     * @return string
+     */
+    protected function fileSnippet(string $text, string $query): string {
+        $text = trim(preg_replace('/\s+/u', ' ', $text));
+        $needle = trim($query, "\" \t");
+        $pos = $needle === '' ? false : mb_stripos($text, $needle);
+        if ($pos === false) {
+            $words = preg_split('/\s+/u', $needle, -1, PREG_SPLIT_NO_EMPTY);
+            $pos = empty($words) ? false : mb_stripos($text, $words[0]);
+        }
+        if ($pos === false) {
+            return mb_substr($text, 0, 240);
+        }
+        $start = max(0, $pos - 80);
+        $snippet = mb_substr($text, $start, 240);
+        if ($start > 0) {
+            $snippet = '...' . $snippet;
+        }
+        if ($start + 240 < mb_strlen($text)) {
+            $snippet .= '...';
+        }
+        return $snippet;
     }
 
 }
