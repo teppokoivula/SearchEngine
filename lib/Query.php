@@ -306,8 +306,19 @@ class Query extends QueryBase {
         $indexer = $this->wire('modules')->get('SearchEngine')->indexer;
         $index_field = $this->getOptions()['index_field'];
         $operator = $this->getOperator();
+        $allowed_templates = $this->args['_match_templates'] ?? null;
+        if (is_array($allowed_templates) && $allowed_templates) {
+            $allowed_templates = array_flip($allowed_templates);
+        } else {
+            $allowed_templates = null;
+        }
         $pages = $this->wire('pages')->findMany($this->getSelector());
         foreach ($pages as $page) {
+            // A grouped find restricts pages.templates_id. File hits use that same page
+            // template, not the document result's own template (`file`).
+            if ($allowed_templates !== null && !isset($allowed_templates[(string) $page->template])) {
+                continue;
+            }
             $index = $page->get($index_field);
             if (is_object($index) && method_exists($index, '__toString')) {
                 $index = (string) $index;
@@ -380,6 +391,12 @@ class Query extends QueryBase {
         if ($page->id) {
             $parents->add($page);
         }
+        $hierarchy = $this->wire('modules')->get('SearchEngine')->indexer->pageTemplateHierarchy($page);
+        $leaf = $hierarchy ? $hierarchy[count($hierarchy) - 1] : ['name' => '', 'label' => '', 'id' => null];
+        // Live page values win over the stored record, so a template change applies before reindex.
+        $public['page_template'] = $leaf['name'];
+        $public['page_template_label'] = $leaf['label'];
+        $public['page_templates'] = $hierarchy;
         return new SearchResult([
             'id' => $page->id,
             'title' => $name !== '' ? $name : (string) $page->title,
@@ -394,6 +411,14 @@ class Query extends QueryBase {
                 'name' => 'file',
                 'label' => strtoupper((string) ($file['ext'] ?? 'file')),
             ]),
+            // The page the file was uploaded to. template stays `file` so file rendering
+            // is unchanged; this is the value template filters and groups compare.
+            'page_template' => new SearchResultTemplate([
+                'name' => $leaf['name'],
+                'label' => $leaf['label'],
+                'id' => $leaf['id'],
+            ]),
+            'page_templates' => $hierarchy,
             'is_file' => 1,
             'files' => [$public],
         ]);

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.42.1] - 2026-11-17
+
+### Added
+- A matched document exposes the template of the page it was uploaded to (`page_template`) and the template chain from the root down to that page (`page_templates`). Template groups include the document with that page, because the document's own template remains `file`.
+
 ## [0.42.0] - 2026-11-17
 
 ### Added

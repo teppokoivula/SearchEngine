@@ -404,8 +404,9 @@ class Indexer extends Base {
      *
      * `path` is the full public URL path (`/site/assets/files/...`). `url` is the absolute URL.
      * `page_*` refers to the viewable page the file belongs to (a repeater's owner page when
-     * the file field lives on a repeater). `stored_page_id` is the page that actually owns the
-     * file field. `is_file` is 1 for every record written here.
+     * the file field lives on a repeater). `page_template` is that page's template name, and
+     * `page_templates` is the template chain from the root down to that page. `stored_page_id`
+     * is the page that actually owns the file field. `is_file` is 1 for every record written here.
      *
      * @param \ProcessWire\Pagefile $file
      * @return array
@@ -435,7 +436,47 @@ class Indexer extends Base {
             'page_name' => $page && $page->id ? (string) $page->name : '',
             'page_url' => $page && $page->id ? (string) $page->url : '',
             'page_title' => $page && $page->id ? (string) $page->get('title') : '',
+            'page_template' => $page && $page->id ? (string) $page->template : '',
+            'page_template_label' => $page && $page->id && $page->template ? (string) $page->template->getLabel() : '',
+            'page_templates' => $page && $page->id ? $this->pageTemplateHierarchy($page) : [],
             'stored_page_id' => $stored && $stored->id ? (int) $stored->id : null,
+        ];
+    }
+
+    /**
+     * Template chain for the page a file belongs to, from the root down to that page
+     *
+     * Template filters and groups match a page by its own template. A document result's
+     * template is `file`, so this chain is what places that document in the same groups
+     * as the page it was uploaded to. The last item is that page.
+     *
+     * @param \ProcessWire\Page $page
+     * @return array<int, array{name: string, label: string, id: int|null}>
+     */
+    public function pageTemplateHierarchy(\ProcessWire\Page $page): array {
+        $items = [];
+        if (!$page->id) {
+            return $items;
+        }
+        foreach ($page->parents() as $parent) {
+            $items[] = $this->templateIdentity($parent);
+        }
+        $items[] = $this->templateIdentity($page);
+        return $items;
+    }
+
+    /**
+     * Name, label, and id for a page's template
+     *
+     * @param \ProcessWire\Page $page
+     * @return array{name: string, label: string, id: int|null}
+     */
+    protected function templateIdentity(\ProcessWire\Page $page): array {
+        $template = $page->template;
+        return [
+            'name' => $template ? (string) $template->name : '',
+            'label' => $template ? (string) $template->getLabel() : '',
+            'id' => $template && $template->id ? (int) $template->id : null,
         ];
     }
 

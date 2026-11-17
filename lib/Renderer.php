@@ -567,7 +567,9 @@ class Renderer extends Base {
      * Placeholders available inside that template (and in result_link, result_path, and
      * result_desc) are {file.is_file}, {file.name}, {file.ext}, {file.path}, {file.url},
      * {file.filesize}, {file.filesize_str}, {file.description}, {file.field}, {file.page_id},
-     * {file.page_name}, {file.page_url}, {file.page_title}, and {file.stored_page_id}.
+     * {file.page_name}, {file.page_url}, {file.page_title}, {file.page_template},
+     * {file.page_template_label}, and {file.stored_page_id}. {file.page_templates} is the
+     * template chain from the root down to the page the file was uploaded to.
      * {indexed_file_count} is the number of indexed files on the result. {file.*} in the
      * shared result templates refers to the first indexed file.
      *
@@ -641,6 +643,9 @@ class Renderer extends Base {
             'page_name' => '',
             'page_url' => '',
             'page_title' => '',
+            'page_template' => '',
+            'page_template_label' => '',
+            'page_templates' => [],
             'stored_page_id' => null,
         ];
     }
@@ -710,6 +715,9 @@ class Renderer extends Base {
                 || strpos($field, 'file.') === 0
             ) {
                 $value = $this->getResultPseudoValue($result, $field, $query, $index_field);
+            } else if (strpos($field, 'page_template.') === 0) {
+                $page_template = $result->get('page_template');
+                $value = $page_template ? $page_template->get(substr($field, 14)) : '';
             } else if (strpos($field, 'template.') === 0) {
                 $value = $result->template->get(substr($field, 9));
             } else if (strpos($field, 'parent.') === 0) {

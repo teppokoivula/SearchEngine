@@ -103,6 +103,9 @@ class Finder extends Base {
                 $template_ids = $this->templates->find('name=' . implode('|', $templates))->explode('id');
             }
             $pwse_query->where('pages.templates_id IN (' . implode(', ', $template_ids) . ')');
+            // match_by_source does not run this SQL. It filters expanded page and file
+            // hits with these template names, using the page the file was uploaded to.
+            $query->args['_match_templates'] = array_values($templates);
         }
         if (empty($args['named_only']) || count($templates) > 1) {
             $template_names = $templates;
