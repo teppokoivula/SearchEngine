@@ -7,10 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.40.3] - 2026-06-15
+## [0.42.0] - 2026-11-17
 
-### Fixed
-- Fixed grouped results not showing all items when `tabs => false` and no group filter is selected. Previously only the first group's results were displayed; now all named groups are combined.
+### Added
+- `find_args.match_by_source` (default false). When enabled, a match in page content returns the page, a match that exists only in an indexed document returns that document, and a match in both returns both. Rebuild the index after enabling it.
+
+## [0.41.0] - 2026-11-17
+
+### Added
+- Files indexed by SearchEngine File Indexer store their public path, absolute URL, and the page they belong to in the index meta. `is_file` is `1` when that meta is present and omitted (null) otherwise.
+- `renderResultsJSON()` can return `is_file`, `file.*` / `_file_*` attributes, and `_files`.
+- Result templates can use `{file.path}`, `{file.url}`, `{file.page_url}`, `{file.page_title}`, `{file.ext}`, and the other indexed-file placeholders via the `result_file` template.
 
 ## [0.40.2] - 2026-02-01
 

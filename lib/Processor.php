@@ -100,6 +100,17 @@ class Processor extends Base {
             }
         }
 
+        // is_file is 1 when this index contains a file indexed by SearchEngineFileIndexer.
+        // The key is omitted (null) for page indexes that have no indexed file.
+        if (!empty($meta_index['files']) && is_array($meta_index['files'])) {
+            foreach ($meta_index['files'] as $file_entry) {
+                if (is_string($file_entry) && strpos($file_entry, Indexer::FILE_RECORD_MARKER) !== false) {
+                    $meta_index['is_file'] = 1;
+                    break;
+                }
+            }
+        }
+
         return $meta_index;
     }
 

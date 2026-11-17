@@ -247,9 +247,10 @@ abstract class QueryBase extends Base {
             }
         }
 
-        // Construct and return selector string
+        // Construct and return selector string. match_by_source pages the expanded
+        // page-and-file list itself, so the database query must return every candidate.
         return implode(', ', array_filter([
-            empty($this->args['limit']) ? '' : 'limit=' . $this->args['limit'],
+            empty($this->args['limit']) || !empty($this->args['match_by_source']) ? '' : 'limit=' . $this->args['limit'],
             empty($sort) ? '' : implode(', ', $sort),
             implode([$options['search_field'] ?? $options['index_field'], $this->args['operator'], $this->query]),
             empty($template) ? '' : 'template=' . implode('|', $template),

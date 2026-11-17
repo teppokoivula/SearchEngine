@@ -19,6 +19,35 @@ class Indexer extends Base {
     const META_PREFIX = '_meta.';
 
     /**
+     * Meta key prefix for a structured record describing an indexed file
+     *
+     * The value after this marker is a JSON object. SearchEngineFileIndexer marks a Pagefile
+     * before this record is written; pages with no indexed file omit it, and the index meta
+     * `is_file` value stays null.
+     *
+     * @var string
+     */
+    const FILE_RECORD_MARKER = 'file.record:';
+
+    /**
+     * Separates page text from each indexed document's text inside the index body
+     *
+     * The page text is the first segment. Each following segment is one indexed file, in the
+     * same order as the file records in the meta JSON. The separator is not used until the
+     * index is rebuilt with this version of the module.
+     *
+     * @var string
+     */
+    const SOURCE_SEPARATOR = "\x1e";
+
+    /**
+     * Extracted text for indexed files on the page currently being indexed
+     *
+     * @var array
+     */
+    protected $indexedFileTexts = [];
+
+    /**
      * Processor instance
      *
      * @var Processor
@@ -99,17 +128,19 @@ class Indexer extends Base {
             $this->actions->prepareFor('indexPage');
             if ($this->wire('modules')->isInstalled('LanguageSupport') && $this->wire('fields')->get($index_field)->type == 'FieldtypeTextareaLanguage') {
                 foreach ($this->wire('languages') as $language) {
+                    $this->indexedFileTexts = [];
                     $index[$language->id] = $this->getPageIndex($page, $options['indexed_fields'], '', [
                         'language' => $language,
                     ]);
-                    $index[$language->id] = $this->processor->processIndex($index[$language->id]);
+                    $index[$language->id] = $this->appendIndexedFileTexts($this->processor->processIndex($index[$language->id]));
                     if ($index_field_exists) {
                         $page->getUnformatted($index_field)->setLanguageValue($language, $index[$language->id]);
                     }
                 }
             } else {
+                $this->indexedFileTexts = [];
                 $index[0] = $this->getPageIndex($page, $options['indexed_fields'], '');
-                $index[0] = $this->processor->processIndex($index[0]);
+                $index[0] = $this->appendIndexedFileTexts($this->processor->processIndex($index[0]));
                 if ($index_field_exists) {
                     $page->set($index_field, $index[0]);
                 }
@@ -262,10 +293,18 @@ class Indexer extends Base {
                 if ($field_value instanceof \ProcessWire\WireArray) {
                     foreach ($field_value as $item) {
                         $value[] = $this->getPagefileIndexValue($item, $indexed_fields);
-                        $files[] = [
+                        $file_meta = [
                             'file.name:' . $item->name,
                             'file.meta:' . $item->hash . '|' . $item->modified,
                         ];
+                        // Set by SearchEngineFileIndexer when this file's content was indexed.
+                        if ($item->get('_se_is_file')) {
+                            $file_meta[] = self::FILE_RECORD_MARKER . json_encode(
+                                $this->getIndexedFileRecord($item),
+                                JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+                            );
+                        }
+                        $files[] = $file_meta;
                     }
                 }
                 return (new IndexValue(implode(' ', $value)))->setMeta([
@@ -358,6 +397,189 @@ class Indexer extends Base {
             }
         }
         return $index;
+    }
+
+    /**
+     * Structured record stored for a file whose content was indexed
+     *
+     * `path` is the full public URL path (`/site/assets/files/...`). `url` is the absolute URL.
+     * `page_*` refers to the viewable page the file belongs to (a repeater's owner page when
+     * the file field lives on a repeater). `stored_page_id` is the page that actually owns the
+     * file field. `is_file` is 1 for every record written here.
+     *
+     * @param \ProcessWire\Pagefile $file
+     * @return array
+     */
+    protected function ___getIndexedFileRecord(\ProcessWire\Pagefile $file): array {
+        $stored = $file->page;
+        $page = $stored;
+        if ($stored && $stored->id && method_exists($stored, 'getForPage')) {
+            $owner = $stored->getForPage();
+            if ($owner instanceof \ProcessWire\Page && $owner->id) {
+                $page = $owner;
+            }
+        }
+        $field = $file->field;
+        $this->indexedFileTexts[] = $this->normalizeIndexedText((string) $file->get('_se_file_text'));
+        return [
+            'is_file' => 1,
+            'name' => $file->basename,
+            'ext' => strtolower((string) $file->ext),
+            'path' => (string) $file->url,
+            'url' => (string) $file->httpUrl,
+            'filesize' => (int) $file->filesize,
+            'filesize_str' => (string) $file->filesizeStr,
+            'description' => (string) $file->description,
+            'field' => $field ? (string) $field->name : '',
+            'page_id' => $page && $page->id ? (int) $page->id : null,
+            'page_name' => $page && $page->id ? (string) $page->name : '',
+            'page_url' => $page && $page->id ? (string) $page->url : '',
+            'page_title' => $page && $page->id ? (string) $page->get('title') : '',
+            'stored_page_id' => $stored && $stored->id ? (int) $stored->id : null,
+        ];
+    }
+
+    /**
+     * Append indexed document text after the page text and before the meta JSON
+     *
+     * @param string $index
+     * @return string
+     */
+    protected function appendIndexedFileTexts(string $index): string {
+        if (!$this->indexedFileTexts) {
+            return $index;
+        }
+        $texts = implode(self::SOURCE_SEPARATOR, $this->indexedFileTexts);
+        $pos = strrpos($index, "\n");
+        if ($pos === false) {
+            return $index . self::SOURCE_SEPARATOR . $texts;
+        }
+        return substr($index, 0, $pos) . self::SOURCE_SEPARATOR . $texts . substr($index, $pos);
+    }
+
+    /**
+     * Normalize text the same way the page index does, so source checks match the stored words
+     *
+     * @param string $text
+     * @return string
+     */
+    public function normalizeIndexedText(string $text): string {
+        $text = str_replace('<', ' <', $text);
+        $text = strip_tags($text);
+        $text = preg_replace('/\s+/u', ' ', $text);
+        return trim((string) $text);
+    }
+
+    /**
+     * Split a stored index into page text and one text body per indexed file
+     *
+     * `segmented` is false for indexes built before document text was stored separately.
+     * Those indexes cannot tell a page hit from a file hit.
+     *
+     * @param string $index
+     * @return array{page: string, files: array, segmented: bool}
+     */
+    public function readIndexSources(string $index): array {
+        $meta_pos = strrpos($index, "\n");
+        $body = $meta_pos === false ? $index : substr($index, 0, $meta_pos);
+        $segmented = strpos($body, self::SOURCE_SEPARATOR) !== false;
+        $parts = explode(self::SOURCE_SEPARATOR, $body);
+        $page_text = (string) array_shift($parts);
+        $files = $this->getIndexedFilesFromIndex($index);
+        foreach ($files as $i => $file) {
+            $files[$i]['text'] = $parts[$i] ?? '';
+        }
+        return [
+            'page' => $page_text,
+            'files' => $files,
+            'segmented' => $segmented,
+        ];
+    }
+
+    /**
+     * Does $haystack satisfy the same operator the finder used against the whole index?
+     *
+     * @param string $haystack
+     * @param string $query
+     * @param string $operator
+     * @return bool
+     */
+    public function sourceContains(string $haystack, string $query, string $operator): bool {
+        $query = trim($query);
+        if ($query === '' || $query === '""') {
+            return false;
+        }
+        $haystack = mb_strtolower($haystack);
+        $phrase = $query;
+        $quoted = strlen($query) > 1 && $query[0] === '"' && substr($query, -1) === '"';
+        if ($quoted) {
+            $phrase = trim($query, '"');
+        }
+        $phrase = mb_strtolower($phrase);
+        if ($phrase === '') {
+            return false;
+        }
+        if ($operator === '=' || $operator === '==') {
+            return $haystack === $phrase;
+        }
+        if ($operator === '^=' || $operator === '%^=') {
+            return mb_strpos($haystack, $phrase) === 0;
+        }
+        if ($operator === '$=' || $operator === '%$=') {
+            $length = mb_strlen($phrase);
+            return $length > 0 && mb_substr($haystack, -$length) === $phrase;
+        }
+        if ($quoted || $operator === '%=' || $operator === '~%=') {
+            return mb_strpos($haystack, $phrase) !== false;
+        }
+        foreach (preg_split('/\s+/u', $phrase, -1, PREG_SPLIT_NO_EMPTY) as $word) {
+            if (mb_strpos($haystack, mb_strtolower($word)) === false) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Read indexed-file records out of a stored index value
+     *
+     * Records are written into the index meta JSON by getIndexedFileRecord(). Pages that
+     * have no indexed file return an empty array, which callers expose as is_file=null.
+     *
+     * @param string $index Stored index field value.
+     * @return array
+     */
+    public function getIndexedFilesFromIndex(string $index): array {
+        $meta = $this->getIndexMeta($index);
+        if (empty($meta['files']) || !is_array($meta['files'])) {
+            return [];
+        }
+        $files = [];
+        $marker = self::FILE_RECORD_MARKER;
+        $marker_length = strlen($marker);
+        foreach ($meta['files'] as $entry) {
+            if (!is_string($entry)) continue;
+            $pos = strpos($entry, $marker);
+            if ($pos === false) continue;
+            $record = json_decode(substr($entry, $pos + $marker_length), true);
+            if (!is_array($record)) continue;
+            $record['is_file'] = !empty($record['is_file']) ? 1 : null;
+            $files[] = $record;
+        }
+        return $files;
+    }
+
+    /**
+     * Decode the meta object stored on the last line of an index value
+     *
+     * @param string $index
+     * @return array
+     */
+    public function getIndexMeta(string $index): array {
+        $pos = strrpos($index, "\n");
+        if ($pos === false) return [];
+        $meta = json_decode(substr($index, $pos + 1), true);
+        return is_array($meta) ? $meta : [];
     }
 
     /**

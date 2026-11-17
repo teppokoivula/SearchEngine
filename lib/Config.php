@@ -277,6 +277,17 @@ class Config extends Base {
         $operator = $this->maybeUseConfig($operator);
         $finder_settings->add($operator);
 
+        /** @var InputfieldCheckbox Return a hit as the page or the file it was found in */
+        $match_by_source = $this->wire('modules')->get('InputfieldCheckbox');
+        $match_by_source->name = 'find_args__match_by_source';
+        $match_by_source->label = $this->_('Return matches where they occur');
+        $match_by_source->description = $this->_('By default a match is always the page, including when the only matching text is inside an uploaded document. Enable this to return the page when the match is in the page content, the document when the match is only in that file, and both when the query matches both.');
+        $match_by_source->notes = $this->_('Rebuild the search index after enabling this. Until pages are reindexed, file-only matches still return the containing page.');
+        $match_by_source->checkedValue = 1;
+        $match_by_source->uncheckedValue = 0;
+        $match_by_source = $this->maybeUseConfig($match_by_source);
+        $finder_settings->add($match_by_source);
+
         if (version_compare($this->wire('config')->version, '3.0.160') > -1) {
             /** @var InputfieldMarkup Additional information for each available operator */
             $operator_details = $this->wire('modules')->get('InputfieldMarkup');
